@@ -1,5 +1,7 @@
+import { SharedDirectory } from 'fluid-framework';
 import * as PIXI from 'pixi.js';
-import { HelloWorld } from './scenes/helloWorld';
+import { getFluidData } from './fluid';
+import { FluidText } from './scenes/fluidText';
 
 const load = (app: PIXI.Application) => {
     return new Promise<void>((resolve) => {
@@ -10,6 +12,7 @@ const load = (app: PIXI.Application) => {
 };
 
 const main = async () => {
+    console.log("beginning of main");
     // Main app
     let app = new PIXI.Application();
 
@@ -25,12 +28,18 @@ const main = async () => {
     });
 
     // Load assets
+    let { container, services } = await getFluidData();
+    let root = container.initialObjects.root as SharedDirectory;
+    console.log("Loaded container");
+
     await load(app);
+    console.log("Loaded pixi app");
     document.body.appendChild(app.view);
 
     // Set scene
-    var scene = new HelloWorld(app);
+    var scene = new FluidText(app);
     app.stage.addChild(scene);
+    console.log("end of main");
 };
 
 main();

@@ -1,4 +1,5 @@
 import { Application, Container, Sprite } from 'pixi.js';
+import { getFluidData } from '../fluid';
 
 export class HelloWorld extends Container {
     app: Application;
@@ -12,7 +13,7 @@ export class HelloWorld extends Container {
         this.update = this.update.bind(this);
 
         this.sprite = new Sprite(
-            app.loader.resources['assets/hello-world.png'].texture
+            app.loader.resources['assets/bunny.png'].texture
         );
         this.sprite.x = window.innerWidth / 2 - this.sprite.width / 2;
         this.sprite.y = window.innerHeight / 2 - this.sprite.height / 2;
@@ -28,20 +29,20 @@ export class HelloWorld extends Container {
         app.ticker.add(this.update);
     }
 
-    update(_: any, delta: number) {
-        if (
-            this.sprite.x <= 0 ||
-            this.sprite.x >= window.innerWidth - this.sprite.width
-        ) {
-            this.state.velocity.x = -this.state.velocity.x;
-        }
-        if (
-            this.sprite.y <= 0 ||
-            this.sprite.y >= window.innerHeight - this.sprite.height
-        ) {
-            this.state.velocity.y = -this.state.velocity.y;
-        }
-        this.sprite.x += this.state.velocity.x;
-        this.sprite.y += this.state.velocity.y;
+    async update(_: any, delta: number) {
+        // if (
+        //     this.sprite.x <= 0 ||
+        //     this.sprite.x >= window.innerWidth - this.sprite.width
+        // ) {
+        //     this.state.velocity.x = -this.state.velocity.x;
+        // }
+        // if (
+        //     this.sprite.y <= 0 ||
+        //     this.sprite.y >= window.innerHeight - this.sprite.height
+        // ) {
+        //     this.state.velocity.y = -this.state.velocity.y;
+        // }
+        // this.sprite.x += this.state.velocity.x;
+        // this.sprite.y += this.state.velocity.y;
     }
 }
