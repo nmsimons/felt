@@ -110,8 +110,14 @@ export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
     function onDragMove() {
         if (dragging) {
             const newPosition = data.getLocalPosition(sprite.parent);
-            sprite.x = newPosition.x;
-            sprite.y = newPosition.y;            
+            
+            if (newPosition.x > sprite.width/2 && newPosition.x < app.renderer.width - sprite.width/2) {
+                sprite.x = newPosition.x;
+            }
+
+            if (newPosition.y > sprite.height/2 && newPosition.y < app.renderer.height - sprite.height/2) {
+                sprite.y = newPosition.y;
+            }                   
         }
     }
 
