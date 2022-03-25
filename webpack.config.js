@@ -5,14 +5,14 @@ const CopyPlugin = require('copy-webpack-plugin')
 
 module.exports = {
     // Basic configuration
-    entry: './src/index.ts',
+    entry: './src/index.tsx',
     // Necessary in order to use source maps and debug directly TypeScript files
     devtool: 'source-map',
     module: {
         rules: [
             // Necessary in order to use TypeScript
             {
-                test: /\.ts$/,
+                test: /\.ts$|tsx/,
                 use: 'ts-loader',
                 exclude: /node_modules/,
             },
@@ -21,7 +21,7 @@ module.exports = {
     resolve: {
         // Alway keep '.js' even though you don't use it.
         // https://github.com/webpack/webpack-dev-server/issues/720#issuecomment-268470989
-        extensions: ['.ts', '.js'],
+        extensions: ['.tsx', '.ts', '.js'],
     },
     output: {
         filename: 'bundle.js',

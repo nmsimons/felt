@@ -1,47 +1,66 @@
-import { Application, Container, Sprite } from 'pixi.js';
 
-export class HelloWorld extends Container {
-    app: Application;
-    sprite: Sprite;
-    state: { velocity: { x: number; y: number } };
+import * as PIXI from 'pixi.js';
 
-    constructor(app: Application) {
-        super();
-        this.app = app;
-        this.state = { velocity: { x: 1, y: 1 } };
-        this.update = this.update.bind(this);
+export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {       
+    
+    var dragging: any;
+    var data: any;
 
-        this.sprite = new Sprite(
-            app.loader.resources['assets/hello-world.png'].texture
-        );
-        this.sprite.x = window.innerWidth / 2 - this.sprite.width / 2;
-        this.sprite.y = window.innerHeight / 2 - this.sprite.height / 2;
-        this.addChild(this.sprite);
+    const sprite = new PIXI.Sprite(
+        app.loader.resources['assets/willow.png'].texture
+    );
+    sprite.x = 100;
+    sprite.y = 100;
+    sprite.anchor.set(0.5);
 
-        // Handle window resizing
-        window.addEventListener('resize', (e) => {
-            this.sprite.x = window.innerWidth / 2 - this.sprite.width / 2;
-            this.sprite.y = window.innerHeight / 2 - this.sprite.height / 2;
-        });
+    sprite.interactive = true;
+    sprite.buttonMode = true;
 
-        // Handle update
-        app.ticker.add(this.update);
+    // Pointers normalize touch and mouse
+    sprite
+        .on('pointerdown', onDragStart)
+        .on('pointerup', onDragEnd)
+        .on('pointerupoutside', onDragEnd)
+        .on('pointermove', onDragMove);
+
+
+    // Alternatively, use the mouse & touch events:
+    // sprite.on('click', onClick); // mouse-only
+    // sprite.on('tap', onClick); // touch-only
+
+    app.stage.addChild(sprite);
+
+    function onClick() {
+        sprite.scale.x *= 1.25;
+        sprite.scale.y *= 1.25;
     }
 
-    update(_: any, delta: number) {
-        if (
-            this.sprite.x <= 0 ||
-            this.sprite.x >= window.innerWidth - this.sprite.width
-        ) {
-            this.state.velocity.x = -this.state.velocity.x;
-        }
-        if (
-            this.sprite.y <= 0 ||
-            this.sprite.y >= window.innerHeight - this.sprite.height
-        ) {
-            this.state.velocity.y = -this.state.velocity.y;
-        }
-        this.sprite.x += this.state.velocity.x;
-        this.sprite.y += this.state.velocity.y;
+    function onDragStart(event: any) {
+        // store a reference to the data
+        // the reason for this is because of multitouch
+        // we want to track the movement of this particular touch
+        data = event.data;
+        sprite.alpha = 0.5;
+        dragging = true;
     }
+    
+    function onDragEnd() {
+        sprite.alpha = 1;
+        dragging = false;
+        // set the interaction data to null
+        data = null;
+    }
+    
+    function onDragMove() {
+        if (dragging) {
+            const newPosition = data.getLocalPosition(sprite.parent);
+            sprite.x = newPosition.x;
+            sprite.y = newPosition.y;
+        }
+    }
+
+    return sprite;
 }
+
+
+
