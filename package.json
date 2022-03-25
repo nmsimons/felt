@@ -9,16 +9,19 @@
     "license": "MIT",
     "devDependencies": {
         "clean-webpack-plugin": "^3.0.0",
-        "copy-webpack-plugin": "5.1.1",
-        "html-webpack-plugin": "4.0.4",
-        "prettier": "2.0.4",
-        "ts-loader": "6.2.2",
-        "typescript": "3.8.3",
-        "webpack": "4.42.1",
-        "webpack-cli": "3.3.11",
+        "copy-webpack-plugin": "^5.1.1",
+        "html-webpack-plugin": "^4.0.4",
+        "prettier": "^2.0.4",
+        "ts-loader": "^6.2.2",
+        "typescript": "^3.8.3",
+        "webpack": "^4.42.1",
+        "webpack-cli": "^3.3.11",
         "webpack-dev-server": "^3.10.3"
     },
     "dependencies": {
-        "pixi.js": "5.2.1"
+        "@fluidframework/azure-client": "^0.58.2001",
+        "@fluidframework/test-client-utils": "^0.58.2001",
+        "fluid-framework": "^0.58.2001",
+        "pixi.js": "^5.2.1"
     }
 }
