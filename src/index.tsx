@@ -32,7 +32,7 @@ async function main() {
 
     for (let i = 0; i < 6; i++) {
         const shape = CreateShape(pixiApp,
-            (dobj: PIXI.Sprite) => {
+            (dobj: PIXI.DisplayObject) => {
                 console.log("Setting fluid position");
                 const fobj = DisplayObject2Fluid(dobj);
                 shapeDir.set(i.toString(), fobj);
@@ -79,7 +79,7 @@ async function initPixiApp() {
     return app;
 }
 
-export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI.Sprite) => void): PIXI.Sprite {
+export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
     let dragging: boolean;
     let data: any;
 
@@ -90,11 +90,18 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
     sprite.y = 100;
     sprite.anchor.set(0.5);
 
+    const shape = new PIXI.Graphics();
+    shape.beginFill(0xff0000);
+    shape.drawCircle(100,100,50);
+
+    shape.interactive = true;
+    shape.buttonMode = true;
+
     sprite.interactive = true;
     sprite.buttonMode = true;
 
     // Pointers normalize touch and mouse
-    sprite
+    shape
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
@@ -104,20 +111,15 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
     // sprite.on('click', onClick); // mouse-only
     // sprite.on('tap', onClick); // touch-only
 
-    app.stage.addChild(sprite);
-
-    function onClick() {
-        sprite.scale.x *= 1.25;
-        sprite.scale.y *= 1.25;
-    }
+    app.stage.addChild(shape);    
 
     function onDragStart(event: any) {
         // store a reference to the data
         // the reason for this is because of multitouch
         // we want to track the movement of this particular touch
         data = event.data;
-        sprite.alpha = 0.5;
-        setFluidPosition(sprite);
+        shape.alpha = 0.5;
+        setFluidPosition(shape);
         dragging = true;
     }
 
@@ -125,37 +127,37 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
         // const newPosition = data.getLocalPosition(sprite.parent);
         sprite.alpha = 1;
         dragging = false;
-        setFluidPosition(sprite);
+        setFluidPosition(shape);
         // set the interaction data to null
         data = null;
     }
 
     function onDragMove() {
         if (dragging) {
-            const newPosition = data.getLocalPosition(sprite.parent);
+            const newPosition = data.getLocalPosition(shape.parent);
             updatePosition(newPosition);
-            setFluidPosition(sprite);
+            setFluidPosition(shape);
         }
     }
 
     function updatePosition(newPosition: PIXI.Point) {
         if (
-            newPosition.x > sprite.width / 2 &&
-            newPosition.x < app.renderer.width - sprite.width / 2
+            newPosition.x > shape.width / 2 &&
+            newPosition.x < app.renderer.width - shape.width / 2
         ) {
-            sprite.x = newPosition.x;
+            shape.x = newPosition.x;
 
         }
 
         if (
-            newPosition.y > sprite.height / 2 &&
-            newPosition.y < app.renderer.height - sprite.height / 2
+            newPosition.y > shape.height / 2 &&
+            newPosition.y < app.renderer.height - shape.height / 2
         ) {
-            sprite.y = newPosition.y;
+            shape.y = newPosition.y;
         }
     }
 
-    return sprite;
+    return shape;
 }
 
 export default main();
