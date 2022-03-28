@@ -3,7 +3,7 @@ import * as PIXI from 'pixi.js';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { FluidContainer, SharedDirectory } from 'fluid-framework';
-import { DisplayObject2Fluid } from './wrappers';
+import { DisplayObject2Fluid, FluidDisplayObject } from './wrappers';
 
 const load = async (app: PIXI.Application) => {
     return new Promise<void>((resolve) => {
@@ -31,14 +31,25 @@ async function main() {
     const shapeDir = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
-        const shape = CreateShape(pixiApp, (dobj: PIXI.DisplayObject) => {
-            const fobj = DisplayObject2Fluid(dobj);
-            console.log(`setting fluid shape`);
-            shapeDir.set(i.toString(), fobj);
-        });
+        const shape = CreateShape(pixiApp,
+            (dobj: PIXI.DisplayObject) => {
+                console.log("Setting fluid position");
+                const fobj = DisplayObject2Fluid(dobj);
+                shapeDir.set(i.toString(), fobj);
+            });
         shapeMap.set(i, shape);
         pixiApp.stage.addChild(shapeMap.get(i)!);
     }
+
+    shapeDir.on("valueChanged", (changed, local, target) => {
+        if (!local) {
+            const remoteShape = target.get(changed.key) as FluidDisplayObject;
+            const index = parseInt(changed.key);
+            const localShape = shapeMap.get(index)!;
+            localShape.x = remoteShape.x;
+            localShape.y = remoteShape.y;
+        }
+    });
 
     ReactDOM.render(<ReactApp />, document.getElementById('root'));
 
@@ -133,7 +144,6 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
             ) {
                 sprite.y = newPosition.y;
             }
-            console.log("Setting fluid position");
             setFluidPosition(sprite);
         }
     }
