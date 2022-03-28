@@ -110,7 +110,7 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
     function onDragEnd(event: any) {
         shape.alpha = 1;
         dragging = false;
-        setFluidPosition(shape);        
+        updatePosition(event.data.global.x, event.data.global.y);       
     }
 
     function onDragMove(event: any) {
