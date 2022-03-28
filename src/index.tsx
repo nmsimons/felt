@@ -2,7 +2,8 @@ import { getFluidData } from './fluid';
 import * as PIXI from 'pixi.js';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { SharedDirectory } from 'fluid-framework';
+import { FluidContainer, SharedDirectory } from 'fluid-framework';
+import { DisplayObject2Fluid } from './wrappers';
 
 const load = async (app: PIXI.Application) => {
     return new Promise<void>((resolve) => {
@@ -17,14 +18,25 @@ async function main() {
     root.id = 'root';
     document.body.appendChild(root);
 
+    // Fluid data
+    const { container, services } = await getFluidData();
+    const rootMap = container.initialObjects.root as SharedDirectory;
+    console.log('Loaded container');
+
     const pixiApp = await initPixiApp();
 
     pixiApp.stage.sortableChildren = true;
 
     const shapeMap = new Map<number, PIXI.DisplayObject>();
+    const shapeDir = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
-        shapeMap.set(i, CreateShape(pixiApp));
+        const shape = CreateShape(pixiApp, (dobj: PIXI.DisplayObject) => {
+            const fobj = DisplayObject2Fluid(dobj);
+            console.log(`setting fluid shape`);
+            shapeDir.set(i.toString(), fobj);
+        });
+        shapeMap.set(i, shape);
         pixiApp.stage.addChild(shapeMap.get(i)!);
     }
 
@@ -52,15 +64,10 @@ async function initPixiApp() {
     // Load assets
     await load(app);
 
-    // Fluid data
-    const { container, services } = await getFluidData();
-    const root = container.initialObjects.root as SharedDirectory;
-    console.log('Loaded container');
-
     return app;
 }
 
-export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
+export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
     let dragging: any;
     let data: any;
 
@@ -117,6 +124,7 @@ export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
                 newPosition.x < app.renderer.width - sprite.width / 2
             ) {
                 sprite.x = newPosition.x;
+
             }
 
             if (
@@ -125,6 +133,8 @@ export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
             ) {
                 sprite.y = newPosition.y;
             }
+            console.log("Setting fluid position");
+            setFluidPosition(sprite);
         }
     }
 

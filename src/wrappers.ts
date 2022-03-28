@@ -1,12 +1,15 @@
-import { Sprite } from 'pixi.js';
+import { DisplayObject, Sprite } from 'pixi.js';
 
-export interface FeltSprite {
-    width: number;
-    height: number;
+export interface FluidDisplayObject {
+    // width: number;
+    // height: number;
     x: number;
     y: number;
 }
 
-export const SpriteToObject = (sprite: Sprite): FeltSprite => {
-    return sprite;
+export const DisplayObject2Fluid = (dobj: DisplayObject): FluidDisplayObject => {
+    return {
+        x: dobj.x,
+        y: dobj.y,
+    }
 };

@@ -16,7 +16,7 @@ import {
     SharedMap,
 } from 'fluid-framework';
 import { Application, Container, Sprite } from 'pixi.js';
-import { SpriteToObject } from './wrappers';
+import { DisplayObject2Fluid } from './wrappers';
 
 export interface ICustomUserDetails {
     gender: string;
@@ -75,11 +75,11 @@ async function initializeNewContainer(
     const sprites: Sprite[] = [];
     const root = container.initialObjects.root as SharedDirectory;
     const shapes = container.initialObjects.shapes as SharedDirectory;
-    let i = 0;
-    for (const s of sprites) {
-        shapes.set(i.toString(), SpriteToObject(s));
-        i++;
-    }
+    // let i = 0;
+    // for (const s of sprites) {
+    //     shapes.set(i.toString(), DisplayObject2Fluid(s));
+    //     i++;
+    // }
 
     root.set('test', 'test-string');
 }
