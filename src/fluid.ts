@@ -39,10 +39,10 @@ const azureUser = {
 
 const connectionConfig: AzureConnectionConfig = useAzure
     ? {
-          tenantId: '',
+        tenantId: 'a8e17ca8-2152-4f8d-9a6e-d5c43f3179e3',
           tokenProvider: new AzureFunctionTokenProvider('', azureUser),
-          orderer: '',
-          storage: '',
+        orderer: 'https://alfred.westus2.fluidrelay.azure.com',
+        storage: 'https://historian.westus2.fluidrelay.azure.com',
       }
     : {
           tenantId: LOCAL_MODE_TENANT_ID,
