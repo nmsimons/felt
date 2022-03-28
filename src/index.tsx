@@ -1,6 +1,8 @@
+import { getFluidData } from './fluid';
 import * as PIXI from 'pixi.js';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
+import { SharedDirectory } from 'fluid-framework';
 
 const load = async (app: PIXI.Application) => {
     return new Promise<void>((resolve) => {
@@ -10,11 +12,11 @@ const load = async (app: PIXI.Application) => {
     });
 };
 
-async function main() {    
-    const root = document.createElement("div");
-    root.id = "root";
-    document.body.appendChild(root)
-    
+async function main() {
+    const root = document.createElement('div');
+    root.id = 'root';
+    document.body.appendChild(root);
+
     const pixiApp = await initPixiApp();
 
     pixiApp.stage.sortableChildren = true;
@@ -24,41 +26,41 @@ async function main() {
     for (let i = 0; i < 6; i++) {
         shapeMap.set(i, CreateShape(pixiApp));
         pixiApp.stage.addChild(shapeMap.get(i)!);
-    }    
+    }
 
-    ReactDOM.render (
-        <ReactApp/>,
-        document.getElementById('root')
-    )
+    ReactDOM.render(<ReactApp />, document.getElementById('root'));
 
-    document.getElementById("canvas")?.appendChild(pixiApp.view);
+    document.getElementById('canvas')?.appendChild(pixiApp.view);
 }
 
 function ReactApp() {
     return (
         <>
-        <div>Felt</div>
-        <div id="canvas"></div>        
+            <div>Felt</div>
+            <div id="canvas"></div>
         </>
     );
 }
 
 async function initPixiApp() {
-    
     // Main app
-    const app = new PIXI.Application({width: 800, height: 500});
+    const app = new PIXI.Application({ width: 800, height: 500 });
 
     app.renderer.view.style.position = 'absolute';
-    app.renderer.view.style.display = 'block';    
-    
+    app.renderer.view.style.display = 'block';
+
     // Load assets
-    await load(app);    
+    await load(app);
+
+    // Fluid data
+    const { container, services } = await getFluidData();
+    const root = container.initialObjects.root as SharedDirectory;
+    console.log('Loaded container');
 
     return app;
 }
 
-export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {       
-    
+export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
     let dragging: any;
     let data: any;
 
@@ -79,7 +81,6 @@ export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
         .on('pointerupoutside', onDragEnd)
         .on('pointermove', onDragMove);
 
-
     // Alternatively, use the mouse & touch events:
     // sprite.on('click', onClick); // mouse-only
     // sprite.on('tap', onClick); // touch-only
@@ -99,25 +100,31 @@ export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {
         sprite.alpha = 0.5;
         dragging = true;
     }
-    
+
     function onDragEnd() {
         sprite.alpha = 1;
         dragging = false;
         // set the interaction data to null
         data = null;
     }
-    
+
     function onDragMove() {
         if (dragging) {
             const newPosition = data.getLocalPosition(sprite.parent);
-            
-            if (newPosition.x > sprite.width/2 && newPosition.x < app.renderer.width - sprite.width/2) {
+
+            if (
+                newPosition.x > sprite.width / 2 &&
+                newPosition.x < app.renderer.width - sprite.width / 2
+            ) {
                 sprite.x = newPosition.x;
             }
 
-            if (newPosition.y > sprite.height/2 && newPosition.y < app.renderer.height - sprite.height/2) {
+            if (
+                newPosition.y > sprite.height / 2 &&
+                newPosition.y < app.renderer.height - sprite.height / 2
+            ) {
                 sprite.y = newPosition.y;
-            }                   
+            }
         }
     }
 
