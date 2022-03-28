@@ -85,18 +85,16 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
 
     const shape = new PIXI.Graphics();
     shape.beginFill(0xff0000);
-    shape.drawCircle(100,100,50);    
-
+    shape.drawCircle(100,100,50);
     shape.interactive = true;
-    shape.buttonMode = true;
-
+    shape.buttonMode = true;    
     // Pointers normalize touch and mouse
     shape
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
         .on('pointermove', onDragMove);
-   
+
     app.stage.addChild(shape);    
 
     function onDragStart(event: any) {
@@ -111,6 +109,7 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
 
     function onDragEnd() {
         // const newPosition = data.getLocalPosition(sprite.parent);
+
         shape.alpha = 1;
         dragging = false;
         setFluidPosition(shape);
