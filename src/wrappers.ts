@@ -1,4 +1,4 @@
-import { DisplayObject, Sprite } from 'pixi.js';
+import { DisplayObject } from 'pixi.js';
 
 export interface FluidDisplayObject {
     // width: number;

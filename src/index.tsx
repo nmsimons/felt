@@ -1,8 +1,8 @@
-import { getFluidData } from './fluid';
+import { loadFluidData } from './fluid';
 import * as PIXI from 'pixi.js';
-import React, { useState } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
-import { FluidContainer, SharedDirectory } from 'fluid-framework';
+import { SharedDirectory } from 'fluid-framework';
 import { DisplayObject2Fluid, FluidDisplayObject } from './wrappers';
 
 const load = async (app: PIXI.Application) => {
@@ -19,7 +19,7 @@ async function main() {
     document.body.appendChild(root);
 
     // Fluid data
-    const { container, services } = await getFluidData();
+    const { container, services } = await loadFluidData();
     const rootMap = container.initialObjects.root as SharedDirectory;
     console.log('Loaded container');
 

@@ -15,8 +15,6 @@ import {
     SharedDirectory,
     SharedMap,
 } from 'fluid-framework';
-import { Application, Container, Sprite } from 'pixi.js';
-import { DisplayObject2Fluid } from './wrappers';
 
 export interface ICustomUserDetails {
     gender: string;
@@ -72,21 +70,15 @@ const clientProps = {
 async function initializeNewContainer(
     container: IFluidContainer
 ): Promise<void> {
-    const sprites: Sprite[] = [];
-    const root = container.initialObjects.root as SharedDirectory;
-    const shapes = container.initialObjects.shapes as SharedDirectory;
-    // let i = 0;
-    // for (const s of sprites) {
-    //     shapes.set(i.toString(), DisplayObject2Fluid(s));
-    //     i++;
-    // }
-
-    root.set('test', 'test-string');
+    // const sprites: Sprite[] = [];
+    // const root = container.initialObjects.root as SharedDirectory;
+    // const shapes = container.initialObjects.shapes as SharedDirectory;
+    // root.set('test', 'test-string');
 }
 
 const client = new AzureClient(clientProps);
 
-export const getFluidData = async (): Promise<{
+export const loadFluidData = async (): Promise<{
     container: IFluidContainer;
     services: AzureContainerServices;
 }> => {
@@ -127,7 +119,4 @@ export const getFluidData = async (): Promise<{
     document.title = id;
 
     return { container, services };
-
-    // TODO 2: Get the container from the Fluid service.
-    // TODO 3: Return the Fluid timestamp object.
 };
