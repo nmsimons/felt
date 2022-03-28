@@ -31,7 +31,7 @@ async function main() {
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
-        const shape = CreateShape(pixiApp,
+        const shape = CreateShape(pixiApp, 0x999999, 
             (dobj: PIXI.DisplayObject) => {
                 console.log("Setting fluid position");
                 const fobj = DisplayObject2Fluid(dobj);
@@ -79,15 +79,15 @@ async function initPixiApp() {
     return app;
 }
 
-export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
+export function CreateShape(app: PIXI.Application, color: number, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
     let dragging: boolean;
     let data: any;
 
     const shape = new PIXI.Graphics();
-    shape.beginFill(0xff0000);
-    shape.drawCircle(0,0,50);
+    shape.beginFill(color);
+    shape.drawCircle(0,0,30);
     shape.interactive = true;
-    shape.buttonMode = true;
+    shape.buttonMode = true;    
     shape.x = 100;
     shape.y = 100;   
     
@@ -100,8 +100,7 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
 
     app.stage.addChild(shape);    
 
-    function onDragStart(event: any) {
-        
+    function onDragStart(event: any) {        
         shape.alpha = 0.5;
         dragging = true;
         updatePosition(event.data.global.x, event.data.global.y);
@@ -125,7 +124,6 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
             x < app.renderer.width - shape.width / 2
         ) {
             shape.x = x;
-
         }
 
         if (
