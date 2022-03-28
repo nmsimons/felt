@@ -85,9 +85,12 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
 
     const shape = new PIXI.Graphics();
     shape.beginFill(0xff0000);
-    shape.drawCircle(100,100,50);
+    shape.drawCircle(0,0,50);
     shape.interactive = true;
-    shape.buttonMode = true;    
+    shape.buttonMode = true;
+    shape.x = 100;
+    shape.y = 100;   
+    
     // Pointers normalize touch and mouse
     shape
         .on('pointerdown', onDragStart)
@@ -98,48 +101,41 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
     app.stage.addChild(shape);    
 
     function onDragStart(event: any) {
-        // store a reference to the data
-        // the reason for this is because of multitouch
-        // we want to track the movement of this particular touch
-        data = event.data;
+        
         shape.alpha = 0.5;
-        setFluidPosition(shape);
         dragging = true;
+        updatePosition(event.data.global.x, event.data.global.y);
     }
 
-    function onDragEnd() {
-        // const newPosition = data.getLocalPosition(sprite.parent);
-
+    function onDragEnd(event: any) {
         shape.alpha = 1;
         dragging = false;
-        setFluidPosition(shape);
-        // set the interaction data to null
-        data = null;
+        setFluidPosition(shape);        
     }
 
-    function onDragMove() {
+    function onDragMove(event: any) {
         if (dragging) {
-            const newPosition = data.getLocalPosition(shape.parent);
-            updatePosition(newPosition);
-            setFluidPosition(shape);
+            updatePosition(event.data.global.x, event.data.global.y);
         }
     }
 
-    function updatePosition(newPosition: PIXI.Point) {
+    function updatePosition(x: number, y: number) {
         if (
-            newPosition.x > shape.width / 2 &&
-            newPosition.x < app.renderer.width - shape.width / 2
+            x > shape.width / 2 &&
+            x < app.renderer.width - shape.width / 2
         ) {
-            shape.x = newPosition.x;
+            shape.x = x;
 
         }
 
         if (
-            newPosition.y > shape.height / 2 &&
-            newPosition.y < app.renderer.height - shape.height / 2
+            y > shape.height / 2 &&
+            y < app.renderer.height - shape.height / 2
         ) {
-            shape.y = newPosition.y;
+            shape.y = y;
         }
+
+        setFluidPosition(shape);
     }
 
     return shape;
