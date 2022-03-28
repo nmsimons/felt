@@ -32,7 +32,7 @@ async function main() {
 
     for (let i = 0; i < 6; i++) {
         const shape = CreateShape(pixiApp,
-            (dobj: PIXI.DisplayObject) => {
+            (dobj: PIXI.Sprite) => {
                 console.log("Setting fluid position");
                 const fobj = DisplayObject2Fluid(dobj);
                 shapeDir.set(i.toString(), fobj);
@@ -48,6 +48,7 @@ async function main() {
             const localShape = shapeMap.get(index)!;
             localShape.x = remoteShape.x;
             localShape.y = remoteShape.y;
+            localShape.alpha = remoteShape.alpha;
         }
     });
 
@@ -78,8 +79,8 @@ async function initPixiApp() {
     return app;
 }
 
-export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
-    let dragging: any;
+export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI.Sprite) => void): PIXI.Sprite {
+    let dragging: boolean;
     let data: any;
 
     const sprite = new PIXI.Sprite(
@@ -116,12 +117,15 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
         // we want to track the movement of this particular touch
         data = event.data;
         sprite.alpha = 0.5;
+        setFluidPosition(sprite);
         dragging = true;
     }
 
     function onDragEnd() {
+        // const newPosition = data.getLocalPosition(sprite.parent);
         sprite.alpha = 1;
         dragging = false;
+        setFluidPosition(sprite);
         // set the interaction data to null
         data = null;
     }
@@ -129,22 +133,25 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
     function onDragMove() {
         if (dragging) {
             const newPosition = data.getLocalPosition(sprite.parent);
-
-            if (
-                newPosition.x > sprite.width / 2 &&
-                newPosition.x < app.renderer.width - sprite.width / 2
-            ) {
-                sprite.x = newPosition.x;
-
-            }
-
-            if (
-                newPosition.y > sprite.height / 2 &&
-                newPosition.y < app.renderer.height - sprite.height / 2
-            ) {
-                sprite.y = newPosition.y;
-            }
+            updatePosition(newPosition);
             setFluidPosition(sprite);
+        }
+    }
+
+    function updatePosition(newPosition: PIXI.Point) {
+        if (
+            newPosition.x > sprite.width / 2 &&
+            newPosition.x < app.renderer.width - sprite.width / 2
+        ) {
+            sprite.x = newPosition.x;
+
+        }
+
+        if (
+            newPosition.y > sprite.height / 2 &&
+            newPosition.y < app.renderer.height - sprite.height / 2
+        ) {
+            sprite.y = newPosition.y;
         }
     }
 
