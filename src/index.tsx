@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 
-const load = (app: PIXI.Application) => {
+const load = async (app: PIXI.Application) => {
     return new Promise<void>((resolve) => {
         app.loader.add('assets/willow.png').load(() => {
             resolve();
@@ -19,7 +19,7 @@ async function main() {
 
     pixiApp.stage.sortableChildren = true;
 
-    let shapeMap = new Map<number, PIXI.DisplayObject>();
+    const shapeMap = new Map<number, PIXI.DisplayObject>();
 
     for (let i = 0; i < 6; i++) {
         shapeMap.set(i, CreateShape(pixiApp));
@@ -32,7 +32,7 @@ async function main() {
     )
 
     document.getElementById("canvas")?.appendChild(pixiApp.view);
-};
+}
 
 function ReactApp() {
     return (
@@ -55,12 +55,12 @@ async function initPixiApp() {
     await load(app);    
 
     return app;
-};
+}
 
 export function CreateShape(app: PIXI.Application): PIXI.DisplayObject {       
     
-    var dragging: any;
-    var data: any;
+    let dragging: any;
+    let data: any;
 
     const sprite = new PIXI.Sprite(
         app.loader.resources['assets/willow.png'].texture
