@@ -83,33 +83,17 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
     let dragging: boolean;
     let data: any;
 
-    const sprite = new PIXI.Sprite(
-        app.loader.resources['assets/willow.png'].texture
-    );
-    sprite.x = 100;
-    sprite.y = 100;
-    sprite.anchor.set(0.5);
-
     const shape = new PIXI.Graphics();
     shape.beginFill(0xff0000);
     shape.drawCircle(100,100,50);
-
     shape.interactive = true;
-    shape.buttonMode = true;
-
-    sprite.interactive = true;
-    sprite.buttonMode = true;
-
+    shape.buttonMode = true;    
     // Pointers normalize touch and mouse
     shape
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
         .on('pointermove', onDragMove);
-
-    // Alternatively, use the mouse & touch events:
-    // sprite.on('click', onClick); // mouse-only
-    // sprite.on('tap', onClick); // touch-only
 
     app.stage.addChild(shape);    
 
@@ -125,7 +109,8 @@ export function CreateShape(app: PIXI.Application, setFluidPosition: (dobj: PIXI
 
     function onDragEnd() {
         // const newPosition = data.getLocalPosition(sprite.parent);
-        sprite.alpha = 1;
+
+        shape.alpha = 1;
         dragging = false;
         setFluidPosition(shape);
         // set the interaction data to null
