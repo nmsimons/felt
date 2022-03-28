@@ -27,7 +27,7 @@ const userDetails: ICustomUserDetails = {
 };
 
 // Define the server we will be using and initialize Fluid
-const useAzure = process.env.FLUID_CLIENT === 'azure';
+const useAzure = true;//process.env.FLUID_CLIENT === 'azure';
 
 const user = generateTestUser();
 
@@ -37,10 +37,14 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
+if (useAzure) {
+    console.log(`Configured to use azure.`);
+}
+
 const connectionConfig: AzureConnectionConfig = useAzure
     ? {
         tenantId: 'a8e17ca8-2152-4f8d-9a6e-d5c43f3179e3',
-          tokenProvider: new AzureFunctionTokenProvider('', azureUser),
+        tokenProvider: new AzureFunctionTokenProvider('https://fluid-token-mint.azurewebsites.net/api/gettoken', azureUser),
         orderer: 'https://alfred.westus2.fluidrelay.azure.com',
         storage: 'https://historian.westus2.fluidrelay.azure.com',
       }

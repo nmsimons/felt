@@ -27,25 +27,25 @@ async function main() {
 
     pixiApp.stage.sortableChildren = true;
 
-    const shapeMap = new Map<number, PIXI.DisplayObject>();
-    const shapeDir = container.initialObjects.shapes as SharedDirectory;
+    const localMap = new Map<number, PIXI.DisplayObject>();
+    const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
         const shape = CreateShape(pixiApp,
             (dobj: PIXI.DisplayObject) => {
                 console.log("Setting fluid position");
                 const fobj = DisplayObject2Fluid(dobj);
-                shapeDir.set(i.toString(), fobj);
+                fluidMap.set(i.toString(), fobj);
             });
-        shapeMap.set(i, shape);
-        pixiApp.stage.addChild(shapeMap.get(i)!);
+        localMap.set(i, shape);
+        pixiApp.stage.addChild(localMap.get(i)!);
     }
 
-    shapeDir.on("valueChanged", (changed, local, target) => {
+    fluidMap.on("valueChanged", (changed, local, target) => {
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
             const index = parseInt(changed.key);
-            const localShape = shapeMap.get(index)!;
+            const localShape = localMap.get(index)!;
             localShape.x = remoteShape.x;
             localShape.y = remoteShape.y;
             localShape.alpha = remoteShape.alpha;

@@ -1,19 +1,25 @@
 {
-    "name": "pixijs-typescript-starter",
+    "name": "fluid-felt",
     "version": "0.0.1",
-    "description": "A boilerplate to start developping a PixiJS game or animation using TypeScript (VS Code & Chrome).",
+    "description": "",
     "scripts": {
+        "dev:azure": "cross-env FLUID_CLIENT='azure' webpack-dev-server -d",
         "dev": "webpack-dev-server -d",
+        "format": "prettier src --write",
         "lint": "eslint src",
-        "format": "prettier src --write"
+        "start": "webpack-dev-server -d",
+        "pack": "webpack",
+        "compile": "tsc -b",
+        "build": "npm run compile && npm run pack"
     },
-    "author": "Guillaume DESFORGES <aceus02@gmail.com>",
     "license": "MIT",
     "devDependencies": {
+        "@types/debug": "^4.1.7",
         "@typescript-eslint/eslint-plugin": "^5.16.0",
         "@typescript-eslint/parser": "^5.16.0",
         "clean-webpack-plugin": "^3.0.0",
         "copy-webpack-plugin": "^5.1.1",
+        "cross-env": "^7.0.3",
         "eslint": "^8.12.0",
         "eslint-plugin-react": "^7.29.4",
         "html-webpack-plugin": "^4.0.4",
