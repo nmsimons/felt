@@ -19,9 +19,14 @@
         "webpack-dev-server": "^3.10.3"
     },
     "dependencies": {
+        "@pixi/layers": "^1.0.11",
+        "@types/react": "^17.0.43",
+        "@types/react-dom": "^17.0.14",
         "@fluidframework/azure-client": "^0.58.2001",
         "@fluidframework/test-client-utils": "^0.58.2001",
         "fluid-framework": "^0.58.2001",
-        "pixi.js": "^5.2.1"
+        "pixi.js": "^5.2.1",
+        "react": "^17.0.2",
+        "react-dom": "^17.0.2"
     }
 }
