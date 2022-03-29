@@ -1,5 +1,6 @@
 const path = require('path')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const Dotenv = require('dotenv-webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyPlugin = require('copy-webpack-plugin')
 
@@ -33,6 +34,8 @@ module.exports = {
     plugins: [
         // No need to write a index.html
         new HtmlWebpackPlugin(),
+        // Load environment variables during webpack bundle
+        new Dotenv(),
         // Do not accumulate files in ./dist
         new CleanWebpackPlugin(),
         // Copy assets to serve them

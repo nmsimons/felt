@@ -2,3 +2,4 @@ shell.nix
 
 **/node_modules/
 dist/
+.env

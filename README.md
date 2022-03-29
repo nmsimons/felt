@@ -1,30 +1,24 @@
-# Pixi.JS TypeScript boilerplate
+# Fluid Framework Felt Board
 
-I had a hard time setting up a development environment, so I decided to share it.
-It can be useful to start from there if you want to start developping a game for browsers quickly.
-This setup is supposed to be used with VS Code, as configuration is provided so that you hava all tools set up.
+Feltboard is an example application that uses Fluid Framework to enable collaboration.
 
-## Demo
+The app is a virtual [felt board](https://en.wikipedia.org/wiki/Felt#Arts_and_crafts) with pieces that can be moved
+around the board. Everyone can move pieces.
 
-![pixijsstarterdemo](https://user-images.githubusercontent.com/1882000/117959954-cde93100-b31c-11eb-889b-4879bd596c6b.gif)
+## Building and running
 
-## Requirements
+You can use the following npm scripts (`npm run SCRIPT-NAME`) to build and run the app. 
 
--   Node JS and NPM
--   VS Code
--   Chrome
-
-## Setup
-
-```bash
-npm install
-```
-
-## Development
-
-Launch the `Complete development` launch configuration.
-
-Putting/removing breakpoints in the `.ts` files with VS Code in `/src` should work.
-If it does not, please open an issue.
-
-Edit the TypeScript files, the browser should refresh on save.
+<!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
+| Script | Description |
+|--------|-------------|
+| `build` | `npm run format && npm run docs && npm run compile && npm run pack` |
+| `compile` | Compile the TyppeScript source code to JavaScript. |
+| `dev` | Runs the app in webpack-dev-server. Expects local-azure-service running on port 7070. |
+| `dev:azure` | Runs the app in webpack-dev-server using the Azure Fluid Relay config. |
+| `docs` | Update documentation. |
+| `format` | Format source code using Prettier. |
+| `lint` | Lint source code using ESLint |
+| `pack` | `webpack` |
+| `start` | `npm run dev` |
+<!-- AUTO-GENERATED-CONTENT:END -->
