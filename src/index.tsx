@@ -1,3 +1,4 @@
+import { SignalListener, SignalManager } from '@fluid-experimental/data-objects';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import { IFluidContainer, SharedDirectory } from 'fluid-framework';
 import * as PIXI from 'pixi.js';
@@ -5,7 +6,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Audience } from './audience';
 import { loadFluidData } from './fluid';
-import { DisplayObject2Fluid, FluidDisplayObject } from './wrappers';
+import {
+    Pixi2Fluid,
+    DragSignalPayload,
+    FluidDisplayObject,
+    Signals,
+    Fluid2Pixi,
+} from './wrappers';
 
 async function main() {
     const root = document.createElement('div');
@@ -14,17 +21,60 @@ async function main() {
 
     // Fluid data
     const { container, services } = await loadFluidData();
-    const rootMap = container.initialObjects.root as SharedDirectory;
+    const signaler = container.initialObjects.signalManager as SignalManager;
     const audience = services.audience;
     console.log('Loaded container');
 
     const pixiApp = await initPixiApp();
-
-    pixiApp.stage.sortableChildren = true;
-
     const localMap = new Map<number, PIXI.DisplayObject>();
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
+    // This function will be called each time a shape is moved around the canvas. It's passed in to the CreateShape
+    // function which wires it up to the PIXI events for the shape.
+    const setFluidPosition = (
+        shapeId: string,
+        dobj: PIXI.DisplayObject | PIXI.Sprite | PIXI.Graphics,
+        mode: 'dragging' | 'dropped'
+    ) => {
+        const fobj = Pixi2Fluid(dobj);
+        if (mode === 'dragging') {
+            // Send a signal with the new (temporary) position
+            const payload: DragSignalPayload = {
+                x: fobj.x,
+                y: fobj.y,
+                alpha: fobj.alpha,
+                shapeId: shapeId,
+            };
+            signaler.submitSignal(Signals.ON_DRAG, payload);
+        } else {
+            // Store the final position in Fluid
+            fluidMap.set(shapeId, fobj);
+        }
+    };
+
+    // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
+    // handle the signal we send and update the local state accordingly.
+    const fluidDragHandler: SignalListener = (
+        clientId: string,
+        local: boolean,
+        payload: DragSignalPayload
+    ) => {
+        const { shapeId, x, y, alpha } = payload;
+        if (!local) {
+            // console.log(`received ${local ? "local" : "remote"} signal from client ${clientId}`)
+            // console.log(`id: ${shapeId}, x: ${x}, y: ${y}, alpha: ${alpha}`);
+            const index = parseInt(shapeId);
+            const localShape = localMap.get(index);
+            if (localShape) {
+                localShape.x = x;
+                localShape.y = y;
+                localShape.alpha = alpha;
+            }
+        }
+    };
+    signaler.onSignal(Signals.ON_DRAG, fluidDragHandler);
+
+    // Create some shapes
     for (let i = 0; i < 6; i++) {
         const shape = CreateShape(
             pixiApp,
@@ -32,21 +82,18 @@ async function main() {
             Color.Random,
             60,
             i,
-            (dobj: PIXI.DisplayObject) => {
-                const fobj = DisplayObject2Fluid(dobj);
-                fluidMap.set(i.toString(), fobj);
-            }
+            setFluidPosition
         );
 
-        // try to get the fluid object if it exists
+        // try to get the fluid object if it exists, and update the local positions based on that
         const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
         if (fluidObj) {
-            shape.x = fluidObj.x;
-            shape.y = fluidObj.y;
+            Fluid2Pixi(shape, fluidObj);
         }
 
         localMap.set(i, shape);
-        pixiApp.stage.addChild(localMap.get(i)!);
+
+        pixiApp.stage.addChild(shape);
     }
 
     fluidMap.on('valueChanged', (changed, local, target) => {
@@ -54,9 +101,7 @@ async function main() {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
             const index = parseInt(changed.key);
             const localShape = localMap.get(index)!;
-            localShape.x = remoteShape.x;
-            localShape.y = remoteShape.y;
-            localShape.alpha = remoteShape.alpha;
+            Fluid2Pixi(localShape, remoteShape);
         }
     });
 
@@ -73,7 +118,6 @@ function ReactApp(props: {
     container: IFluidContainer;
     audience: IAzureAudience;
 }): JSX.Element {
-    // const {audience} =
     return (
         <>
             <h1>Felt</h1>
@@ -82,9 +126,6 @@ function ReactApp(props: {
         </>
     );
 }
-// ReactApp.propTypes = {
-//     audience: PropTypes.string.isRequired
-//   }
 
 async function initPixiApp() {
     // Main app
@@ -92,6 +133,7 @@ async function initPixiApp() {
 
     app.renderer.view.style.position = 'absolute';
     app.renderer.view.style.display = 'block';
+    app.stage.sortableChildren = true;
 
     return app;
 }
@@ -112,9 +154,14 @@ enum Color {
     Random
 }
 
-export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, size: number, id: number, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
+export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, size: number, id: number, setFluidPosition: (
+    shapeId: string,
+    dobj: PIXI.DisplayObject,
+    state: 'dragging' | 'dropped'
+) => void): PIXI.DisplayObject {
     let dragging: boolean;
     let data: any;
+    const shapeId = id.toString();
 
     const graphic = new PIXI.Graphics();
 
@@ -153,6 +200,7 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
             break;
         case Shape.Triangle:
             size = size * 1.5;
+            // eslint-disable-next-line no-case-declarations
             const path = [0, -size/2, -size/2, size/3, size/2, size/3];
             graphic.drawPolygon(path);
             break;
@@ -196,17 +244,21 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
         graphic.alpha = 0.5;
         dragging = true;
         updatePosition(event.data.global.x, event.data.global.y);
+        setFluidPosition(shapeId, graphic, 'dragging');
     }
 
     function onDragEnd(event: any) {
         graphic.alpha = 1;
         dragging = false;
         updatePosition(event.data.global.x, event.data.global.y);
+        setFluidPosition(shapeId, graphic, 'dropped');
     }
 
     function onDragMove(event: any) {
         if (dragging) {
+            graphic.alpha = 0.5;
             updatePosition(event.data.global.x, event.data.global.y);
+            setFluidPosition(shapeId, graphic, 'dragging');
         }
     }
 
@@ -218,8 +270,6 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
         if (y >= graphic.height / 2 && y <= app.renderer.height - graphic.height / 2) {
             graphic.y = y;
         }
-
-        setFluidPosition(graphic);
     }
 
     return graphic;

@@ -17,30 +17,18 @@ import {
     SharedMap,
 } from 'fluid-framework';
 
-export interface ICustomUserDetails {
-    gender: string;
-    email: string;
-}
-
-const userDetails: ICustomUserDetails = {
-    gender: 'female',
-    email: 'xyz@microsoft.com',
-};
-
-// Define the server we will be using and initialize Fluid
+// Define the server (Azure or local) we will be using
 const useAzure = process.env.FLUID_CLIENT === 'azure';
+if (!useAzure) {
+    console.warn(`Configured to use local tinylicious.`);
+}
 
 const user = generateTestUser();
 
 const azureUser = {
     userId: user.id,
     userName: user.name,
-    additionalDetails: userDetails,
 };
-
-if (!useAzure) {
-    console.warn(`Configured to use local tinylicious.`);
-}
 
 const connectionConfig: AzureConnectionConfig = useAzure
     ? {
@@ -59,9 +47,14 @@ const connectionConfig: AzureConnectionConfig = useAzure
           storage: 'http://localhost:7070',
       };
 
-// Define the schema of our Container.
-// This includes the DataObjects we support and any initial DataObjects we want created
-// when the container is first created.
+const clientProps = {
+    connection: connectionConfig,
+};
+
+const client = new AzureClient(clientProps);
+
+// Define the schema of our Container. This includes the DDSes/DataObjects that we want to create dynamically and any
+// initial DataObjects we want created when the container is first created.
 const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
@@ -72,16 +65,17 @@ const containerSchema: ContainerSchema = {
     dynamicObjectTypes: [SharedDirectory, SharedMap],
 };
 
-const clientProps = {
-    connection: connectionConfig,
-};
-
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
-    // We don't have any additional configuration to do here.
+    // We don't have any additional configuration to do here. If we needed to initialize some of our Fluid data, we
+    // could do so here.
 }
 
-const client = new AzureClient(clientProps);
-
+/**
+ * This function will create a container if no container ID is passed on the hash portion of the URL. If a container ID
+ * is provided, it will load the container.
+ *
+ * @returns The loaded container and container services.
+ */
 export const loadFluidData = async (): Promise<{
     container: IFluidContainer;
     services: AzureContainerServices;

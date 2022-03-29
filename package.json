@@ -11,7 +11,7 @@
         "docs": "md-magic",
         "format": "prettier src --write",
         "lint": "eslint src",
-        "pack": "webpack",
+        "pack": "cross-env FLUID_CLIENT='azure' webpack",
         "start": "npm run dev"
     },
     "dependencies": {
