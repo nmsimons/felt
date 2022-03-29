@@ -26,10 +26,17 @@ async function main() {
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
-        const shape = CreateShape(pixiApp, i, (dobj: PIXI.DisplayObject) => {
-            const fobj = DisplayObject2Fluid(dobj);
-            fluidMap.set(i.toString(), fobj);
-        });
+        const shape = CreateShape(
+            pixiApp,
+            Shape.Random,
+            Color.Random,
+            60,
+            i,
+            (dobj: PIXI.DisplayObject) => {
+                const fobj = DisplayObject2Fluid(dobj);
+                fluidMap.set(i.toString(), fobj);
+            }
+        );
 
         // try to get the fluid object if it exists
         const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
@@ -89,18 +96,75 @@ async function initPixiApp() {
     return app;
 }
 
-export function CreateShape(
-    app: PIXI.Application,
-    index: number,
-    setFluidPosition: (dobj: PIXI.DisplayObject) => void
-): PIXI.DisplayObject {
+enum Shape {
+    Circle,
+    Square,
+    Triangle,
+    Rectangle,
+    Random
+}
+
+enum Color {
+    Red,
+    Green,
+    Blue,
+    Orange,
+    Random
+}
+
+export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, size: number, id: number, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
     let dragging: boolean;
     let data: any;
 
-    const shape = new PIXI.Graphics();
+    const graphic = new PIXI.Graphics();
 
-    shape.beginFill(0x888888);
-    shape.drawCircle(0, 0, 30);
+    if (color === Color.Random) {
+        color = getRandomInt(0, (Object.keys(Color).length / 2) - 2);
+    }
+
+    switch (color) {
+        case Color.Red:
+            graphic.beginFill(0xFF0000);
+            break;
+        case Color.Green:
+            graphic.beginFill(0x00FF00);
+            break;
+        case Color.Blue:
+            graphic.beginFill(0x0000FF);
+            break;
+        case Color.Orange:
+            graphic.beginFill(0xFF7F00);
+            break;
+        default:
+            graphic.beginFill(0x888888);
+            break;
+    }
+
+    if (shape === Shape.Random) {
+        shape = getRandomInt(0, (Object.keys(Shape).length / 2) - 2);
+    }
+
+    switch (shape) {
+        case Shape.Circle:
+            graphic.drawCircle(0,0,size/2);
+            break;
+        case Shape.Square:
+            graphic.drawRect(-size/2,-size/2,size,size);
+            break;
+        case Shape.Triangle:
+            size = size * 1.5;
+            const path = [0, -size/2, -size/2, size/3, size/2, size/3];
+            graphic.drawPolygon(path);
+            break;
+        case Shape.Rectangle:
+            graphic.drawRect(-size*1.5/2,-size/2,size*1.5,size);
+            break;
+        default:
+            graphic.drawCircle(0,0,size);
+            break;
+    }
+
+    graphic.endFill();
 
     const style = new PIXI.TextStyle({
         fontFamily: 'Arial',
@@ -109,33 +173,33 @@ export function CreateShape(
         fill: '#ffffff',
     });
 
-    const number = new PIXI.Text((index + 1).toString(), style);
-    shape.addChild(number);
+    const number = new PIXI.Text((id).toString(), style);
+    graphic.addChild(number);
 
     number.anchor.set(0.5);
 
-    shape.interactive = true;
-    shape.buttonMode = true;
-    shape.x = 100 + (index * (app.view.width - 100)) / 6;
-    shape.y = 100;
+    graphic.interactive = true;
+    graphic.buttonMode = true;
+    graphic.x = 100 + (id * (app.view.width - 100)/6);
+    graphic.y = 100;
 
     // Pointers normalize touch and mouse
-    shape
+    graphic
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
         .on('pointermove', onDragMove);
 
-    app.stage.addChild(shape);
+    app.stage.addChild(graphic);
 
     function onDragStart(event: any) {
-        shape.alpha = 0.5;
+        graphic.alpha = 0.5;
         dragging = true;
         updatePosition(event.data.global.x, event.data.global.y);
     }
 
     function onDragEnd(event: any) {
-        shape.alpha = 1;
+        graphic.alpha = 1;
         dragging = false;
         updatePosition(event.data.global.x, event.data.global.y);
     }
@@ -147,18 +211,24 @@ export function CreateShape(
     }
 
     function updatePosition(x: number, y: number) {
-        if (x >= shape.width / 2 && x <= app.renderer.width - shape.width / 2) {
-            shape.x = x;
+        if (x >= graphic.width / 2 && x <= app.renderer.width - graphic.width / 2) {
+            graphic.x = x;
         }
 
-        if (y >= shape.height / 2 && y <= app.renderer.height - shape.height / 2) {
-            shape.y = y;
+        if (y >= graphic.height / 2 && y <= app.renderer.height - graphic.height / 2) {
+            graphic.y = y;
         }
 
-        setFluidPosition(shape);
+        setFluidPosition(graphic);
     }
 
-    return shape;
+    return graphic;
+}
+
+function getRandomInt(min: number, max: number) : number{
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 export default main();
