@@ -18,6 +18,7 @@ async function main() {
     const root = document.createElement('div');
     root.id = 'root';
     document.body.appendChild(root);
+    const shapeCount = 8;
 
     // Fluid data
     const { container, services } = await loadFluidData();
@@ -75,13 +76,14 @@ async function main() {
     signaler.onSignal(Signals.ON_DRAG, fluidDragHandler);
 
     // Create some shapes
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < shapeCount; i++) {
         const shape = CreateShape(
             pixiApp,
             Shape.Random,
             Color.Random,
             60,
             i,
+            shapeCount,
             setFluidPosition
         );
 
@@ -151,22 +153,29 @@ enum Color {
     Green,
     Blue,
     Orange,
+    Purple,
     Random
 }
 
-export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, size: number, id: number, setFluidPosition: (
-    shapeId: string,
-    dobj: PIXI.DisplayObject,
-    state: 'dragging' | 'dropped'
-) => void): PIXI.DisplayObject {
+export function CreateShape(app: PIXI.Application,
+    shape: Shape,
+    color: Color,
+    size: number,
+    id: number,
+    shapeCount: number,
+    setFluidPosition: (
+        shapeId: string,
+        dobj: PIXI.DisplayObject,
+        state: 'dragging' | 'dropped'
+    ) => void): PIXI.DisplayObject {
+
     let dragging: boolean;
-    let data: any;
     const shapeId = id.toString();
 
     const graphic = new PIXI.Graphics();
 
     if (color === Color.Random) {
-        color = getRandomInt(id, (Object.keys(Color).length / 2) - 2);
+        color = getNotRandomInt(id, (Object.keys(Color).length / 2) - 2);
     }
 
     switch (color) {
@@ -182,13 +191,16 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
         case Color.Orange:
             graphic.beginFill(0xFF7F00);
             break;
+        case Color.Purple:
+            graphic.beginFill(0x800080);
+            break;
         default:
             graphic.beginFill(0x888888);
             break;
     }
 
     if (shape === Shape.Random) {
-        shape = getRandomInt(id, (Object.keys(Shape).length / 2) - 2);
+        shape = getNotRandomInt(id, (Object.keys(Shape).length / 2) - 2);
     }
 
     switch (shape) {
@@ -221,14 +233,14 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
         fill: '#ffffff',
     });
 
-    const number = new PIXI.Text((id).toString(), style);
+    const number = new PIXI.Text((id + 1).toString(), style);
     graphic.addChild(number);
 
     number.anchor.set(0.5);
 
     graphic.interactive = true;
     graphic.buttonMode = true;
-    graphic.x = 100 + (id * (app.view.width - 100)/6);
+    graphic.x = 100 + (id * (app.view.width - 100 - size/2)/shapeCount);
     graphic.y = 100;
 
     // Pointers normalize touch and mouse
@@ -275,12 +287,12 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
     return graphic;
 }
 
-function getRandomInt(min: number, max: number) : number {
-    if (min <= max) {
-        return min;
-    } else {
-        return max - (min - max);
+function getNotRandomInt(index: number, max: number) : number {
+    while (index > max) {
+        index = index - (max + 1);
     }
+
+    return index;
 }
 
 export default main();
