@@ -81,7 +81,7 @@ async function main() {
             Shape.Random,
             Color.Random,
             60,
-            i,
+            i + 1,
             setFluidPosition
         );
 
@@ -166,7 +166,7 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
     const graphic = new PIXI.Graphics();
 
     if (color === Color.Random) {
-        color = getRandomInt(0, (Object.keys(Color).length / 2) - 2);
+        color = getRandomInt(id, (Object.keys(Color).length / 2) - 2);
     }
 
     switch (color) {
@@ -188,7 +188,7 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
     }
 
     if (shape === Shape.Random) {
-        shape = getRandomInt(0, (Object.keys(Shape).length / 2) - 2);
+        shape = getRandomInt(id, (Object.keys(Shape).length / 2) - 2);
     }
 
     switch (shape) {
@@ -275,10 +275,12 @@ export function CreateShape(app: PIXI.Application, shape: Shape, color: Color, s
     return graphic;
 }
 
-function getRandomInt(min: number, max: number) : number{
-	min = Math.ceil(min);
-	max = Math.floor(max);
-	return Math.floor(Math.random() * (max - min + 1)) + min;
+function getRandomInt(min: number, max: number) : number {
+    if (min <= max) {
+        return min;
+    } else {
+        return max - (min - max);
+    }
 }
 
 export default main();
