@@ -103,9 +103,8 @@ export function CreateShape(app: PIXI.Application, index: number, setFluidPositi
 
     const number = new PIXI.Text((index + 1).toString(), style);
     shape.addChild(number);
-
-    number.x = -11;
-    number.y = -18;
+   
+    number.anchor.set(0.5);
 
     shape.interactive = true;
     shape.buttonMode = true;    
@@ -140,14 +139,11 @@ export function CreateShape(app: PIXI.Application, index: number, setFluidPositi
     }
 
     function updatePosition(x: number, y: number) {
-        if (x > shape.width / 2 && x < app.renderer.width - shape.width / 2) {
+        if (x >= shape.width / 2 && x <= app.renderer.width - shape.width / 2) {
             shape.x = x;
         }
 
-        if (
-            y > shape.height / 2 &&
-            y < app.renderer.height - shape.height / 2
-        ) {
+        if (y >= shape.height / 2 && y <= app.renderer.height - shape.height / 2) {
             shape.y = y;
         }
 
