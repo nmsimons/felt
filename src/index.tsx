@@ -7,14 +7,6 @@ import { Audience } from './audience';
 import { loadFluidData } from './fluid';
 import { DisplayObject2Fluid, FluidDisplayObject } from './wrappers';
 
-const load = async (app: PIXI.Application) => {
-    return new Promise<void>((resolve) => {
-        app.loader.add('assets/willow.png').load(() => {
-            resolve();
-        });
-    });
-};
-
 async function main() {
     const root = document.createElement('div');
     root.id = 'root';
@@ -34,9 +26,7 @@ async function main() {
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
-        const shape = CreateShape(
-            pixiApp,
-            0x999999,
+        const shape = CreateShape(pixiApp, i, 
             (dobj: PIXI.DisplayObject) => {
                 const fobj = DisplayObject2Fluid(dobj);
                 fluidMap.set(i.toString(), fobj);
@@ -92,28 +82,36 @@ async function initPixiApp() {
     app.renderer.view.style.position = 'absolute';
     app.renderer.view.style.display = 'block';
 
-    // Load assets
-    await load(app);
-
     return app;
 }
 
-export function CreateShape(
-    app: PIXI.Application,
-    color: number,
-    setFluidPosition: (dobj: PIXI.DisplayObject) => void
-): PIXI.DisplayObject {
+export function CreateShape(app: PIXI.Application, index: number, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
     let dragging: boolean;
     let data: any;
 
     const shape = new PIXI.Graphics();
-    shape.beginFill(color);
-    shape.drawCircle(0, 0, 30);
-    shape.interactive = true;
-    shape.buttonMode = true;
-    shape.x = 100;
-    shape.y = 100;
+    
+    shape.beginFill(0x888888);
+    shape.drawCircle(0,0,30);
+        
+    const style = new PIXI.TextStyle({
+        fontFamily: 'Arial',
+        fontSize: 36,
+        fontWeight: 'bold',
+        fill: '#ffffff',
+    });
 
+    const number = new PIXI.Text((index + 1).toString(), style);
+    shape.addChild(number);
+
+    number.x = -11;
+    number.y = -18;
+
+    shape.interactive = true;
+    shape.buttonMode = true;    
+    shape.x = 100 + (index * (app.view.width - 100)/6);
+    shape.y = 100;   
+    
     // Pointers normalize touch and mouse
     shape
         .on('pointerdown', onDragStart)
