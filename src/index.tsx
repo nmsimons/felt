@@ -42,6 +42,14 @@ async function main() {
                 fluidMap.set(i.toString(), fobj);
             }
         );
+
+        // try to get the fluid object if it exists
+        const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
+        if (fluidObj) {
+            shape.x = fluidObj.x;
+            shape.y = fluidObj.y;
+        }
+        
         localMap.set(i, shape);
         pixiApp.stage.addChild(localMap.get(i)!);
     }
@@ -63,7 +71,7 @@ async function main() {
 }
 
 // eslint-disable-next-line react/prop-types
-function ReactApp(props: {container: IFluidContainer, audience: IAzureAudience}): JSX.Element {
+function ReactApp(props: { container: IFluidContainer, audience: IAzureAudience }): JSX.Element {
     // const {audience} = 
     return (
         <>
