@@ -81,7 +81,7 @@ async function main() {
             Shape.Random,
             Color.Random,
             60,
-            i + 1,
+            i,
             setFluidPosition
         );
 
