@@ -8,13 +8,15 @@ export interface FluidDisplayObject {
     alpha: number;
 }
 
-export const DisplayObject2Fluid = (dobj: DisplayObject | Sprite): FluidDisplayObject => {
+export const DisplayObject2Fluid = (
+    dobj: DisplayObject | Sprite
+): FluidDisplayObject => {
     if (dobj instanceof Sprite) {
         return {
             x: dobj.x,
             y: dobj.y,
             alpha: dobj.alpha,
-        }
+        };
     }
 
     // if (dobj instanceof DisplayObject) {
@@ -23,6 +25,6 @@ export const DisplayObject2Fluid = (dobj: DisplayObject | Sprite): FluidDisplayO
         x: dobj.x,
         y: dobj.y,
         alpha: 1,
-    }
+    };
     // }
 };
