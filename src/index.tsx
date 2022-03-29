@@ -26,12 +26,10 @@ async function main() {
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     for (let i = 0; i < 6; i++) {
-        const shape = CreateShape(pixiApp, i, 
-            (dobj: PIXI.DisplayObject) => {
-                const fobj = DisplayObject2Fluid(dobj);
-                fluidMap.set(i.toString(), fobj);
-            }
-        );
+        const shape = CreateShape(pixiApp, i, (dobj: PIXI.DisplayObject) => {
+            const fobj = DisplayObject2Fluid(dobj);
+            fluidMap.set(i.toString(), fobj);
+        });
 
         // try to get the fluid object if it exists
         const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
@@ -39,7 +37,7 @@ async function main() {
             shape.x = fluidObj.x;
             shape.y = fluidObj.y;
         }
-        
+
         localMap.set(i, shape);
         pixiApp.stage.addChild(localMap.get(i)!);
     }
@@ -55,14 +53,20 @@ async function main() {
         }
     });
 
-    ReactDOM.render(<ReactApp container={container} audience={audience} />, document.getElementById('root'));
+    ReactDOM.render(
+        <ReactApp container={container} audience={audience} />,
+        document.getElementById('root')
+    );
 
     document.getElementById('canvas')?.appendChild(pixiApp.view);
 }
 
 // eslint-disable-next-line react/prop-types
-function ReactApp(props: { container: IFluidContainer, audience: IAzureAudience }): JSX.Element {
-    // const {audience} = 
+function ReactApp(props: {
+    container: IFluidContainer;
+    audience: IAzureAudience;
+}): JSX.Element {
+    // const {audience} =
     return (
         <>
             <h1>Felt</h1>
@@ -85,15 +89,19 @@ async function initPixiApp() {
     return app;
 }
 
-export function CreateShape(app: PIXI.Application, index: number, setFluidPosition: (dobj: PIXI.DisplayObject) => void): PIXI.DisplayObject {
+export function CreateShape(
+    app: PIXI.Application,
+    index: number,
+    setFluidPosition: (dobj: PIXI.DisplayObject) => void
+): PIXI.DisplayObject {
     let dragging: boolean;
     let data: any;
 
     const shape = new PIXI.Graphics();
-    
+
     shape.beginFill(0x888888);
-    shape.drawCircle(0,0,30);
-        
+    shape.drawCircle(0, 0, 30);
+
     const style = new PIXI.TextStyle({
         fontFamily: 'Arial',
         fontSize: 36,
@@ -103,14 +111,14 @@ export function CreateShape(app: PIXI.Application, index: number, setFluidPositi
 
     const number = new PIXI.Text((index + 1).toString(), style);
     shape.addChild(number);
-   
+
     number.anchor.set(0.5);
 
     shape.interactive = true;
-    shape.buttonMode = true;    
-    shape.x = 100 + (index * (app.view.width - 100)/6);
-    shape.y = 100;   
-    
+    shape.buttonMode = true;
+    shape.x = 100 + (index * (app.view.width - 100)) / 6;
+    shape.y = 100;
+
     // Pointers normalize touch and mouse
     shape
         .on('pointerdown', onDragStart)

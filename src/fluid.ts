@@ -44,20 +44,20 @@ if (!useAzure) {
 
 const connectionConfig: AzureConnectionConfig = useAzure
     ? {
-        tenantId: process.env.AZURE_TENANT_ID ?? LOCAL_MODE_TENANT_ID,
-        tokenProvider: new AzureFunctionTokenProvider(
-            process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
-            azureUser
-        ),
-        orderer: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
-        storage: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
-    }
+          tenantId: process.env.AZURE_TENANT_ID ?? LOCAL_MODE_TENANT_ID,
+          tokenProvider: new AzureFunctionTokenProvider(
+              process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
+              azureUser
+          ),
+          orderer: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
+          storage: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
+      }
     : {
-        tenantId: LOCAL_MODE_TENANT_ID,
-        tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
-        orderer: 'http://localhost:7070',
-        storage: 'http://localhost:7070',
-    };
+          tenantId: LOCAL_MODE_TENANT_ID,
+          tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
+          orderer: 'http://localhost:7070',
+          storage: 'http://localhost:7070',
+      };
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
@@ -76,9 +76,7 @@ const clientProps = {
     connection: connectionConfig,
 };
 
-async function initializeNewContainer(
-    container: IFluidContainer
-): Promise<void> {
+async function initializeNewContainer(container: IFluidContainer): Promise<void> {
     // We don't have any additional configuration to do here.
 }
 
@@ -97,9 +95,7 @@ export const loadFluidData = async (): Promise<{
     if (createNew) {
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
-        ({ container, services } = await client.createContainer(
-            containerSchema
-        ));
+        ({ container, services } = await client.createContainer(containerSchema));
         // Initialize our models so they are ready for use with our controllers
         await initializeNewContainer(container);
 
@@ -112,10 +108,7 @@ export const loadFluidData = async (): Promise<{
         id = location.hash.substring(1);
         // Use the unique container ID to fetch the container created earlier.  It will already be connected to the
         // collaboration session.
-        ({ container, services } = await client.getContainer(
-            id,
-            containerSchema
-        ));
+        ({ container, services } = await client.getContainer(id, containerSchema));
     }
 
     document.title = id;
