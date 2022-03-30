@@ -9,7 +9,7 @@ export enum Shape {
 }
 
 export function getDeterministicInt(index: number, max: number): number {
-    return index % (max + 1);
+    return index % max;
 }
 
 export function getRandomColor() {

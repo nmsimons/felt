@@ -180,7 +180,7 @@ export function CreateShape(
     graphic.beginFill(0xffffff);
 
     if (shape === Shape.Random) {
-        shape = getDeterministicInt(id, Object.keys(Shape).length / 2 - 2);
+        shape = getDeterministicInt(id, Object.keys(Shape).length / 2 - 1);
     }
 
     switch (shape) {
