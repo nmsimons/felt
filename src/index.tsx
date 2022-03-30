@@ -145,11 +145,10 @@ function ReactApp(props: {
     audience: IAzureAudience;
 }): JSX.Element {
     return (
-        <>
-            <h1>Felt</h1>
+        <div className = "content">
+            <div id = "canvas"></div>
             <Audience {...props} />
-            <div id="canvas"></div>
-        </>
+        </div>
     );
 }
 
@@ -157,8 +156,8 @@ async function initPixiApp() {
     // Main app
     const app = new PIXI.Application({ width: 800, height: 500 });
 
-    app.renderer.view.style.position = 'absolute';
-    app.renderer.view.style.display = 'block';
+    //app.renderer.view.style.position = 'absolute';
+    //app.renderer.view.style.display = 'block';
     app.stage.sortableChildren = true;
 
     return app;

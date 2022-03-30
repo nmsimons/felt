@@ -49,10 +49,10 @@ export function Audience(props: {
     return (
         <>
             <div id="audience">
-                <h3>Audience ({members.length} members)</h3>
-                <div>
+                <p>Audience ({members.length} members)</p>
+                <p>
                     I am: <strong>{audience.getMyself()?.userName}</strong>
-                </div>
+                </p>
                 <ul>
                     {memberDisplay}
                     {/* {EnumAudience(props.audience)} */}
