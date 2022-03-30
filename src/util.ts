@@ -8,15 +8,10 @@ export enum Shape {
 }
 
 export enum Color {
-    Red,
-    Green,
-    Blue,
-    Orange,
-    Random
-}
-
-export function getDeterministicInt(index: number, max: number): number {
-    return index % max;
+    Red = "0xFF0000",
+    Green = "0x00FF00",
+    Blue = "0x0000FF",
+    Orange = "0xFF7F00"
 }
 
 export function getDeterministicShape(index: number): Shape {
@@ -24,25 +19,9 @@ export function getDeterministicShape(index: number): Shape {
 }
 
 export function getRandomColor() {
-    let color = randomColor({ format: 'hex' });
-
-    console.log(`color: ${color}`);
-    color = color.slice(1);
-    const colorHex = parseInt(color, 16);
-    return colorHex;
+    return Object.values(Color)[Math.floor(Math.random() * 4)];
 }
 
-export function getColor(color: Color) {
-    switch (color) {
-        case Color.Red:
-            return 0xFF0000;
-        case Color.Green:
-            return 0x00FF00;
-        case Color.Blue:
-            return 0x0000FF;
-        case Color.Orange:
-            return 0xFF7F00;
-        default:
-            return 0x888888;
-    }
+export function getDeterministicColor(index: number) {
+    return Object.values(Color)[index % 4];
 }

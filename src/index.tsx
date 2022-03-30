@@ -6,7 +6,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Audience } from './audience';
 import { loadFluidData } from './fluid';
-import { getDeterministicInt, getDeterministicShape, getRandomColor, Shape } from './util';
+import { getDeterministicColor, getDeterministicShape, getRandomColor, Shape } from './util';
 import {
     Pixi2Fluid,
     DragSignalPayload,
@@ -106,11 +106,11 @@ async function main() {
             shape = CreateShape(
                 pixiApp,
                 getDeterministicShape(i),
-                getRandomColor(),
+                Number(getDeterministicColor(i)),
                 size,
                 i,
-                100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount,
-                100,
+                100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
+                100, //y
                 setFluidPosition
             );
             setFluidPosition(i.toString(), shape, 'dropped');
@@ -239,7 +239,7 @@ export function CreateShape(
 
     function onRightClick(event: any) {
         console.log('onRightClick');
-        const c = getRandomColor();
+        const c = Number(getRandomColor());
         console.log(`setting color to ${c}`);
         graphic.tint = c;
         setFluidPosition(shapeId, graphic, 'dropped');

@@ -35,7 +35,7 @@ export const Pixi2Fluid = (
         x: dobj.x,
         y: dobj.y,
         alpha: 1,
-        color: getRandomColor(),
+        color: Number(getRandomColor()),
         z: dobj.zIndex,
     };
 };
