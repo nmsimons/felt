@@ -6,6 +6,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Audience } from './audience';
 import { loadFluidData } from './fluid';
+import { getDeterministicInt, getRandomColor, Shape } from './util';
 import {
     Pixi2Fluid,
     DragSignalPayload,
@@ -18,6 +19,7 @@ async function main() {
     const root = document.createElement('div');
     root.id = 'root';
     document.body.appendChild(root);
+    document.addEventListener('contextmenu', (event) => event.preventDefault());
     const shapeCount = 8;
 
     // Fluid data
@@ -44,11 +46,14 @@ async function main() {
                 x: fobj.x,
                 y: fobj.y,
                 alpha: fobj.alpha,
+                color: fobj.color,
                 z: fobj.z,
                 shapeId: shapeId,
             };
             signaler.submitSignal(Signals.ON_DRAG, payload);
         } else {
+            // Clone the object
+            // const clone: FluidDisplayObject = {...fobj};
             // Store the final position in Fluid
             fluidMap.set(shapeId, fobj);
         }
@@ -79,24 +84,36 @@ async function main() {
 
     // Create some shapes
     for (let i = 0; i < shapeCount; i++) {
-        const shape = CreateShape(
-            pixiApp,
-            Shape.Random,
-            Color.Random,
-            60,
-            i,
-            shapeCount,
-            setFluidPosition
-        );
-
         // try to get the fluid object if it exists, and update the local positions based on that
         const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
+        let shape: PIXI.Sprite | PIXI.DisplayObject | PIXI.Graphics;
         if (fluidObj) {
+            console.log(`Loaded shape ${i + 1} from Fluid.`);
+            shape = CreateShape(
+                pixiApp,
+                Shape.Random,
+                fluidObj.color,
+                60, // size
+                i, // id
+                shapeCount,
+                setFluidPosition
+            );
             Fluid2Pixi(shape, fluidObj);
+        } else {
+            console.log(`Creating new shape for shape ${i + 1}`);
+            shape = CreateShape(
+                pixiApp,
+                Shape.Random,
+                getRandomColor(),
+                60,
+                i,
+                shapeCount,
+                setFluidPosition
+            );
+            setFluidPosition(i.toString(), shape, 'dropped');
         }
 
         localMap.set(i, shape);
-
         pixiApp.stage.addChild(shape);
     }
 
@@ -142,26 +159,10 @@ async function initPixiApp() {
     return app;
 }
 
-enum Shape {
-    Circle,
-    Square,
-    Triangle,
-    Rectangle,
-    Random
-}
-
-enum Color {
-    Red,
-    Green,
-    Blue,
-    Orange,
-    Purple,
-    Random
-}
-
-export function CreateShape(app: PIXI.Application,
+export function CreateShape(
+    app: PIXI.Application,
     shape: Shape,
-    color: Color,
+    color: number,
     size: number,
     id: number,
     shapeCount: number,
@@ -169,64 +170,45 @@ export function CreateShape(app: PIXI.Application,
         shapeId: string,
         dobj: PIXI.DisplayObject,
         state: 'dragging' | 'dropped'
-    ) => void): PIXI.DisplayObject {
-
+    ) => void
+): PIXI.DisplayObject {
     let dragging: boolean;
     const shapeId = id.toString();
 
     const graphic = new PIXI.Graphics();
 
-    if (color === Color.Random) {
-        color = getNotRandomInt(id, (Object.keys(Color).length / 2) - 2);
-    }
-
-    switch (color) {
-        case Color.Red:
-            graphic.beginFill(0xFF0000);
-            break;
-        case Color.Green:
-            graphic.beginFill(0x00FF00);
-            break;
-        case Color.Blue:
-            graphic.beginFill(0x0000FF);
-            break;
-        case Color.Orange:
-            graphic.beginFill(0xFF7F00);
-            break;
-        case Color.Purple:
-            graphic.beginFill(0x800080);
-            break;
-        default:
-            graphic.beginFill(0x888888);
-            break;
-    }
+    graphic.beginFill(0xffffff);
 
     if (shape === Shape.Random) {
-        shape = getNotRandomInt(id, (Object.keys(Shape).length / 2) - 2);
+        shape = getDeterministicInt(id, Object.keys(Shape).length / 2 - 2);
     }
 
     switch (shape) {
         case Shape.Circle:
-            graphic.drawCircle(0,0,size/2);
+            // const c = new PIXI.Circle(0,0,size/2)
+            // graphic.drawShape(c);
+            graphic.drawCircle(0, 0, size / 2);
             break;
         case Shape.Square:
-            graphic.drawRect(-size/2,-size/2,size,size);
+            graphic.drawRect(-size / 2, -size / 2, size, size);
             break;
         case Shape.Triangle:
             size = size * 1.5;
             // eslint-disable-next-line no-case-declarations
-            const path = [0, -size/2, -size/2, size/3, size/2, size/3];
+            const path = [0, -size / 2, -size / 2, size / 3, size / 2, size / 3];
             graphic.drawPolygon(path);
             break;
         case Shape.Rectangle:
-            graphic.drawRect(-size*1.5/2,-size/2,size*1.5,size);
+            graphic.drawRect((-size * 1.5) / 2, -size / 2, size * 1.5, size);
             break;
         default:
-            graphic.drawCircle(0,0,size);
+            graphic.drawCircle(0, 0, size);
             break;
     }
 
     graphic.endFill();
+    console.log(`initializing color to: ${color}`);
+    graphic.tint = color;
 
     const style = new PIXI.TextStyle({
         fontFamily: 'Arial',
@@ -242,7 +224,7 @@ export function CreateShape(app: PIXI.Application,
 
     graphic.interactive = true;
     graphic.buttonMode = true;
-    graphic.x = 100 + (id * (app.view.width - 100 - size/2)/shapeCount);
+    graphic.x = 100 + (id * (app.view.width - 100 - size / 2)) / shapeCount;
     graphic.y = 100;
 
     // Pointers normalize touch and mouse
@@ -250,9 +232,18 @@ export function CreateShape(app: PIXI.Application,
         .on('pointerdown', onDragStart)
         .on('pointerup', onDragEnd)
         .on('pointerupoutside', onDragEnd)
-        .on('pointermove', onDragMove);
+        .on('pointermove', onDragMove)
+        .on('rightclick', onRightClick);
 
     app.stage.addChild(graphic);
+
+    function onRightClick(event: any) {
+        console.log('onRightClick');
+        const c = getRandomColor();
+        console.log(`setting color to ${c}`);
+        graphic.tint = c;
+        setFluidPosition(shapeId, graphic, 'dropped');
+    }
 
     function onDragStart(event: any) {
         graphic.alpha = 0.5;
@@ -284,20 +275,15 @@ export function CreateShape(app: PIXI.Application,
             graphic.x = x;
         }
 
-        if (y >= graphic.height / 2 && y <= app.renderer.height - graphic.height / 2) {
+        if (
+            y >= graphic.height / 2 &&
+            y <= app.renderer.height - graphic.height / 2
+        ) {
             graphic.y = y;
         }
     }
 
     return graphic;
-}
-
-function getNotRandomInt(index: number, max: number) : number {
-    while (index > max) {
-        index = index - (max + 1);
-    }
-
-    return index;
 }
 
 export default main();

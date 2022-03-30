@@ -38,7 +38,7 @@ const connectionConfig: AzureConnectionConfig = useAzure
               azureUser
           ),
           orderer: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
-          storage: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
+          storage: process.env.AZURE_STORAGE ?? 'http://localhost:7070',
       }
     : {
           tenantId: LOCAL_MODE_TENANT_ID,
