@@ -1,5 +1,5 @@
 import { DisplayObject, Sprite, Graphics } from 'pixi.js';
-import { getDeterministicColor, getRandomColor } from './util';
+import { getDeterministicColor, getNextColor } from './util';
 
 export interface FluidDisplayObject {
     x: number;
