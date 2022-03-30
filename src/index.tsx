@@ -106,7 +106,7 @@ async function main() {
             shape = CreateShape(
                 pixiApp,
                 getDeterministicShape(i),
-                Number(getDeterministicColor(i)),
+                getDeterministicColor(i),
                 size,
                 i,
                 100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x

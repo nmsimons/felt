@@ -23,5 +23,5 @@ export function getRandomColor() {
 }
 
 export function getDeterministicColor(index: number) {
-    return Object.values(Color)[index % Object.values(Color).length];
+    return Number(Object.values(Color)[index % Object.values(Color).length]);
 }
