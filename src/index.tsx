@@ -44,6 +44,7 @@ async function main() {
                 x: fobj.x,
                 y: fobj.y,
                 alpha: fobj.alpha,
+                z: fobj.z,
                 shapeId: shapeId,
             };
             signaler.submitSignal(Signals.ON_DRAG, payload);
@@ -60,7 +61,7 @@ async function main() {
         local: boolean,
         payload: DragSignalPayload
     ) => {
-        const { shapeId, x, y, alpha } = payload;
+        const { shapeId, x, y, alpha, z } = payload;
         if (!local) {
             // console.log(`received ${local ? "local" : "remote"} signal from client ${clientId}`)
             // console.log(`id: ${shapeId}, x: ${x}, y: ${y}, alpha: ${alpha}`);
@@ -70,6 +71,7 @@ async function main() {
                 localShape.x = x;
                 localShape.y = y;
                 localShape.alpha = alpha;
+                localShape.zIndex = z;
             }
         }
     };
@@ -254,6 +256,7 @@ export function CreateShape(app: PIXI.Application,
 
     function onDragStart(event: any) {
         graphic.alpha = 0.5;
+        graphic.zIndex = 9999;
         dragging = true;
         updatePosition(event.data.global.x, event.data.global.y);
         setFluidPosition(shapeId, graphic, 'dragging');
@@ -261,6 +264,7 @@ export function CreateShape(app: PIXI.Application,
 
     function onDragEnd(event: any) {
         graphic.alpha = 1;
+        graphic.zIndex = id;
         dragging = false;
         updatePosition(event.data.global.x, event.data.global.y);
         setFluidPosition(shapeId, graphic, 'dropped');
@@ -269,6 +273,7 @@ export function CreateShape(app: PIXI.Application,
     function onDragMove(event: any) {
         if (dragging) {
             graphic.alpha = 0.5;
+            graphic.zIndex = 9999;
             updatePosition(event.data.global.x, event.data.global.y);
             setFluidPosition(shapeId, graphic, 'dragging');
         }

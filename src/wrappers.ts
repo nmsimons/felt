@@ -4,6 +4,7 @@ export interface FluidDisplayObject {
     x: number;
     y: number;
     alpha: number;
+    z: number;
 }
 
 export interface DragSignalPayload extends FluidDisplayObject {
@@ -22,6 +23,7 @@ export const Pixi2Fluid = (
             x: dobj.x,
             y: dobj.y,
             alpha: dobj.alpha,
+            z: dobj.zIndex
         };
     }
 
@@ -30,6 +32,7 @@ export const Pixi2Fluid = (
         x: dobj.x,
         y: dobj.y,
         alpha: 1,
+        z: dobj.zIndex
     };
 };
 
@@ -40,5 +43,6 @@ export const Fluid2Pixi = (
     shapeToUpdate.x = sourceObject.x;
     shapeToUpdate.y = sourceObject.y;
     shapeToUpdate.alpha = sourceObject.alpha;
+    shapeToUpdate.zIndex = sourceObject.z;
     return shapeToUpdate;
 };
