@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const path = require('path')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const path = require('path');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const CopyPlugin = require('copy-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
     // Basic configuration
@@ -17,6 +18,23 @@ module.exports = {
                 test: /\.ts$|tsx/,
                 use: 'ts-loader',
                 exclude: /node_modules/,
+            },
+            {
+                test: /\.scss$/,
+                use: [
+                    // { loader: 'style-loader' },
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: 'css-loader'
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            sourceMap: true,
+                            // options...
+                        }
+                    }
+                ]
             },
         ],
     },
@@ -37,6 +55,10 @@ module.exports = {
         new HtmlWebpackPlugin(),
         // Load environment variables during webpack bundle
         new Dotenv(),
+        // Extract CSS to separate file
+        new MiniCssExtractPlugin({
+            filename: 'css/mystyles.css'
+        }),
         // Do not accumulate files in ./dist
         new CleanWebpackPlugin(),
         // Copy assets to serve them

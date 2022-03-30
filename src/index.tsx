@@ -15,6 +15,8 @@ import {
     Fluid2Pixi,
 } from './wrappers';
 
+import './styles.scss';
+
 async function main() {
     const root = document.createElement('div');
     root.id = 'root';
