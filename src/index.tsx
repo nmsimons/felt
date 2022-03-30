@@ -15,11 +15,15 @@ import {
     Fluid2Pixi,
 } from './wrappers';
 
+import './styles.scss';
+
 async function main() {
     const root = document.createElement('div');
     root.id = 'root';
     document.body.appendChild(root);
+    // disable right-click context menu since right-click changes shape color
     document.addEventListener('contextmenu', (event) => event.preventDefault());
+
     const shapeCount = 8;
     const size = 60;
 
@@ -27,7 +31,7 @@ async function main() {
     const { container, services } = await loadFluidData();
     const signaler = container.initialObjects.signalManager as SignalManager;
     const audience = services.audience;
-    console.log('Loaded container');
+    console.log('Loaded Fluid container');
 
     const pixiApp = await initPixiApp();
     const localMap = new Map<number, PIXI.DisplayObject>();
@@ -67,17 +71,15 @@ async function main() {
         local: boolean,
         payload: DragSignalPayload
     ) => {
-        const { shapeId, x, y, alpha, z } = payload;
+        const { shapeId, x, y, z, alpha } = payload;
         if (!local) {
-            // console.log(`received ${local ? "local" : "remote"} signal from client ${clientId}`)
-            // console.log(`id: ${shapeId}, x: ${x}, y: ${y}, alpha: ${alpha}`);
             const index = parseInt(shapeId);
             const localShape = localMap.get(index);
             if (localShape) {
                 localShape.x = x;
                 localShape.y = y;
-                localShape.alpha = alpha;
                 localShape.zIndex = z;
+                localShape.alpha = alpha;
             }
         }
     };
@@ -143,11 +145,10 @@ function ReactApp(props: {
     audience: IAzureAudience;
 }): JSX.Element {
     return (
-        <>
-            <h1>Felt</h1>
+        <div className = "content">
+            <div id = "canvas"></div>
             <Audience {...props} />
-            <div id="canvas"></div>
-        </>
+        </div>
     );
 }
 
@@ -155,8 +156,8 @@ async function initPixiApp() {
     // Main app
     const app = new PIXI.Application({ width: 800, height: 500 });
 
-    app.renderer.view.style.position = 'absolute';
-    app.renderer.view.style.display = 'block';
+    //app.renderer.view.style.position = 'absolute';
+    //app.renderer.view.style.display = 'block';
     app.stage.sortableChildren = true;
 
     return app;

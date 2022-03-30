@@ -13,9 +13,9 @@ export interface DragSignalPayload extends FluidDisplayObject {
     shapeId: string;
 }
 
-export enum Signals {
-    'ON_DRAG' = 'ON_DRAG',
-}
+export const Signals = {
+    ON_DRAG: 'ON_DRAG',
+} as const;
 
 export const Pixi2Fluid = (
     dobj: DisplayObject | Sprite | Graphics

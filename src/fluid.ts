@@ -58,8 +58,8 @@ const client = new AzureClient(clientProps);
 const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
-        root: SharedDirectory,
         shapes: SharedDirectory,
+        stats: SharedMap,
         signalManager: SignalManager,
     },
     dynamicObjectTypes: [SharedDirectory, SharedMap],
@@ -90,7 +90,8 @@ export const loadFluidData = async (): Promise<{
         // The client will create a new detached container using the schema
         // A detached container will enable the app to modify the container before attaching it to the client
         ({ container, services } = await client.createContainer(containerSchema));
-        // Initialize our models so they are ready for use with our controllers
+
+        // Initialize our Fluid data -- set default values, establish relationships, etc.
         await initializeNewContainer(container);
 
         // If the app is in a `createNew` state, and the container is detached, we attach the container.

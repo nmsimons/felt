@@ -1,5 +1,5 @@
 import { IAzureAudience } from '@fluidframework/azure-client';
-import { IFluidContainer } from 'fluid-framework';
+import { IFluidContainer, SharedDirectory } from 'fluid-framework';
 import React from 'react';
 
 export function Audience(props: {
@@ -11,33 +11,47 @@ export function Audience(props: {
     const [members, setMembers] = React.useState(
         Array.from(audience.getMembers().values())
     );
-    // set the user as the author so the user can be assigned as the author when needed
-    const authorInfo = audience.getMyself();
+
+    const myself = audience.getMyself();
     const setMembersCallback = React.useCallback(
         () => setMembers(Array.from(audience.getMembers().values())),
         [setMembers, audience]
     );
+
+    const updateStats = React.useCallback(
+        () => {
+            const max = (container.initialObjects.stats as SharedDirectory).get<number>("maxUsers") ?? 0;
+            const size = audience.getMembers().size;
+
+            if (size > max) {
+                (container.initialObjects.stats as SharedDirectory).set("maxUsers", size);
+            }
+        },
+        [setMembers, audience]);
+
+    const maxUsers = (container.initialObjects.stats as SharedDirectory).get<number>("maxUsers") ?? 0;
+
     // Setup a listener to update our users when new clients join the session
     React.useEffect(() => {
         container.on('connected', setMembersCallback);
         audience.on('membersChanged', setMembersCallback);
+        audience.on('membersChanged', updateStats);
         return () => {
             container.off('connected', () => setMembersCallback);
             audience.off('membersChanged', () => setMembersCallback);
+            audience.off('membersChanged', () => updateStats);
         };
     }, [container, audience, setMembersCallback]);
 
     let memberDisplay: JSX.Element[];
     if (members.length > 3) {
-        const membersToShow = members.slice(-3);
+        const membersToShow = members;
         memberDisplay = membersToShow.map((v, k) => (
             <li key={k.toString()}>
                 {v.userName} ({v.userId})
             </li>
         ));
-        memberDisplay.push(
-            <li key="summary">... and {members.length - 3} other people</li>
-        );
+
     } else {
         memberDisplay = members.map((v, k) => (
             <li key={k.toString()}>
@@ -49,14 +63,17 @@ export function Audience(props: {
     return (
         <>
             <div id="audience">
-                <h3>Audience ({members.length} members)</h3>
-                <div>
+                <p>
                     I am: <strong>{audience.getMyself()?.userName}</strong>
-                </div>
-                <ul>
-                    {memberDisplay}
-                    {/* {EnumAudience(props.audience)} */}
-                </ul>
+                </p>
+                <p>Audience ({members.length} members)
+                    <ul>
+                        {memberDisplay}
+                    </ul>
+                </p>
+            <p id="stats">
+                <p>Maximum simultaneous clients: {Math.max(members.length, maxUsers)}</p>
+            </p>
             </div>
         </>
     );
