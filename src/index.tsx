@@ -239,7 +239,7 @@ export function CreateShape(
 
     function onRightClick(event: any) {
         console.log('onRightClick');
-        const c = Number(getRandomColor());
+        const c = Number(getRandomColor(graphic.tint));
         console.log(`setting color to ${c}`);
         graphic.tint = c;
         setFluidPosition(shapeId, graphic, 'dropped');

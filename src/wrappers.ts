@@ -1,5 +1,5 @@
 import { DisplayObject, Sprite, Graphics } from 'pixi.js';
-import { getRandomColor } from './util';
+import { getDeterministicColor, getRandomColor } from './util';
 
 export interface FluidDisplayObject {
     x: number;
@@ -35,7 +35,7 @@ export const Pixi2Fluid = (
         x: dobj.x,
         y: dobj.y,
         alpha: 1,
-        color: Number(getRandomColor()),
+        color: getDeterministicColor(0),
         z: dobj.zIndex,
     };
 };
