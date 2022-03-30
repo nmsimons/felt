@@ -18,18 +18,25 @@ export function Audience(props: {
         [setMembers, audience]
     );
 
-    const updateStats = React.useCallback(
-        () => {
-            const max = (container.initialObjects.stats as SharedDirectory).get<number>("maxUsers") ?? 0;
-            const size = audience.getMembers().size;
+    const updateStats = React.useCallback(() => {
+        const max =
+            (container.initialObjects.stats as SharedDirectory).get<number>(
+                'maxUsers'
+            ) ?? 0;
+        const size = audience.getMembers().size;
 
-            if (size > max) {
-                (container.initialObjects.stats as SharedDirectory).set("maxUsers", size);
-            }
-        },
-        [setMembers, audience]);
+        if (size > max) {
+            (container.initialObjects.stats as SharedDirectory).set(
+                'maxUsers',
+                size
+            );
+        }
+    }, [setMembers, audience]);
 
-    const maxUsers = (container.initialObjects.stats as SharedDirectory).get<number>("maxUsers") ?? 0;
+    const maxUsers =
+        (container.initialObjects.stats as SharedDirectory).get<number>(
+            'maxUsers'
+        ) ?? 0;
 
     // Setup a listener to update our users when new clients join the session
     React.useEffect(() => {
@@ -51,7 +58,6 @@ export function Audience(props: {
                 {v.userName} ({v.userId})
             </li>
         ));
-
     } else {
         memberDisplay = members.map((v, k) => (
             <li key={k.toString()}>
@@ -66,14 +72,16 @@ export function Audience(props: {
                 <p>
                     I am: <strong>{audience.getMyself()?.userName}</strong>
                 </p>
-                <p>Audience ({members.length} members)
-                    <ul>
-                        {memberDisplay}
-                    </ul>
+                <p>
+                    Audience ({members.length} members)
+                    <ul>{memberDisplay}</ul>
                 </p>
-            <p id="stats">
-                <p>Maximum simultaneous clients: {Math.max(members.length, maxUsers)}</p>
-            </p>
+                <p id="stats">
+                    <p>
+                        Maximum simultaneous clients:{' '}
+                        {Math.max(members.length, maxUsers)}
+                    </p>
+                </p>
             </div>
         </>
     );

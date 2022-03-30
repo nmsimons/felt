@@ -6,7 +6,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Audience } from './audience';
 import { loadFluidData } from './fluid';
-import { getDeterministicColor, getDeterministicShape, getNextColor, Shape } from './util';
+import {
+    getDeterministicColor,
+    getDeterministicShape,
+    getNextColor,
+    Shape,
+} from './util';
 import {
     Pixi2Fluid,
     DragSignalPayload,
@@ -145,8 +150,8 @@ function ReactApp(props: {
     audience: IAzureAudience;
 }): JSX.Element {
     return (
-        <div className = "content">
-            <div id = "canvas"></div>
+        <div className="content">
+            <div id="canvas"></div>
             <Audience {...props} />
         </div>
     );
