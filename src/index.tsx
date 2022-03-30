@@ -6,7 +6,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Audience } from './audience';
 import { loadFluidData } from './fluid';
-import { getDeterministicInt, getRandomColor, Shape } from './util';
+import { getDeterministicInt, getDeterministicShape, getRandomColor, Shape } from './util';
 import {
     Pixi2Fluid,
     DragSignalPayload,
@@ -21,6 +21,7 @@ async function main() {
     document.body.appendChild(root);
     document.addEventListener('contextmenu', (event) => event.preventDefault());
     const shapeCount = 8;
+    const size = 60;
 
     // Fluid data
     const { container, services } = await loadFluidData();
@@ -91,11 +92,12 @@ async function main() {
             console.log(`Loaded shape ${i + 1} from Fluid.`);
             shape = CreateShape(
                 pixiApp,
-                Shape.Random,
+                getDeterministicShape(i),
                 fluidObj.color,
-                60, // size
+                size,
                 i, // id
-                shapeCount,
+                fluidObj.x,
+                fluidObj.y,
                 setFluidPosition
             );
             Fluid2Pixi(shape, fluidObj);
@@ -103,11 +105,12 @@ async function main() {
             console.log(`Creating new shape for shape ${i + 1}`);
             shape = CreateShape(
                 pixiApp,
-                Shape.Random,
+                getDeterministicShape(i),
                 getRandomColor(),
-                60,
+                size,
                 i,
-                shapeCount,
+                100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount,
+                100,
                 setFluidPosition
             );
             setFluidPosition(i.toString(), shape, 'dropped');
@@ -165,7 +168,8 @@ export function CreateShape(
     color: number,
     size: number,
     id: number,
-    shapeCount: number,
+    x: number,
+    y: number,
     setFluidPosition: (
         shapeId: string,
         dobj: PIXI.DisplayObject,
@@ -178,10 +182,6 @@ export function CreateShape(
     const graphic = new PIXI.Graphics();
 
     graphic.beginFill(0xffffff);
-
-    if (shape === Shape.Random) {
-        shape = getDeterministicInt(id, Object.keys(Shape).length / 2 - 1);
-    }
 
     switch (shape) {
         case Shape.Circle:
@@ -224,8 +224,8 @@ export function CreateShape(
 
     graphic.interactive = true;
     graphic.buttonMode = true;
-    graphic.x = 100 + (id * (app.view.width - 100 - size / 2)) / shapeCount;
-    graphic.y = 100;
+    graphic.x = x;
+    graphic.y = y;
 
     // Pointers normalize touch and mouse
     graphic
