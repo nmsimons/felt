@@ -1,26 +1,30 @@
 import randomColor from 'randomcolor';
 
 export enum Shape {
-    Circle,
-    Square,
-    Triangle,
-    Rectangle,
-    Random,
+    Circle = "CIRCLE",
+    Square = "SQUARE",
+    Triangle = "TRIANGLE",
+    Rectangle = "RECTANGLE",
 }
 
-export function getDeterministicInt(index: number, max: number): number {
-    // while (index > max) {
-    //     index = index - (max + 1);
-    // }
-
-    return index % max;
+export enum Color {
+    "0xFF0000" = "RED",
+    "0x009A44" = "GREEN",
+    "0x0000FF" = "BLUE",
+    "0xFF7F00" = "ORANGE",
+    "0x800080" = "PURPLE",
 }
 
-export function getRandomColor() {
-    let color = randomColor({ format: 'hex', luminosity: 'dark' });
+export function getDeterministicShape(index: number): Shape {
+    return Object.values(Shape)[index % Object.values(Shape).length];
+}
 
-    console.log(`color: ${color}`);
-    color = color.slice(1);
-    const colorHex = parseInt(color, 16);
-    return colorHex;
+export function getNextColor(current: number) {
+    const colorAsString = current.toString(16).padStart(6, "0").toUpperCase().padStart(8, "0x");
+    const currentIndex = Object.keys(Color).indexOf(colorAsString);
+    return getDeterministicColor(currentIndex + 1);
+}
+
+export function getDeterministicColor(index: number) {
+    return Number(Object.keys(Color)[index % Object.keys(Color).length]);
 }

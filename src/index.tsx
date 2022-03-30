@@ -6,7 +6,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Audience } from './audience';
 import { loadFluidData } from './fluid';
-import { getDeterministicInt, getRandomColor, Shape } from './util';
+import { getDeterministicColor, getDeterministicShape, getNextColor, Shape } from './util';
 import {
     Pixi2Fluid,
     DragSignalPayload,
@@ -23,6 +23,7 @@ async function main() {
     document.body.appendChild(root);
     document.addEventListener('contextmenu', (event) => event.preventDefault());
     const shapeCount = 8;
+    const size = 60;
 
     // Fluid data
     const { container, services } = await loadFluidData();
@@ -93,11 +94,12 @@ async function main() {
             console.log(`Loaded shape ${i + 1} from Fluid.`);
             shape = CreateShape(
                 pixiApp,
-                Shape.Random,
+                getDeterministicShape(i),
                 fluidObj.color,
-                60, // size
+                size,
                 i, // id
-                shapeCount,
+                fluidObj.x,
+                fluidObj.y,
                 setFluidPosition
             );
             Fluid2Pixi(shape, fluidObj);
@@ -105,11 +107,12 @@ async function main() {
             console.log(`Creating new shape for shape ${i + 1}`);
             shape = CreateShape(
                 pixiApp,
-                Shape.Random,
-                getRandomColor(),
-                60,
+                getDeterministicShape(i),
+                getDeterministicColor(i),
+                size,
                 i,
-                shapeCount,
+                100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
+                100, //y
                 setFluidPosition
             );
             setFluidPosition(i.toString(), shape, 'dropped');
@@ -167,7 +170,8 @@ export function CreateShape(
     color: number,
     size: number,
     id: number,
-    shapeCount: number,
+    x: number,
+    y: number,
     setFluidPosition: (
         shapeId: string,
         dobj: PIXI.DisplayObject,
@@ -180,10 +184,6 @@ export function CreateShape(
     const graphic = new PIXI.Graphics();
 
     graphic.beginFill(0xffffff);
-
-    if (shape === Shape.Random) {
-        shape = getDeterministicInt(id, Object.keys(Shape).length / 2 - 2);
-    }
 
     switch (shape) {
         case Shape.Circle:
@@ -226,8 +226,8 @@ export function CreateShape(
 
     graphic.interactive = true;
     graphic.buttonMode = true;
-    graphic.x = 100 + (id * (app.view.width - 100 - size / 2)) / shapeCount;
-    graphic.y = 100;
+    graphic.x = x;
+    graphic.y = y;
 
     // Pointers normalize touch and mouse
     graphic
@@ -241,26 +241,29 @@ export function CreateShape(
 
     function onRightClick(event: any) {
         console.log('onRightClick');
-        const c = getRandomColor();
+        const c = Number(getNextColor(graphic.tint));
         console.log(`setting color to ${c}`);
         graphic.tint = c;
         setFluidPosition(shapeId, graphic, 'dropped');
     }
 
     function onDragStart(event: any) {
-        graphic.alpha = 0.5;
-        graphic.zIndex = 9999;
-        dragging = true;
-        updatePosition(event.data.global.x, event.data.global.y);
-        setFluidPosition(shapeId, graphic, 'dragging');
+        if (event.data.buttons === 1) {
+            graphic.alpha = 0.5;
+            graphic.zIndex = 9999;
+            dragging = true;
+            //updatePosition(event.data.global.x, event.data.global.y);
+            setFluidPosition(shapeId, graphic, 'dragging');
+        }
     }
 
     function onDragEnd(event: any) {
-        graphic.alpha = 1;
-        graphic.zIndex = id;
-        dragging = false;
-        updatePosition(event.data.global.x, event.data.global.y);
-        setFluidPosition(shapeId, graphic, 'dropped');
+        if (dragging) {
+            graphic.alpha = 1;
+            graphic.zIndex = id;
+            dragging = false;
+            setFluidPosition(shapeId, graphic, 'dropped');
+        }
     }
 
     function onDragMove(event: any) {
