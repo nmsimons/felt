@@ -13,7 +13,6 @@ export enum Color {
     Blue = "0x0000FF",
     Orange = "0xFF7F00",
     Purple = "0x800080",
-    Pink = "0xFFC0CB",
 }
 
 export function getDeterministicShape(index: number): Shape {
