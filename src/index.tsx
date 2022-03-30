@@ -246,19 +246,22 @@ export function CreateShape(
     }
 
     function onDragStart(event: any) {
-        graphic.alpha = 0.5;
-        graphic.zIndex = 9999;
-        dragging = true;
-        updatePosition(event.data.global.x, event.data.global.y);
-        setFluidPosition(shapeId, graphic, 'dragging');
+        if (event.data.buttons === 1) {
+            graphic.alpha = 0.5;
+            graphic.zIndex = 9999;
+            dragging = true;
+            //updatePosition(event.data.global.x, event.data.global.y);
+            setFluidPosition(shapeId, graphic, 'dragging');
+        }
     }
 
     function onDragEnd(event: any) {
-        graphic.alpha = 1;
-        graphic.zIndex = id;
-        dragging = false;
-        updatePosition(event.data.global.x, event.data.global.y);
-        setFluidPosition(shapeId, graphic, 'dropped');
+        if (dragging) {
+            graphic.alpha = 1;
+            graphic.zIndex = id;
+            dragging = false;
+            setFluidPosition(shapeId, graphic, 'dropped');
+        }
     }
 
     function onDragMove(event: any) {
