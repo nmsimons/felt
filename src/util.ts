@@ -19,9 +19,9 @@ export function getDeterministicShape(index: number): Shape {
 }
 
 export function getRandomColor() {
-    return Object.values(Color)[Math.floor(Math.random() * 4)];
+    return Object.values(Color)[Math.floor(Math.random() * Object.values(Color).length)];
 }
 
 export function getDeterministicColor(index: number) {
-    return Object.values(Color)[index % 4];
+    return Object.values(Color)[index % Object.values(Color).length];
 }
