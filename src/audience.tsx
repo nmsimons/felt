@@ -29,15 +29,13 @@ export function Audience(props: {
 
     let memberDisplay: JSX.Element[];
     if (members.length > 3) {
-        const membersToShow = members.slice(-3);
+        const membersToShow = members;
         memberDisplay = membersToShow.map((v, k) => (
             <li key={k.toString()}>
                 {v.userName} ({v.userId})
             </li>
         ));
-        memberDisplay.push(
-            <li key="summary">... and {members.length - 3} other people</li>
-        );
+
     } else {
         memberDisplay = members.map((v, k) => (
             <li key={k.toString()}>
@@ -49,10 +47,10 @@ export function Audience(props: {
     return (
         <>
             <div id="audience">
-                <p>Audience ({members.length} members)</p>
                 <p>
                     I am: <strong>{audience.getMyself()?.userName}</strong>
                 </p>
+                <p>Audience ({members.length} members)</p>
                 <ul>
                     {memberDisplay}
                     {/* {EnumAudience(props.audience)} */}
