@@ -25,11 +25,7 @@ export function getNextColor(current: number) {
 }
 
 export function getColorAsString(color: number) {
-    return color
-    .toString(16)
-    .padStart(6, '0')
-    .toUpperCase()
-    .padStart(8, '0x');
+    return color.toString(16).padStart(6, '0').toUpperCase().padStart(8, '0x');
 }
 
 export function getDeterministicColor(index: number) {

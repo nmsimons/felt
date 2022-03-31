@@ -54,7 +54,9 @@ module.exports = {
         // No need to write a index.html
         new HtmlWebpackPlugin(),
         // Load environment variables during webpack bundle
-        new Dotenv(),
+        new Dotenv({
+            path: path.resolve(__dirname, '..', '.env'),
+        }),
         // Extract CSS to separate file
         new MiniCssExtractPlugin({
             filename: 'css/mystyles.css'
