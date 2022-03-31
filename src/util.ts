@@ -20,13 +20,16 @@ export function getDeterministicShape(index: number): Shape {
 }
 
 export function getNextColor(current: number) {
-    const colorAsString = current
-        .toString(16)
-        .padStart(6, '0')
-        .toUpperCase()
-        .padStart(8, '0x');
-    const currentIndex = Object.keys(Color).indexOf(colorAsString);
+    const currentIndex = Object.keys(Color).indexOf(getColorAsString(current));
     return getDeterministicColor(currentIndex + 1);
+}
+
+export function getColorAsString(color: number) {
+    return color
+    .toString(16)
+    .padStart(6, '0')
+    .toUpperCase()
+    .padStart(8, '0x');
 }
 
 export function getDeterministicColor(index: number) {
