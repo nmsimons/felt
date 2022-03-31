@@ -55,7 +55,7 @@ module.exports = {
         new HtmlWebpackPlugin(),
         // Load environment variables during webpack bundle
         new Dotenv({
-            path: './.env', // Path to .env file (this is the default)
+            path: '.env', // Path to .env file (this is the default)
         }),
         // Extract CSS to separate file
         new MiniCssExtractPlugin({
