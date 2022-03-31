@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-//const Dotenv = require('dotenv-webpack');
+const Dotenv = require('dotenv-webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -54,9 +54,9 @@ module.exports = {
         // No need to write a index.html
         new HtmlWebpackPlugin(),
         // Load environment variables during webpack bundle
-        //new Dotenv({
+        new Dotenv({
 
-        //}),
+        }),
         // Extract CSS to separate file
         new MiniCssExtractPlugin({
             filename: 'css/mystyles.css'
