@@ -1,6 +1,34 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import { IFluidContainer, SharedDirectory } from 'fluid-framework';
-import React from 'react';
+
+// eslint-disable-next-line react/prop-types
+export function ReactApp(props: {
+    container: IFluidContainer;
+    audience: IAzureAudience;
+}): JSX.Element {
+    return (
+        <div className="content">
+            <Toolbar />
+            <Canvas />
+            <Audience {...props} />
+        </div>
+    );
+}
+
+// eslint-disable-next-line react/prop-types
+export function Toolbar() {
+    return (
+        <div>UX GOES HERE!!!</div>
+    );
+}
+
+export function Canvas() {
+    return (
+        <div id="canvas"></div>
+    )
+}
 
 export function Audience(props: {
     container: IFluidContainer;
@@ -67,22 +95,20 @@ export function Audience(props: {
     }
 
     return (
-        <>
-            <div id="audience">
+        <div id="audience">
+            <p>
+                I am: <strong>{audience.getMyself()?.userName}</strong>
+            </p>
+            <p>
+                Audience ({members.length} members)
+                <ul>{memberDisplay}</ul>
+            </p>
+            <p id="stats">
                 <p>
-                    I am: <strong>{audience.getMyself()?.userName}</strong>
+                    Maximum simultaneous clients:{' '}
+                    {Math.max(members.length, maxUsers)}
                 </p>
-                <p>
-                    Audience ({members.length} members)
-                    <ul>{memberDisplay}</ul>
-                </p>
-                <p id="stats">
-                    <p>
-                        Maximum simultaneous clients:{' '}
-                        {Math.max(members.length, maxUsers)}
-                    </p>
-                </p>
-            </div>
-        </>
+            </p>
+        </div>
     );
 }

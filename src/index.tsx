@@ -4,7 +4,6 @@ import { IFluidContainer, SharedDirectory } from 'fluid-framework';
 import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Audience } from './audience';
 import { loadFluidData } from './fluid';
 import {
     getDeterministicColor,
@@ -19,6 +18,7 @@ import {
     Signals,
     Fluid2Pixi,
 } from './wrappers';
+import * as UX from './ux';
 
 import './styles.scss';
 
@@ -26,6 +26,7 @@ async function main() {
     const root = document.createElement('div');
     root.id = 'root';
     document.body.appendChild(root);
+
     // disable right-click context menu since right-click changes shape color
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
@@ -137,32 +138,16 @@ async function main() {
     });
 
     ReactDOM.render(
-        <ReactApp container={container} audience={audience} />,
+        <UX.ReactApp container={container} audience={audience} />,
         document.getElementById('root')
     );
 
     document.getElementById('canvas')?.appendChild(pixiApp.view);
 }
 
-// eslint-disable-next-line react/prop-types
-function ReactApp(props: {
-    container: IFluidContainer;
-    audience: IAzureAudience;
-}): JSX.Element {
-    return (
-        <div className="content">
-            <div id="canvas"></div>
-            <Audience {...props} />
-        </div>
-    );
-}
-
 async function initPixiApp() {
     // Main app
-    const app = new PIXI.Application({ width: 800, height: 500 });
-
-    //app.renderer.view.style.position = 'absolute';
-    //app.renderer.view.style.display = 'block';
+    const app = new PIXI.Application();
     app.stage.sortableChildren = true;
 
     return app;
@@ -191,8 +176,6 @@ export function CreateShape(
 
     switch (shape) {
         case Shape.Circle:
-            // const c = new PIXI.Circle(0,0,size/2)
-            // graphic.drawShape(c);
             graphic.drawCircle(0, 0, size / 2);
             break;
         case Shape.Square:

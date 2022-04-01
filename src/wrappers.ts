@@ -55,12 +55,3 @@ export const Fluid2Pixi = (
 
     return shapeToUpdate;
 };
-
-// export enum Color {
-//     Red = 0xFF0000,
-//     Green = 0x00FF00,
-//     Blue = 0x0000FF,
-//     Orange = 0xFF7F00,
-//     Purple = 0x800080,
-//     Random = 0xFFFFFF
-// }
