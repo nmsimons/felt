@@ -55,7 +55,7 @@ module.exports = {
         new HtmlWebpackPlugin(),
         // Load environment variables during webpack bundle
         new Dotenv({
-
+            systemvars: true,
         }),
         // Extract CSS to separate file
         new MiniCssExtractPlugin({
