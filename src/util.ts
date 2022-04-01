@@ -1,5 +1,3 @@
-import randomColor from 'randomcolor';
-
 export enum Shape {
     Circle = 'CIRCLE',
     Square = 'SQUARE',
