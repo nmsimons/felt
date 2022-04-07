@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import { IFluidContainer, SharedDirectory } from 'fluid-framework';
+import { FeltShape } from '.';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
     container: IFluidContainer;
     audience: IAzureAudience;
+    shapes: Map<number, FeltShape>;
 }): JSX.Element {
     return (
         <div className="content">
@@ -19,14 +21,37 @@ export function ReactApp(props: {
 
 // eslint-disable-next-line react/prop-types
 export function Toolbar() {
+    const [count, setCount] = useState(0);
+
     return (
-        <div>UX GOES HERE!!!</div>
+        <div>
+            UX HERE SOMEDAY
+        </div>
     );
 }
 
 export function Canvas() {
     return (
         <div id="canvas"></div>
+    )
+}
+
+export function Shapes(props: {shapes: Map<number, FeltShape>}) {
+    const shapes = Array.from(props.shapes.values()).map((fs) =>
+        <Shape key={fs.id} shape={fs} />
+    );
+
+    return (
+        <ul>
+            {shapes}
+        </ul>
+    )
+}
+
+export function Shape(props: {shape: FeltShape}) {
+
+    return (
+        <li>{props.shape.id}: {props.shape.frames}</li>
     )
 }
 
@@ -101,13 +126,11 @@ export function Audience(props: {
             </p>
             <p>
                 Audience ({members.length} members)
-                <ul>{memberDisplay}</ul>
             </p>
+            <ul>{memberDisplay}</ul>
             <p id="stats">
-                <p>
-                    Maximum simultaneous clients:{' '}
-                    {Math.max(members.length, maxUsers)}
-                </p>
+                Maximum simultaneous clients:{' '}
+                {Math.max(members.length, maxUsers)}
             </p>
         </div>
     );

@@ -1,16 +1,15 @@
 import { DisplayObject, Sprite, Graphics } from 'pixi.js';
+import { FeltShape } from '.';
 import { getDeterministicColor, getNextColor } from './util';
 
 export interface FluidDisplayObject {
+    id: string;
     x: number;
     y: number;
     alpha: number;
     color: number;
     z: number;
-}
-
-export interface DragSignalPayload extends FluidDisplayObject {
-    shapeId: string;
+    dragging: boolean,
 }
 
 export const Signals = {
@@ -18,39 +17,40 @@ export const Signals = {
 } as const;
 
 export const Pixi2Fluid = (
-    dobj: DisplayObject | Sprite | Graphics
+    dobj: FeltShape
 ): FluidDisplayObject => {
-    if (dobj instanceof Sprite || dobj instanceof Graphics) {
-        return {
-            x: dobj.x,
-            y: dobj.y,
-            alpha: dobj.alpha,
-            color: dobj.tint,
-            z: dobj.zIndex,
-        };
-    }
-
-    console.warn(`Received a plain display object`);
     return {
+        id: dobj.id,
         x: dobj.x,
         y: dobj.y,
-        alpha: 1,
-        color: getDeterministicColor(0),
+        alpha: dobj.alpha,
+        color: dobj.tint,
         z: dobj.zIndex,
+        dragging: dobj.dragging,
     };
 };
 
 export const Fluid2Pixi = (
-    shapeToUpdate: DisplayObject | Sprite | Graphics,
+    shapeToUpdate: FeltShape,
     sourceObject: FluidDisplayObject
 ) => {
     shapeToUpdate.x = sourceObject.x;
     shapeToUpdate.y = sourceObject.y;
     shapeToUpdate.alpha = sourceObject.alpha;
     shapeToUpdate.zIndex = sourceObject.z;
+    shapeToUpdate.tint = sourceObject.color;
+    shapeToUpdate.dragging = sourceObject.dragging;
 
-    if (shapeToUpdate instanceof Sprite || shapeToUpdate instanceof Graphics) {
-        shapeToUpdate.tint = sourceObject.color;
+    if (shapeToUpdate.dragging) {
+        shapeToUpdate.frames++;
+    } else {
+        shapeToUpdate.frames = 0;
+    }
+
+    if (shapeToUpdate.signals) {
+        console.log("remote frames (signals):" + shapeToUpdate.frames);
+    } else {
+        console.log("remote frames (ops):" + shapeToUpdate.frames);
     }
 
     return shapeToUpdate;
