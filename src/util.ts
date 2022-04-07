@@ -1,3 +1,5 @@
+import { captureRejections } from "events";
+
 export enum Shape {
     Circle = 'CIRCLE',
     Square = 'SQUARE',
@@ -6,26 +8,22 @@ export enum Shape {
 }
 
 export enum Color {
-    '0xFF0000' = 'RED',
-    '0x009A44' = 'GREEN',
-    '0x0000FF' = 'BLUE',
-    '0xFF7F00' = 'ORANGE',
-    '0x800080' = 'PURPLE',
+    Red = '0xFF0000',
+    Green = '0x009A44',
+    Blue = '0x0000FF',
+    Orange = '0xFF7F00',
+    Purple = '0x800080'
 }
 
 export function getDeterministicShape(index: number): Shape {
     return Object.values(Shape)[index % Object.values(Shape).length];
 }
 
-export function getNextColor(current: number) {
-    const currentIndex = Object.keys(Color).indexOf(getColorAsString(current));
+export function getNextColor(current: Color) {
+    const currentIndex = Object.values(Color).indexOf(current);
     return getDeterministicColor(currentIndex + 1);
 }
 
-export function getColorAsString(color: number) {
-    return color.toString(16).padStart(6, '0').toUpperCase().padStart(8, '0x');
-}
-
-export function getDeterministicColor(index: number) {
-    return Number(Object.keys(Color)[index % Object.keys(Color).length]);
+export function getDeterministicColor(index: number): Color {
+    return Object.values(Color)[index % Object.values(Color).length];
 }

@@ -5,6 +5,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { loadFluidData } from './fluid';
 import {
+    Color,
     getDeterministicColor,
     getDeterministicShape,
     getNextColor,
@@ -60,15 +61,15 @@ async function main() {
 
     // Create some shapes
     for (let i = 0; i < shapeCount; i++) {
-        // try to get the fluid object if it exists, and update the local positions based on that
+        // try to get the fluid object if it exists, and update the local objects based on that
         const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
         let shape: FeltShape;
         if (fluidObj) {
             console.log(`Loaded shape ${i + 1} from Fluid.`);
             shape = CreateShape(
                 pixiApp,
-                getDeterministicShape(i),
-                fluidObj.color,
+                getDeterministicShape(i), //we always determine shape type by index
+                fluidObj.color, //color is configurable
                 size,
                 i, // id
                 fluidObj.x,
@@ -83,7 +84,7 @@ async function main() {
                 getDeterministicShape(i),
                 getDeterministicColor(i),
                 size,
-                i,
+                i, //id
                 100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
                 100, //y
                 setFluidPosition
@@ -142,7 +143,7 @@ async function initPixiApp() {
 export function CreateShape(
     app: PIXI.Application,
     shape: Shape,
-    color: number,
+    color: Color,
     size: number,
     id: number,
     x: number,
@@ -152,15 +153,14 @@ export function CreateShape(
     ) => void
 ): FeltShape {
 
-    //const shapeId = id.toString();
     const graphic = new FeltShape();
 
+    //Hack to compare signals with ops
     if ((id + 1) % 2 == 0) {
         graphic.signals = true;
     } else {
         graphic.signals = false;
     }
-
 
     graphic.id = id.toString();
 
@@ -189,7 +189,7 @@ export function CreateShape(
 
     graphic.endFill();
     console.log(`initializing color to: ${color}`);
-    graphic.tint = color;
+    graphic.setColor(color);
 
     const style = new PIXI.TextStyle({
         fontFamily: 'Arial',
@@ -219,10 +219,7 @@ export function CreateShape(
     app.stage.addChild(graphic);
 
     function onRightClick(event: any) {
-        console.log('onRightClick');
-        const c = Number(getNextColor(graphic.tint));
-        console.log(`setting color to ${c}`);
-        graphic.tint = c;
+        graphic.setColor(getNextColor(graphic.color));
         graphic.dragging = false;
         setFluidPosition(graphic);
     }
@@ -275,6 +272,12 @@ export class FeltShape extends PIXI.Graphics {
     id: string = "";
     dragging: boolean = false;
     signals: boolean = true;
+    color: Color = Color.Red;
+
+    public setColor(color: Color) {
+        this.color = color;
+        this.tint = Number(color);
+    }
 }
 
 export default main();
