@@ -48,9 +48,9 @@ export const Fluid2Pixi = (
     }
 
     if (shapeToUpdate.signals) {
-        console.log("remote frames (signals):" + shapeToUpdate.frames + " x: " + shapeToUpdate.x + " y: " + shapeToUpdate.y);
+        console.log("remote frames (signals):" + shapeToUpdate.frames + " timestamp: " + Date.now());
     } else {
-        console.log("remote frames (ops):" + shapeToUpdate.frames+ " x: " + shapeToUpdate.x + " y: " + shapeToUpdate.y);
+        console.log("remote frames (ops):" + shapeToUpdate.frames+ " timestamp: " + Date.now());
     }
 
     return shapeToUpdate;
