@@ -39,9 +39,8 @@ export const Fluid2Pixi = (
     shapeToUpdate.alpha = sourceObject.alpha;
     shapeToUpdate.zIndex = sourceObject.z;
     shapeToUpdate.tint = Number(sourceObject.color);
-    shapeToUpdate.dragging = sourceObject.dragging;
 
-    if (shapeToUpdate.dragging) {
+    if (sourceObject.dragging) {
         shapeToUpdate.frames++;
     } else {
         shapeToUpdate.frames = 0;
