@@ -18,6 +18,7 @@ import {
     Fluid2Pixi,
 } from './wrappers';
 import * as UX from './ux';
+import { Guid } from "guid-typescript";
 
 import './styles.scss';
 
@@ -76,9 +77,19 @@ async function main() {
         pixiApp.stage.addChild(fs);
 
         return fs;
-
-        //setFluidPosition(fs);
     }
+
+    const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number
+        ) => {
+            const fs = addNewLocalShape(
+                shape,
+                color,
+                id,
+                x,
+                y,
+            )
+            setFluidPosition(fs);
+        }
 
     //Get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
@@ -97,16 +108,25 @@ async function main() {
         if (fluidMap.size === 0) {
             for (let i = 0; i < shapeCount; i++) {
                 console.log(`Creating new shape for shape ${i + 1}`);
-                const fs = addNewLocalShape(
+                addNewShape(
                     getDeterministicShape(i),
                     getDeterministicColor(i),
                     (i + 1).toString(), //id
                     100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
                     100, //y
                 )
-                setFluidPosition(fs);
             }
         }
+    }
+
+    const createShape = (shape: Shape) => {
+        addNewShape(
+            shape,
+            Color.Red,
+            Guid.create().toString(),
+            100,
+            100,
+        )
     }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
@@ -147,7 +167,7 @@ async function main() {
     });
 
     ReactDOM.render(
-        <UX.ReactApp container={container} audience={audience} shapes={localMap} createShapes={createShapes} />,
+        <UX.ReactApp container={container} audience={audience} shapes={localMap} createShape={createShape} />,
         document.getElementById('root')
     );
 

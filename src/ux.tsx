@@ -3,13 +3,21 @@ import ReactDOM from 'react-dom';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import { IFluidContainer, SharedDirectory } from 'fluid-framework';
 import { FeltShape } from '.';
+import Icon from '@mdi/react'
+import { mdiCircle } from '@mdi/js'
+import { mdiShape } from '@mdi/js';
+import { mdiSquare } from '@mdi/js';
+import { mdiTriangle } from '@mdi/js';
+import { mdiRectangle } from '@mdi/js';
+import { Shape as S } from './util';
+
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
     container: IFluidContainer;
     audience: IAzureAudience;
     shapes: Map<string, FeltShape>;
-    createShapes: any;
+    createShape: any;
 }): JSX.Element {
     return (
         <div className="content">
@@ -21,13 +29,32 @@ export function ReactApp(props: {
 }
 
 // eslint-disable-next-line react/prop-types
-export function Toolbar(props: {createShapes: any}) {
+export function Toolbar(props: { createShape: any }) {
+
+    const test = mdiCircle;
 
     return (
-        <div>
-            <button onClick={props.createShapes}>CLICK THIS!!!</button>
+        <div className='field is-grouped'>
+            <ShapeButton icon={mdiCircle} title="Circle" color="red" createFunction={() => props.createShape(S.Circle)} />
+            <ShapeButton icon={mdiSquare} title="Square" color="red" createFunction={() => props.createShape(S.Square)} />
+            <ShapeButton icon={mdiTriangle} title="Triangle" color="red" createFunction={() => props.createShape(S.Triangle)} />
+            <ShapeButton icon={mdiRectangle} title="Rectangle" color="red" createFunction={() => props.createShape(S.Rectangle)} />
         </div>
     );
+}
+
+export function ShapeButton(props: { icon: any, title: string, color: string, createFunction: any }) {
+    return (
+        <p className='control'>
+            <button className='button is-large is-white' onClick={props.createFunction}>
+                <span className="icon"><Icon path={props.icon}
+                    title={props.title}
+                    size={2}
+                    color={props.color} />
+                </span>
+            </button>
+        </p>
+    )
 }
 
 export function Canvas() {
@@ -36,7 +63,7 @@ export function Canvas() {
     )
 }
 
-export function Shapes(props: {shapes: Map<string, FeltShape>}) {
+export function Shapes(props: { shapes: Map<string, FeltShape> }) {
     const shapes = Array.from(props.shapes.values()).map((fs) =>
         <Shape key={fs.id} shape={fs} />
     );
@@ -48,7 +75,7 @@ export function Shapes(props: {shapes: Map<string, FeltShape>}) {
     )
 }
 
-export function Shape(props: {shape: FeltShape}) {
+export function Shape(props: { shape: FeltShape }) {
 
     return (
         <li>{props.shape.id}: {props.shape.frames}</li>
