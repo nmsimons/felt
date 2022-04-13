@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import { IFluidContainer, SharedDirectory } from 'fluid-framework';
 import { FeltShape } from '.';
@@ -23,7 +22,7 @@ export function ReactApp(props: {
         <div className="content">
             <Toolbar {...props} />
             <Canvas />
-            <Audience {...props} />
+            <Instructions />
         </div>
     );
 }
@@ -63,22 +62,19 @@ export function Canvas() {
     )
 }
 
-export function Shapes(props: { shapes: Map<string, FeltShape> }) {
-    const shapes = Array.from(props.shapes.values()).map((fs) =>
-        <Shape key={fs.id} shape={fs} />
-    );
-
+export function Instructions() {
     return (
-        <ul>
-            {shapes}
-        </ul>
-    )
-}
-
-export function Shape(props: { shape: FeltShape }) {
-
-    return (
-        <li>{props.shape.id}: {props.shape.frames}</li>
+        <div >
+            <p>
+                Share the URL incuding the goo at the end to make a picture with some friends.
+            </p>
+            <p>
+                You can make a lot of shapes but you can't delete them.
+            </p>
+            <p>
+                Right-click to change the color of a shape.
+            </p>
+        </div>
     )
 }
 

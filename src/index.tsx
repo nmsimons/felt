@@ -30,7 +30,7 @@ async function main() {
     // disable right-click context menu since right-click changes shape color
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
-    const shapeCount: number = 8;
+    const shapeLimit: number = 999;
     const size: number = 60;
 
     // Fluid data
@@ -80,16 +80,16 @@ async function main() {
     }
 
     const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number
-        ) => {
-            const fs = addNewLocalShape(
-                shape,
-                color,
-                id,
-                x,
-                y,
-            )
-            setFluidPosition(fs);
-        }
+    ) => {
+        const fs = addNewLocalShape(
+            shape,
+            color,
+            id,
+            x,
+            y,
+        )
+        setFluidPosition(fs);
+    }
 
     //Get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
@@ -104,29 +104,16 @@ async function main() {
     }
     )
 
-    const createShapes = () => {
-        if (fluidMap.size === 0) {
-            for (let i = 0; i < shapeCount; i++) {
-                console.log(`Creating new shape for shape ${i + 1}`);
-                addNewShape(
-                    getDeterministicShape(i),
-                    getDeterministicColor(i),
-                    (i + 1).toString(), //id
-                    100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
-                    100, //y
-                )
-            }
-        }
-    }
-
     const createShape = (shape: Shape) => {
-        addNewShape(
-            shape,
-            Color.Red,
-            Guid.create().toString(),
-            100,
-            100,
-        )
+        if (fluidMap.size < shapeLimit) {
+            addNewShape(
+                shape,
+                getDeterministicColor(fluidMap.size),
+                Guid.create().toString(),
+                100,
+                100,
+            )
+        }
     }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
@@ -296,7 +283,7 @@ export class FeltShape extends PIXI.Graphics {
                 break;
             case Shape.Triangle:
                 // eslint-disable-next-line no-case-declarations
-                const path = [0, -(this.size/2), -(this.size/2), this.size/2, this.size/2, this.size/2];
+                const path = [0, -(this.size / 2), -(this.size / 2), this.size / 2, this.size / 2, this.size / 2];
                 this.drawPolygon(path);
                 break;
             case Shape.Rectangle:
