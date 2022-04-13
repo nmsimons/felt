@@ -59,8 +59,8 @@ async function main() {
         }
     };
 
-    const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number
-    ) => {
+    const addNewLocalShape = (shape: Shape, color: Color, id: string, x: number, y: number
+    ): FeltShape => {
         const fs = new FeltShape(
             pixiApp,
             shape,
@@ -75,13 +75,15 @@ async function main() {
         localMap.set(id, fs);
         pixiApp.stage.addChild(fs);
 
-        setFluidPosition(fs);
+        return fs;
+
+        //setFluidPosition(fs);
     }
 
-    //Get the Fluid shapes if they already exist
+    //Get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
         console.log(`Loaded shape ${fdo.id} from Fluid.`);
-        addNewShape(
+        addNewLocalShape(
             fdo.shape,
             fdo.color,
             fdo.id,
@@ -91,19 +93,18 @@ async function main() {
     }
     )
 
-    // Create some shapes if we need to
-
     const createShapes = () => {
         if (fluidMap.size === 0) {
             for (let i = 0; i < shapeCount; i++) {
                 console.log(`Creating new shape for shape ${i + 1}`);
-                addNewShape(
+                const fs = addNewLocalShape(
                     getDeterministicShape(i),
                     getDeterministicColor(i),
                     (i + 1).toString(), //id
                     100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
                     100, //y
                 )
+                setFluidPosition(fs);
             }
         }
     }
@@ -133,7 +134,8 @@ async function main() {
             if (localShape) {
                 Fluid2Pixi(localShape, remoteShape);
             } else {
-                addNewShape(
+                console.log("Creating shape from Fluid");
+                addNewLocalShape(
                     remoteShape.shape,
                     remoteShape.color,
                     remoteShape.id,
