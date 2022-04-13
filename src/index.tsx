@@ -108,8 +108,6 @@ async function main() {
         }
     }
 
-    //createShapes();
-
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
     const fluidDragHandler: SignalListener = (
@@ -170,6 +168,7 @@ export class FeltShape extends PIXI.Graphics {
     private _color: Color = Color.Red;
     z: number = 0;
     readonly shape: Shape = Shape.Circle;
+    readonly size: number = 90;
 
     constructor(
         app: PIXI.Application,
@@ -188,45 +187,15 @@ export class FeltShape extends PIXI.Graphics {
         this.signals = true;
         this.id = id;
         this.shape = shape;
+        this.size = size;
 
         this.beginFill(0xffffff);
 
-        switch (this.shape) {
-            case Shape.Circle:
-                this.drawCircle(0, 0, size / 2);
-                break;
-            case Shape.Square:
-                this.drawRect(-size / 2, -size / 2, size, size);
-                break;
-            case Shape.Triangle:
-                size = size * 1.5;
-                // eslint-disable-next-line no-case-declarations
-                const path = [0, -size / 2, -size / 2, size / 3, size / 2, size / 3];
-                this.drawPolygon(path);
-                break;
-            case Shape.Rectangle:
-                this.drawRect((-size * 1.5) / 2, -size / 2, size * 1.5, size);
-                break;
-            default:
-                this.drawCircle(0, 0, size);
-                break;
-        }
+        this.setShape();
 
         this.endFill();
         console.log(`initializing color to: ${color}`);
         this.color = color;
-
-        const style = new PIXI.TextStyle({
-            fontFamily: 'Arial',
-            fontSize: 36,
-            fontWeight: 'bold',
-            fill: '#ffffff',
-        });
-
-        const number = new PIXI.Text(id, style);
-        this.addChild(number);
-
-        number.anchor.set(0.5);
 
         this.interactive = true;
         this.buttonMode = true;
@@ -293,6 +262,40 @@ export class FeltShape extends PIXI.Graphics {
 
     get color() {
         return this._color;
+    }
+
+    private setShape() {
+        switch (this.shape) {
+            case Shape.Circle:
+                this.drawCircle(0, 0, this.size / 2);
+                break;
+            case Shape.Square:
+                this.drawRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                break;
+            case Shape.Triangle:
+                // eslint-disable-next-line no-case-declarations
+                const path = [0, -(this.size/2), -(this.size/2), this.size/2, this.size/2, this.size/2];
+                this.drawPolygon(path);
+                break;
+            case Shape.Rectangle:
+                this.drawRect((-this.size * 1.5) / 2, -this.size / 2, this.size * 1.5, this.size);
+                break;
+            default:
+                this.drawCircle(0, 0, this.size);
+                break;
+        }
+    }
+
+    private addLabel(label: string) {
+        const style = new PIXI.TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 36,
+            fontWeight: 'bold',
+            fill: '#ffffff',
+        });
+        const number = new PIXI.Text(label, style);
+        this.addChild(number);
+        number.anchor.set(0.5);
     }
 }
 
