@@ -59,8 +59,8 @@ async function main() {
         }
     };
 
-    const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number) => {
-
+    const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number
+    ) => {
         const fs = new FeltShape(
             pixiApp,
             shape,
@@ -135,17 +135,13 @@ async function main() {
             if (localShape) {
                 Fluid2Pixi(localShape, remoteShape);
             } else {
-                const newLocalShape = new FeltShape(
-                    pixiApp,
+                addNewShape(
                     remoteShape.shape,
                     remoteShape.color,
-                    size,
                     remoteShape.id,
                     remoteShape.x,
                     remoteShape.y,
-                    setFluidPosition)
-                localMap.set(newLocalShape.id, newLocalShape);
-                pixiApp.stage.addChild(newLocalShape);
+                )
             }
         }
     });
