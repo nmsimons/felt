@@ -1,6 +1,6 @@
 import { DisplayObject, Sprite, Graphics } from 'pixi.js';
 import { FeltShape } from '.';
-import { Color, getDeterministicColor, getNextColor } from './util';
+import { Color, getDeterministicColor, getNextColor, Shape } from './util';
 
 export interface FluidDisplayObject {
     id: string;
@@ -9,7 +9,8 @@ export interface FluidDisplayObject {
     alpha: number;
     color: Color;
     z: number;
-    dragging: boolean,
+    dragging: boolean;
+    shape: Shape;
 }
 
 export const Signals = {
@@ -27,6 +28,7 @@ export const Pixi2Fluid = (
         color: dobj.color,
         z: dobj.zIndex,
         dragging: dobj.dragging,
+        shape: dobj.shape,
     };
 };
 
@@ -38,7 +40,7 @@ export const Fluid2Pixi = (
     shapeToUpdate.y = sourceObject.y;
     shapeToUpdate.alpha = sourceObject.alpha;
     shapeToUpdate.zIndex = sourceObject.z;
-    shapeToUpdate.tint = Number(sourceObject.color);
+    shapeToUpdate.color = sourceObject.color;
 
     if (sourceObject.dragging) {
         shapeToUpdate.frames++;

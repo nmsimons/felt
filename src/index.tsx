@@ -39,7 +39,7 @@ async function main() {
     console.log('Loaded Fluid container');
 
     const pixiApp = await initPixiApp();
-    const localMap = new Map<number, FeltShape>();
+    const localMap = new Map<string, FeltShape>();
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     // This function will be called each time a shape is moved around the canvas. It's passed in to the CreateShape
@@ -59,42 +59,56 @@ async function main() {
         }
     };
 
-    // Create some shapes
-    for (let i = 0; i < shapeCount; i++) {
-        // try to get the fluid object if it exists, and update the local objects based on that
-        const fluidObj = fluidMap.get(i.toString()) as FluidDisplayObject;
-        let shape: FeltShape;
-        if (fluidObj) {
-            console.log(`Loaded shape ${i + 1} from Fluid.`);
-            shape = CreateShape(
-                pixiApp,
-                getDeterministicShape(i), //we always determine shape type by index
-                fluidObj.color, //color is configurable
-                size,
-                i, // id
-                fluidObj.x,
-                fluidObj.y,
-                setFluidPosition
-            );
-            Fluid2Pixi(shape, fluidObj);
-        } else {
-            console.log(`Creating new shape for shape ${i + 1}`);
-            shape = CreateShape(
-                pixiApp,
-                getDeterministicShape(i),
-                getDeterministicColor(i),
-                size,
-                i, //id
-                100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
-                100, //y
-                setFluidPosition
-            );
-            setFluidPosition(shape);
-        }
+    const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number) => {
 
-        localMap.set(i, shape);
-        pixiApp.stage.addChild(shape);
+        const fs = new FeltShape(
+            pixiApp,
+            shape,
+            color,
+            size,
+            id, //id
+            x, //x
+            y, //y
+            setFluidPosition
+        );
+
+        localMap.set(id, fs);
+        pixiApp.stage.addChild(fs);
+
+        setFluidPosition(fs);
     }
+
+    //Get the Fluid shapes if they already exist
+    fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
+        console.log(`Loaded shape ${fdo.id} from Fluid.`);
+        addNewShape(
+            fdo.shape,
+            fdo.color,
+            fdo.id,
+            fdo.x,
+            fdo.y
+        )
+    }
+    )
+
+    // Create some shapes if we need to
+
+    const createShapes = () => {
+        if (fluidMap.size === 0) {
+            for (let i = 0; i < shapeCount; i++) {
+                console.log(`Creating new shape for shape ${i + 1}`);
+                addNewShape(
+                    getDeterministicShape(i),
+                    getDeterministicColor(i),
+                    (i + 1).toString(), //id
+                    100 + (i * (pixiApp.view.width - 100 - 60 / 2)) / shapeCount, //x
+                    100, //y
+                )
+            }
+        }
+    }
+
+    //createShapes();
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
@@ -104,7 +118,7 @@ async function main() {
         payload: FluidDisplayObject
     ) => {
         if (!local) {
-            const localShape = localMap.get(parseInt(payload.id));
+            const localShape = localMap.get(payload.id);
             if (localShape) {
                 Fluid2Pixi(localShape, payload)
             }
@@ -112,20 +126,32 @@ async function main() {
     };
     signaler.onSignal(Signals.ON_DRAG, fluidDragHandler);
 
-
     //commit changes to Fluid data
     fluidMap.on('valueChanged', (changed, local, target) => {
+        console.log('Fluid data updated');
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
-            const localShape = localMap.get(parseInt(changed.key));
+            const localShape = localMap.get(changed.key);
             if (localShape) {
                 Fluid2Pixi(localShape, remoteShape);
+            } else {
+                const newLocalShape = new FeltShape(
+                    pixiApp,
+                    remoteShape.shape,
+                    remoteShape.color,
+                    size,
+                    remoteShape.id,
+                    remoteShape.x,
+                    remoteShape.y,
+                    setFluidPosition)
+                localMap.set(newLocalShape.id, newLocalShape);
+                pixiApp.stage.addChild(newLocalShape);
             }
         }
     });
 
     ReactDOM.render(
-        <UX.ReactApp container={container} audience={audience} shapes={localMap} />,
+        <UX.ReactApp container={container} audience={audience} shapes={localMap} createShapes={createShapes} />,
         document.getElementById('root')
     );
 
@@ -140,143 +166,137 @@ async function initPixiApp() {
     return app;
 }
 
-export function CreateShape(
-    app: PIXI.Application,
-    shape: Shape,
-    color: Color,
-    size: number,
-    id: number,
-    x: number,
-    y: number,
-    setFluidPosition: (
-        dobj: FeltShape,
-    ) => void
-): FeltShape {
-
-    const graphic = new FeltShape();
-
-    //Hack to compare signals with ops
-    if ((id + 1) % 2 == 0) {
-        graphic.signals = true;
-    } else {
-        graphic.signals = false;
-    }
-
-    graphic.id = id.toString();
-
-    graphic.beginFill(0xffffff);
-
-    switch (shape) {
-        case Shape.Circle:
-            graphic.drawCircle(0, 0, size / 2);
-            break;
-        case Shape.Square:
-            graphic.drawRect(-size / 2, -size / 2, size, size);
-            break;
-        case Shape.Triangle:
-            size = size * 1.5;
-            // eslint-disable-next-line no-case-declarations
-            const path = [0, -size / 2, -size / 2, size / 3, size / 2, size / 3];
-            graphic.drawPolygon(path);
-            break;
-        case Shape.Rectangle:
-            graphic.drawRect((-size * 1.5) / 2, -size / 2, size * 1.5, size);
-            break;
-        default:
-            graphic.drawCircle(0, 0, size);
-            break;
-    }
-
-    graphic.endFill();
-    console.log(`initializing color to: ${color}`);
-    graphic.setColor(color);
-
-    const style = new PIXI.TextStyle({
-        fontFamily: 'Arial',
-        fontSize: 36,
-        fontWeight: 'bold',
-        fill: '#ffffff',
-    });
-
-    const number = new PIXI.Text((id + 1).toString(), style);
-    graphic.addChild(number);
-
-    number.anchor.set(0.5);
-
-    graphic.interactive = true;
-    graphic.buttonMode = true;
-    graphic.x = x;
-    graphic.y = y;
-
-    // Pointers normalize touch and mouse
-    graphic
-        .on('pointerdown', onDragStart)
-        .on('pointerup', onDragEnd)
-        .on('pointerupoutside', onDragEnd)
-        .on('pointermove', onDragMove)
-        .on('rightclick', onRightClick);
-
-    app.stage.addChild(graphic);
-
-    function onRightClick(event: any) {
-        graphic.setColor(getNextColor(graphic.color));
-        graphic.dragging = false;
-        setFluidPosition(graphic);
-    }
-
-    function onDragStart(event: any) {
-        if (event.data.buttons === 1) {
-            graphic.alpha = 0.5;
-            graphic.zIndex = 9999;
-            graphic.dragging = true;
-            setFluidPosition(graphic);
-        }
-    }
-
-    function onDragEnd(event: any) {
-        if (graphic.dragging) {
-            graphic.alpha = 1;
-            graphic.zIndex = id;
-            graphic.dragging = false;
-            setFluidPosition(graphic);
-        }
-    }
-
-    function onDragMove(event: any) {
-        if (graphic.dragging) {
-            graphic.alpha = 0.5;
-            graphic.zIndex = 9999;
-            updatePosition(event.data.global.x, event.data.global.y);
-            setFluidPosition(graphic);
-        }
-    }
-
-    function updatePosition(x: number, y: number) {
-        if (x >= graphic.width / 2 && x <= app.renderer.width - graphic.width / 2) {
-            graphic.x = x;
-        }
-
-        if (
-            y >= graphic.height / 2 &&
-            y <= app.renderer.height - graphic.height / 2
-        ) {
-            graphic.y = y;
-        }
-    }
-
-    return graphic;
-}
-
 export class FeltShape extends PIXI.Graphics {
     frames: number = 0;
     id: string = "";
     dragging: boolean = false;
     signals: boolean = true;
-    color: Color = Color.Red;
+    private _color: Color = Color.Red;
+    z: number = 0;
+    readonly shape: Shape = Shape.Circle;
 
-    public setColor(color: Color) {
+    constructor(
+        app: PIXI.Application,
+        shape: Shape,
+        color: Color,
+        size: number,
+        id: string,
+        x: number,
+        y: number,
+        setFluidPosition: (
+            dobj: FeltShape,
+        ) => void
+    ) {
+
+        super();
+        this.signals = true;
+        this.id = id;
+        this.shape = shape;
+
+        this.beginFill(0xffffff);
+
+        switch (this.shape) {
+            case Shape.Circle:
+                this.drawCircle(0, 0, size / 2);
+                break;
+            case Shape.Square:
+                this.drawRect(-size / 2, -size / 2, size, size);
+                break;
+            case Shape.Triangle:
+                size = size * 1.5;
+                // eslint-disable-next-line no-case-declarations
+                const path = [0, -size / 2, -size / 2, size / 3, size / 2, size / 3];
+                this.drawPolygon(path);
+                break;
+            case Shape.Rectangle:
+                this.drawRect((-size * 1.5) / 2, -size / 2, size * 1.5, size);
+                break;
+            default:
+                this.drawCircle(0, 0, size);
+                break;
+        }
+
+        this.endFill();
+        console.log(`initializing color to: ${color}`);
         this.color = color;
+
+        const style = new PIXI.TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 36,
+            fontWeight: 'bold',
+            fill: '#ffffff',
+        });
+
+        const number = new PIXI.Text(id, style);
+        this.addChild(number);
+
+        number.anchor.set(0.5);
+
+        this.interactive = true;
+        this.buttonMode = true;
+        this.x = x;
+        this.y = y;
+
+        const onRightClick = (event: any) => {
+            this.color = getNextColor(this.color);
+            this.dragging = false;
+            setFluidPosition(this);
+        }
+
+        const onDragStart = (event: any) => {
+            if (event.data.buttons === 1) {
+                this.alpha = 0.5;
+                this.zIndex = 9999;
+                this.dragging = true;
+                setFluidPosition(this);
+            }
+        }
+
+        const onDragEnd = (event: any) => {
+            if (this.dragging) {
+                this.alpha = 1;
+                this.zIndex = this.z;
+                this.dragging = false;
+                setFluidPosition(this);
+            }
+        }
+
+        const onDragMove = (event: any) => {
+            if (this.dragging) {
+                this.alpha = 0.5;
+                this.zIndex = 9999;
+                updatePosition(event.data.global.x, event.data.global.y);
+                setFluidPosition(this);
+            }
+        }
+
+        const updatePosition = (x: number, y: number) => {
+            if (x >= this.width / 2 && x <= app.renderer.width - this.width / 2) {
+                this.x = x;
+            }
+
+            if (y >= this.height / 2 &&
+                y <= app.renderer.height - this.height / 2) {
+                this.y = y;
+            }
+        }
+
+        // Pointers normalize touch and mouse
+        this
+            .on('pointerdown', onDragStart)
+            .on('pointerup', onDragEnd)
+            .on('pointerupoutside', onDragEnd)
+            .on('pointermove', onDragMove)
+            .on('rightclick', onRightClick);
+    }
+
+    set color(color: Color) {
+        this._color = color;
         this.tint = Number(color);
+    }
+
+    get color() {
+        return this._color;
     }
 }
 

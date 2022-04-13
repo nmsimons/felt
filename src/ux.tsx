@@ -8,11 +8,12 @@ import { FeltShape } from '.';
 export function ReactApp(props: {
     container: IFluidContainer;
     audience: IAzureAudience;
-    shapes: Map<number, FeltShape>;
+    shapes: Map<string, FeltShape>;
+    createShapes: any;
 }): JSX.Element {
     return (
         <div className="content">
-            <Toolbar />
+            <Toolbar {...props} />
             <Canvas />
             <Audience {...props} />
         </div>
@@ -20,12 +21,11 @@ export function ReactApp(props: {
 }
 
 // eslint-disable-next-line react/prop-types
-export function Toolbar() {
-    const [count, setCount] = useState(0);
+export function Toolbar(props: {createShapes: any}) {
 
     return (
         <div>
-            UX HERE SOMEDAY
+            <button onClick={props.createShapes}>CLICK THIS!!!</button>
         </div>
     );
 }
@@ -36,7 +36,7 @@ export function Canvas() {
     )
 }
 
-export function Shapes(props: {shapes: Map<number, FeltShape>}) {
+export function Shapes(props: {shapes: Map<string, FeltShape>}) {
     const shapes = Array.from(props.shapes.values()).map((fs) =>
         <Shape key={fs.id} shape={fs} />
     );
