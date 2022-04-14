@@ -8,7 +8,8 @@ import { mdiShape } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
-import { Shape as S } from './util';
+import { Color, Shape as S } from './util';
+
 
 
 // eslint-disable-next-line react/prop-types
@@ -41,10 +42,10 @@ export function Toolbar(props: {
                 <div className='navbar-start'>
                     <div className='navbar-item'>
                         <div className='field is-grouped'>
-                            <ShapeButton icon={mdiCircle} title="Circle" color="black" createFunction={() => props.createShape(S.Circle)} />
-                            <ShapeButton icon={mdiSquare} title="Square" color="black" createFunction={() => props.createShape(S.Square)} />
-                            <ShapeButton icon={mdiTriangle} title="Triangle" color="black" createFunction={() => props.createShape(S.Triangle)} />
-                            <ShapeButton icon={mdiRectangle} title="Rectangle" color="black" createFunction={() => props.createShape(S.Rectangle)} />
+                            <ShapeButton icon={mdiCircle} title="Circle" color="red" createFunction={() => props.createShape(S.Circle, Color.Red)} />
+                            <ShapeButton icon={mdiSquare} title="Square" color="blue" createFunction={() => props.createShape(S.Square, Color.Blue)} />
+                            <ShapeButton icon={mdiTriangle} title="Triangle" color="orange" createFunction={() => props.createShape(S.Triangle, Color.Orange)} />
+                            <ShapeButton icon={mdiRectangle} title="Rectangle" color="purple" createFunction={() => props.createShape(S.Rectangle, Color.Purple)} />
                         </div>
                     </div>
                 </div>
@@ -88,10 +89,10 @@ export function Instructions() {
                     Share the URL incuding the goo at the end to make a picture with some friends.
                 </p>
                 <p>
-                    You can make a lot of shapes but you can't delete them.
+                    Right-click to change the color of a shape.
                 </p>
                 <p>
-                    Right-click to change the color of a shape.
+                    You can make a lot of shapes but you can't delete them.
                 </p>
             </div>
         </footer>

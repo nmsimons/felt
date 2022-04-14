@@ -105,11 +105,11 @@ async function main() {
     }
     )
 
-    const createShape = (shape: Shape) => {
+    const createShape = (shape: Shape, color: Color) => {
         if (fluidMap.size < shapeLimit) {
             addNewShape(
                 shape,
-                getDeterministicColor(fluidMap.size),
+                color,
                 Guid.create().toString(),
                 100,
                 100,
