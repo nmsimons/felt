@@ -19,7 +19,7 @@ export function ReactApp(props: {
     createShape: any;
 }): JSX.Element {
     return (
-        <div className="content">
+        <div>
             <Toolbar {...props} />
             <Canvas />
             <Instructions />
@@ -28,17 +28,35 @@ export function ReactApp(props: {
 }
 
 // eslint-disable-next-line react/prop-types
-export function Toolbar(props: { createShape: any }) {
+export function Toolbar(props: {
+    createShape: any; container: IFluidContainer;
+    audience: IAzureAudience;
+}) {
 
     const test = mdiCircle;
 
     return (
-        <div className='field is-grouped'>
-            <ShapeButton icon={mdiCircle} title="Circle" color="red" createFunction={() => props.createShape(S.Circle)} />
-            <ShapeButton icon={mdiSquare} title="Square" color="red" createFunction={() => props.createShape(S.Square)} />
-            <ShapeButton icon={mdiTriangle} title="Triangle" color="red" createFunction={() => props.createShape(S.Triangle)} />
-            <ShapeButton icon={mdiRectangle} title="Rectangle" color="red" createFunction={() => props.createShape(S.Rectangle)} />
-        </div>
+        <div className='navbar is-light'>
+            <div className='navbar-menu'>
+                <div className='navbar-start'>
+                    <div className='navbar-item'>
+                        <div className='field is-grouped'>
+                            <ShapeButton icon={mdiCircle} title="Circle" color="black" createFunction={() => props.createShape(S.Circle)} />
+                            <ShapeButton icon={mdiSquare} title="Square" color="black" createFunction={() => props.createShape(S.Square)} />
+                            <ShapeButton icon={mdiTriangle} title="Triangle" color="black" createFunction={() => props.createShape(S.Triangle)} />
+                            <ShapeButton icon={mdiRectangle} title="Rectangle" color="black" createFunction={() => props.createShape(S.Rectangle)} />
+                        </div>
+                    </div>
+                </div>
+                <div className='navbar-end'>
+                    <div className='navbar-item'>
+                        <div className='field is-grouped'>
+                            <Audience container={props.container} audience={props.audience} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div >
     );
 }
 
@@ -64,17 +82,19 @@ export function Canvas() {
 
 export function Instructions() {
     return (
-        <div >
-            <p>
-                Share the URL incuding the goo at the end to make a picture with some friends.
-            </p>
-            <p>
-                You can make a lot of shapes but you can't delete them.
-            </p>
-            <p>
-                Right-click to change the color of a shape.
-            </p>
-        </div>
+        <footer className='footer'>
+            <div className='content' >
+                <p>
+                    Share the URL incuding the goo at the end to make a picture with some friends.
+                </p>
+                <p>
+                    You can make a lot of shapes but you can't delete them.
+                </p>
+                <p>
+                    Right-click to change the color of a shape.
+                </p>
+            </div>
+        </footer>
     )
 }
 
@@ -143,18 +163,10 @@ export function Audience(props: {
     }
 
     return (
-        <div id="audience">
-            <p>
-                I am: <strong>{audience.getMyself()?.userName}</strong>
-            </p>
-            <p>
-                Audience ({members.length} members)
-            </p>
-            <ul>{memberDisplay}</ul>
-            <p id="stats">
-                Maximum simultaneous clients:{' '}
-                {Math.max(members.length, maxUsers)}
-            </p>
-        </div>
+        <p className='control'>
+            <button className='button is-large is-white'>
+                {members.length}
+            </button>
+        </p>
     );
 }
