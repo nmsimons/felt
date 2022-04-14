@@ -54,6 +54,7 @@ module.exports = {
         // No need to write a index.html
         new HtmlWebpackPlugin({
             title: 'Felt',
+            favicon: 'favicon.ico',
         }),
         // Load environment variables during webpack bundle
         new Dotenv({
