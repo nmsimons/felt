@@ -106,7 +106,5 @@ export const loadFluidData = async (): Promise<{
         ({ container, services } = await client.getContainer(id, containerSchema));
     }
 
-    document.title = id;
-
     return { container, services };
 };

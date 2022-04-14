@@ -52,7 +52,9 @@ module.exports = {
     },
     plugins: [
         // No need to write a index.html
-        new HtmlWebpackPlugin(),
+        new HtmlWebpackPlugin({
+            title: 'Felt',
+        }),
         // Load environment variables during webpack bundle
         new Dotenv({
             systemvars: true,

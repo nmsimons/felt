@@ -25,6 +25,7 @@ import './styles.scss';
 async function main() {
     const root = document.createElement('div');
     root.id = 'root';
+
     document.body.appendChild(root);
 
     // disable right-click context menu since right-click changes shape color
