@@ -164,7 +164,7 @@ async function main() {
 
 async function initPixiApp() {
     // Main app
-    const app = new PIXI.Application();
+    const app = new PIXI.Application({ width: 610, height: 545 });
     app.stage.sortableChildren = true;
 
     return app;
