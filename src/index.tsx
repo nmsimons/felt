@@ -11,14 +11,9 @@ import {
     getNextColor,
     Shape,
 } from './util';
-import {
-    Pixi2Fluid,
-    FluidDisplayObject,
-    Signals,
-    Fluid2Pixi,
-} from './wrappers';
+import { Pixi2Fluid, FluidDisplayObject, Signals, Fluid2Pixi } from './wrappers';
 import * as UX from './ux';
-import { Guid } from "guid-typescript";
+import { Guid } from 'guid-typescript';
 
 import './styles.scss';
 
@@ -31,8 +26,8 @@ async function main() {
     // disable right-click context menu since right-click changes shape color
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
-    const shapeLimit: number = 999;
-    const size: number = 60;
+    const shapeLimit = 999;
+    const size = 60;
 
     // Fluid data
     const { container, services } = await loadFluidData();
@@ -46,14 +41,10 @@ async function main() {
 
     // This function will be called each time a shape is moved around the canvas. It's passed in to the CreateShape
     // function which wires it up to the PIXI events for the shape.
-    const setFluidPosition = (
-        dobj: FeltShape
-    ) => {
+    const setFluidPosition = (dobj: FeltShape) => {
         const fobj = Pixi2Fluid(dobj);
-        if (dobj.dragging && dobj.signals) {
-            // Send a signal with the new (temporary) position
-            signaler.submitSignal(Signals.ON_DRAG, fobj);
-        } else if (dobj.dragging && !dobj.signals) {
+        if (dobj.dragging) {
+            // Store the temporary position in Fluid
             fluidMap.set(dobj.id, fobj);
         } else {
             // Store the final position in Fluid
@@ -61,7 +52,12 @@ async function main() {
         }
     };
 
-    const addNewLocalShape = (shape: Shape, color: Color, id: string, x: number, y: number
+    const addNewLocalShape = (
+        shape: Shape,
+        color: Color,
+        id: string,
+        x: number,
+        y: number
     ): FeltShape => {
         const fs = new FeltShape(
             pixiApp,
@@ -78,60 +74,30 @@ async function main() {
         pixiApp.stage.addChild(fs);
 
         return fs;
-    }
+    };
 
-    const addNewShape = (shape: Shape, color: Color, id: string, x: number, y: number
+    const addNewShape = (
+        shape: Shape,
+        color: Color,
+        id: string,
+        x: number,
+        y: number
     ) => {
-        const fs = addNewLocalShape(
-            shape,
-            color,
-            id,
-            x,
-            y,
-        )
+        const fs = addNewLocalShape(shape, color, id, x, y);
         setFluidPosition(fs);
-    }
+    };
 
     //Get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
         console.log(`Loaded shape ${fdo.id} from Fluid.`);
-        addNewLocalShape(
-            fdo.shape,
-            fdo.color,
-            fdo.id,
-            fdo.x,
-            fdo.y
-        )
-    }
-    )
+        addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
+    });
 
     const createShape = (shape: Shape, color: Color) => {
         if (fluidMap.size < shapeLimit) {
-            addNewShape(
-                shape,
-                color,
-                Guid.create().toString(),
-                100,
-                100,
-            )
-        }
-    }
-
-    // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
-    // handle the signal we send and update the local state accordingly.
-    const fluidDragHandler: SignalListener = (
-        clientId: string,
-        local: boolean,
-        payload: FluidDisplayObject
-    ) => {
-        if (!local) {
-            const localShape = localMap.get(payload.id);
-            if (localShape) {
-                Fluid2Pixi(localShape, payload)
-            }
+            addNewShape(shape, color, Guid.create().toString(), 100, 100);
         }
     };
-    signaler.onSignal(Signals.ON_DRAG, fluidDragHandler);
 
     //commit changes to Fluid data
     fluidMap.on('valueChanged', (changed, local, target) => {
@@ -142,20 +108,25 @@ async function main() {
             if (localShape) {
                 Fluid2Pixi(localShape, remoteShape);
             } else {
-                console.log("Creating shape from Fluid");
+                console.log('Creating shape from Fluid');
                 addNewLocalShape(
                     remoteShape.shape,
                     remoteShape.color,
                     remoteShape.id,
                     remoteShape.x,
-                    remoteShape.y,
-                )
+                    remoteShape.y
+                );
             }
         }
     });
 
     ReactDOM.render(
-        <UX.ReactApp container={container} audience={audience} shapes={localMap} createShape={createShape} />,
+        <UX.ReactApp
+            container={container}
+            audience={audience}
+            shapes={localMap}
+            createShape={createShape}
+        />,
         document.getElementById('root')
     );
 
@@ -171,12 +142,12 @@ async function initPixiApp() {
 }
 
 export class FeltShape extends PIXI.Graphics {
-    frames: number = 0;
-    id: string = "";
-    dragging: boolean = false;
-    signals: boolean = true;
+    frames = 0;
+    id = '';
+    dragging = false;
+    signals = true;
     private _color: Color = Color.Red;
-    z: number = 0;
+    z = 0;
     readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
 
@@ -188,11 +159,8 @@ export class FeltShape extends PIXI.Graphics {
         id: string,
         x: number,
         y: number,
-        setFluidPosition: (
-            dobj: FeltShape,
-        ) => void
+        setFluidPosition: (dobj: FeltShape) => void
     ) {
-
         super();
         this.signals = true;
         this.id = id;
@@ -216,7 +184,7 @@ export class FeltShape extends PIXI.Graphics {
             this.color = getNextColor(this.color);
             this.dragging = false;
             setFluidPosition(this);
-        }
+        };
 
         const onDragStart = (event: any) => {
             if (event.data.buttons === 1) {
@@ -225,7 +193,7 @@ export class FeltShape extends PIXI.Graphics {
                 this.dragging = true;
                 setFluidPosition(this);
             }
-        }
+        };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
@@ -234,7 +202,7 @@ export class FeltShape extends PIXI.Graphics {
                 this.dragging = false;
                 setFluidPosition(this);
             }
-        }
+        };
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
@@ -243,22 +211,20 @@ export class FeltShape extends PIXI.Graphics {
                 updatePosition(event.data.global.x, event.data.global.y);
                 setFluidPosition(this);
             }
-        }
+        };
 
         const updatePosition = (x: number, y: number) => {
             if (x >= this.width / 2 && x <= app.renderer.width - this.width / 2) {
                 this.x = x;
             }
 
-            if (y >= this.height / 2 &&
-                y <= app.renderer.height - this.height / 2) {
+            if (y >= this.height / 2 && y <= app.renderer.height - this.height / 2) {
                 this.y = y;
             }
-        }
+        };
 
         // Pointers normalize touch and mouse
-        this
-            .on('pointerdown', onDragStart)
+        this.on('pointerdown', onDragStart)
             .on('pointerup', onDragEnd)
             .on('pointerupoutside', onDragEnd)
             .on('pointermove', onDragMove)
@@ -284,11 +250,23 @@ export class FeltShape extends PIXI.Graphics {
                 break;
             case Shape.Triangle:
                 // eslint-disable-next-line no-case-declarations
-                const path = [0, -(this.size / 2), -(this.size / 2), this.size / 2, this.size / 2, this.size / 2];
+                const path = [
+                    0,
+                    -(this.size / 2),
+                    -(this.size / 2),
+                    this.size / 2,
+                    this.size / 2,
+                    this.size / 2,
+                ];
                 this.drawPolygon(path);
                 break;
             case Shape.Rectangle:
-                this.drawRect((-this.size * 1.5) / 2, -this.size / 2, this.size * 1.5, this.size);
+                this.drawRect(
+                    (-this.size * 1.5) / 2,
+                    -this.size / 2,
+                    this.size * 1.5,
+                    this.size
+                );
                 break;
             default:
                 this.drawCircle(0, 0, this.size);

@@ -2,6 +2,10 @@ import { DisplayObject, Sprite, Graphics } from 'pixi.js';
 import { FeltShape } from '.';
 import { Color, getDeterministicColor, getNextColor, Shape } from './util';
 
+export const Signals = {
+    ON_DRAG: 'ON_DRAG',
+} as const;
+
 export interface FluidDisplayObject {
     id: string;
     x: number;
@@ -13,13 +17,7 @@ export interface FluidDisplayObject {
     shape: Shape;
 }
 
-export const Signals = {
-    ON_DRAG: 'ON_DRAG',
-} as const;
-
-export const Pixi2Fluid = (
-    dobj: FeltShape
-): FluidDisplayObject => {
+export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
     return {
         id: dobj.id,
         x: dobj.x,
@@ -48,11 +46,21 @@ export const Fluid2Pixi = (
         shapeToUpdate.frames = 0;
     }
 
-    if (shapeToUpdate.signals) {
-        console.log("remote frames (signals):" + shapeToUpdate.frames + " timestamp: " + Date.now());
-    } else {
-        console.log("remote frames (ops):" + shapeToUpdate.frames+ " timestamp: " + Date.now());
-    }
+    // if (shapeToUpdate.signals) {
+    //     console.log(
+    //         'remote frames (signals):' +
+    //         shapeToUpdate.frames +
+    //         ' timestamp: ' +
+    //         Date.now()
+    //     );
+    // } else {
+    //     console.log(
+    //         'remote frames (ops):' +
+    //         shapeToUpdate.frames +
+    //         ' timestamp: ' +
+    //         Date.now()
+    //     );
+    // }
 
     return shapeToUpdate;
 };
