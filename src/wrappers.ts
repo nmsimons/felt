@@ -39,28 +39,5 @@ export const Fluid2Pixi = (
     shapeToUpdate.alpha = sourceObject.alpha;
     shapeToUpdate.zIndex = sourceObject.z;
     shapeToUpdate.color = sourceObject.color;
-
-    if (sourceObject.dragging) {
-        shapeToUpdate.frames++;
-    } else {
-        shapeToUpdate.frames = 0;
-    }
-
-    // if (shapeToUpdate.signals) {
-    //     console.log(
-    //         'remote frames (signals):' +
-    //         shapeToUpdate.frames +
-    //         ' timestamp: ' +
-    //         Date.now()
-    //     );
-    // } else {
-    //     console.log(
-    //         'remote frames (ops):' +
-    //         shapeToUpdate.frames +
-    //         ' timestamp: ' +
-    //         Date.now()
-    //     );
-    // }
-
     return shapeToUpdate;
 };

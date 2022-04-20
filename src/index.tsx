@@ -18,38 +18,38 @@ import { Guid } from 'guid-typescript';
 import './styles.scss';
 
 async function main() {
+
+    // create the root element for React
     const root = document.createElement('div');
     root.id = 'root';
-
     document.body.appendChild(root);
 
     // disable right-click context menu since right-click changes shape color
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
+    // set some constants for shapes
     const shapeLimit = 999;
     const size = 60;
 
-    // Fluid data
+    // Initialize Fluid
     const { container, services } = await loadFluidData();
-    const signaler = container.initialObjects.signalManager as SignalManager;
     const audience = services.audience;
-    console.log('Loaded Fluid container');
 
+    // create PIXI app
     const pixiApp = await initPixiApp();
+
+    // create local map for shapes - contains customized PIXI objects
     const localMap = new Map<string, FeltShape>();
+
+    // create Fluid map for shapes - contains only the data that needs to be synched between clients
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     // This function will be called each time a shape is moved around the canvas. It's passed in to the CreateShape
     // function which wires it up to the PIXI events for the shape.
     const setFluidPosition = (dobj: FeltShape) => {
         const fobj = Pixi2Fluid(dobj);
-        if (dobj.dragging) {
-            // Store the temporary position in Fluid
-            fluidMap.set(dobj.id, fobj);
-        } else {
-            // Store the final position in Fluid
-            fluidMap.set(dobj.id, fobj);
-        }
+        // Store the position in Fluid
+        fluidMap.set(dobj.id, fobj);
     };
 
     const addNewLocalShape = (
@@ -64,18 +64,19 @@ async function main() {
             shape,
             color,
             size,
-            id, //id
-            x, //x
-            y, //y
-            setFluidPosition
+            id, // id
+            x, // x
+            y, // y
+            setFluidPosition // function that syncs local data with Fluid
         );
 
-        localMap.set(id, fs);
-        pixiApp.stage.addChild(fs);
+        localMap.set(id, fs); // add the new shape to local data
+        pixiApp.stage.addChild(fs); // add the new shape to the PIXI canvas
 
         return fs;
     };
 
+    // adds a new shape
     const addNewShape = (
         shape: Shape,
         color: Color,
@@ -87,19 +88,20 @@ async function main() {
         setFluidPosition(fs);
     };
 
-    //Get the Fluid shapes that already exist
+    // get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
         console.log(`Loaded shape ${fdo.id} from Fluid.`);
-        addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
+        addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y); // add the Fluid shapes to the local shape data
     });
 
+    // function passed into React UX for creating shapes
     const createShape = (shape: Shape, color: Color) => {
         if (fluidMap.size < shapeLimit) {
             addNewShape(shape, color, Guid.create().toString(), 100, 100);
         }
     };
 
-    //commit changes to Fluid data
+    // event handler for detecting remote changes to Fluid data and updating the local data
     fluidMap.on('valueChanged', (changed, local, target) => {
         console.log('Fluid data updated');
         if (!local) {
@@ -120,6 +122,7 @@ async function main() {
         }
     });
 
+    // initialize the React UX
     ReactDOM.render(
         <UX.ReactApp
             container={container}
@@ -130,17 +133,20 @@ async function main() {
         document.getElementById('root')
     );
 
+    // insert the PIXI canvas in the page
     document.getElementById('canvas')?.appendChild(pixiApp.view);
 }
 
+// initializes the PIXI app
 async function initPixiApp() {
-    // Main app
     const app = new PIXI.Application({ width: 610, height: 545 });
     app.stage.sortableChildren = true;
 
     return app;
 }
 
+// wrapper class for a PIXI shape with a few extra methods and properties
+// for creating and managing shapes
 export class FeltShape extends PIXI.Graphics {
     frames = 0;
     id = '';
@@ -162,7 +168,6 @@ export class FeltShape extends PIXI.Graphics {
         setFluidPosition: (dobj: FeltShape) => void
     ) {
         super();
-        this.signals = true;
         this.id = id;
         this.shape = shape;
         this.size = size;
@@ -180,10 +185,11 @@ export class FeltShape extends PIXI.Graphics {
         this.x = x;
         this.y = y;
 
+        // event handlers for interaction with PIXI shapes
         const onRightClick = (event: any) => {
             this.color = getNextColor(this.color);
             this.dragging = false;
-            setFluidPosition(this);
+            setFluidPosition(this); // syncs local changes with Fluid data
         };
 
         const onDragStart = (event: any) => {
@@ -191,7 +197,7 @@ export class FeltShape extends PIXI.Graphics {
                 this.alpha = 0.5;
                 this.zIndex = 9999;
                 this.dragging = true;
-                setFluidPosition(this);
+                setFluidPosition(this); // syncs local changes with Fluid data
             }
         };
 
@@ -200,7 +206,7 @@ export class FeltShape extends PIXI.Graphics {
                 this.alpha = 1;
                 this.zIndex = this.z;
                 this.dragging = false;
-                setFluidPosition(this);
+                setFluidPosition(this); // syncs local changes with Fluid data
             }
         };
 
@@ -209,10 +215,11 @@ export class FeltShape extends PIXI.Graphics {
                 this.alpha = 0.5;
                 this.zIndex = 9999;
                 updatePosition(event.data.global.x, event.data.global.y);
-                setFluidPosition(this);
+                setFluidPosition(this); // syncs local changes with Fluid data
             }
         };
 
+        // sets local postion and enforces canvas boundary
         const updatePosition = (x: number, y: number) => {
             if (x >= this.width / 2 && x <= app.renderer.width - this.width / 2) {
                 this.x = x;
@@ -223,7 +230,7 @@ export class FeltShape extends PIXI.Graphics {
             }
         };
 
-        // Pointers normalize touch and mouse
+        // intialize event handlers
         this.on('pointerdown', onDragStart)
             .on('pointerup', onDragEnd)
             .on('pointerupoutside', onDragEnd)
