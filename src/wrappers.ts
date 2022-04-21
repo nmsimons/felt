@@ -2,10 +2,6 @@ import { DisplayObject, Sprite, Graphics } from 'pixi.js';
 import { FeltShape } from '.';
 import { Color, getDeterministicColor, getNextColor, Shape } from './util';
 
-export const Signals = {
-    ON_DRAG: 'ON_DRAG',
-} as const;
-
 export interface FluidDisplayObject {
     id: string;
     x: number;
