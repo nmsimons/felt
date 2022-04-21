@@ -1,6 +1,5 @@
-import { DisplayObject, Sprite, Graphics } from 'pixi.js';
 import { FeltShape } from '.';
-import { Color, getDeterministicColor, getNextColor, Shape } from './util';
+import { Color, Shape } from './util';
 
 export interface FluidDisplayObject {
     id: string;
