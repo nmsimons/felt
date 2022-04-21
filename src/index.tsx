@@ -41,8 +41,9 @@ async function main() {
     // create Fluid map for shapes - contains only the data that needs to be synched between clients
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
-    // This function will be called each time a shape is moved around the canvas. It's passed in to the CreateShape
-    // function which wires it up to the PIXI events for the shape.
+    // This function will be called each time a shape is moved around the canvas.
+    // It's passed in to the CreateShape function which wires it up to the
+    // PIXI events for the shape.
     const setFluidPosition = (dobj: FeltShape) => {
         const fobj = Pixi2Fluid(dobj);
         // Store the position in Fluid
