@@ -11,7 +11,7 @@ import {
     getNextColor,
     Shape,
 } from './util';
-import { Pixi2Fluid, FluidDisplayObject, Signals, Fluid2Pixi } from './wrappers';
+import { Pixi2Fluid, FluidDisplayObject, Fluid2Pixi } from './wrappers';
 import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
