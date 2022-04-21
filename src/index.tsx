@@ -1,4 +1,3 @@
-import { SignalListener, SignalManager } from '@fluid-experimental/data-objects';
 import { SharedDirectory } from 'fluid-framework';
 import * as PIXI from 'pixi.js';
 import React from 'react';
@@ -6,8 +5,6 @@ import ReactDOM from 'react-dom';
 import { loadFluidData } from './fluid';
 import {
     Color,
-    getDeterministicColor,
-    getDeterministicShape,
     getNextColor,
     Shape,
 } from './util';
