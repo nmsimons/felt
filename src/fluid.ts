@@ -72,8 +72,8 @@ async function initializeNewContainer(container: IFluidContainer): Promise<void>
 }
 
 /**
- * This function will create a container if no container ID is passed on the hash portion of the URL. If a container ID
- * is provided, it will load the container.
+ * This function will create a container if no container ID is passed on the hash portion of the URL.
+ * If a container ID is provided, it will load the container.
  *
  * @returns The loaded container and container services.
  */
