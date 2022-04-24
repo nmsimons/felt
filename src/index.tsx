@@ -38,7 +38,8 @@ async function main() {
     // create local map for shapes - contains customized PIXI objects
     const localMap = new Map<string, FeltShape>();
 
-    // create Fluid map for shapes - contains only the data that needs to be synched between clients
+    // create Fluid map for shapes - contains only the data that needs to be
+    // synched between clients
     const fluidMap = container.initialObjects.shapes as SharedDirectory;
 
     // This function will be called each time a shape is moved around the canvas.
@@ -99,7 +100,8 @@ async function main() {
         }
     };
 
-    // event handler for detecting remote changes to Fluid data and updating the local data
+    // event handler for detecting remote changes to Fluid data and updating
+    // the local data
     fluidMap.on('valueChanged', (changed, local, target) => {
         console.log('Fluid data updated');
         if (!local) {

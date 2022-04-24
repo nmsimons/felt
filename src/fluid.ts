@@ -53,7 +53,8 @@ const clientProps = {
 
 const client = new AzureClient(clientProps);
 
-// Define the schema of our Container. This includes the DDSes/DataObjects that we want to create dynamically and any
+// Define the schema of our Container. This includes the DDSes/DataObjects
+// that we want to create dynamically and any
 // initial DataObjects we want created when the container is first created.
 const containerSchema: ContainerSchema = {
     initialObjects: {
@@ -66,8 +67,8 @@ const containerSchema: ContainerSchema = {
 };
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
-    // We don't have any additional configuration to do here. If we needed to initialize some of our Fluid data, we
-    // could do so here.
+    // We don't have any additional configuration to do here. If we needed to initialize
+    // some of our Fluid data, we could do so here.
 }
 
 /**
