@@ -58,7 +58,6 @@ const client = new AzureClient(clientProps);
 // initial DataObjects we want created when the container is first created.
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        /* [id]: DataObject */
         shapes: SharedMap,
     },
     dynamicObjectTypes: [SharedDirectory, SharedMap],
