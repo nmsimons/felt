@@ -60,8 +60,6 @@ const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
         shapes: SharedMap,
-        stats: SharedMap,
-        signalManager: SignalManager,
     },
     dynamicObjectTypes: [SharedDirectory, SharedMap],
 };
