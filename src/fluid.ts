@@ -59,7 +59,7 @@ const client = new AzureClient(clientProps);
 const containerSchema: ContainerSchema = {
     initialObjects: {
         /* [id]: DataObject */
-        shapes: SharedDirectory,
+        shapes: SharedMap,
         stats: SharedMap,
         signalManager: SignalManager,
     },
