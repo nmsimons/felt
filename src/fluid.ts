@@ -60,7 +60,7 @@ const containerSchema: ContainerSchema = {
     initialObjects: {
         shapes: SharedMap,
     },
-    dynamicObjectTypes: [SharedDirectory, SharedMap],
+    dynamicObjectTypes: [SharedMap],
 };
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
