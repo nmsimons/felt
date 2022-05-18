@@ -13,10 +13,6 @@ export enum Color {
     Purple = '0x800080',
 }
 
-export function getDeterministicShape(index: number): Shape {
-    return Object.values(Shape)[index % Object.values(Shape).length];
-}
-
 export function getNextColor(current: Color) {
     const currentIndex = Object.values(Color).indexOf(current);
     return getDeterministicColor(currentIndex + 1);
