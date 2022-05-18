@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IAzureAudience } from '@fluidframework/azure-client';
-import { IFluidContainer, SharedDirectory } from 'fluid-framework';
+import { IFluidContainer, SharedMap } from 'fluid-framework';
 import { FeltShape } from '.';
 import Icon from '@mdi/react';
 import { mdiCircle } from '@mdi/js';
@@ -149,35 +149,13 @@ export function Audience(props: {
         [setMembers, audience]
     );
 
-    const updateStats = React.useCallback(() => {
-        const max =
-            (container.initialObjects.stats as SharedDirectory).get<number>(
-                'maxUsers'
-            ) ?? 0;
-        const size = audience.getMembers().size;
-
-        if (size > max) {
-            (container.initialObjects.stats as SharedDirectory).set(
-                'maxUsers',
-                size
-            );
-        }
-    }, [setMembers, audience]);
-
-    const maxUsers =
-        (container.initialObjects.stats as SharedDirectory).get<number>(
-            'maxUsers'
-        ) ?? 0;
-
     // Setup a listener to update our users when new clients join the session
     React.useEffect(() => {
         container.on('connected', setMembersCallback);
         audience.on('membersChanged', setMembersCallback);
-        audience.on('membersChanged', updateStats);
         return () => {
             container.off('connected', () => setMembersCallback);
             audience.off('membersChanged', () => setMembersCallback);
-            audience.off('membersChanged', () => updateStats);
         };
     }, [container, audience, setMembersCallback]);
 

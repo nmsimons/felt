@@ -1,4 +1,4 @@
-import { SharedDirectory } from 'fluid-framework';
+import { SharedMap } from 'fluid-framework';
 import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -44,7 +44,7 @@ async function main() {
 
     // create Fluid map for shapes - contains only the data that needs to be
     // synched between clients
-    const fluidMap = container.initialObjects.shapes as SharedDirectory;
+    const fluidMap = container.initialObjects.shapes as SharedMap;
 
     // This function will be called each time a shape is moved around the canvas.
     // It's passed in to the CreateShape function which wires it up to the
