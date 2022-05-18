@@ -1,5 +1,3 @@
-import { captureRejections } from 'events';
-
 export enum Shape {
     Circle = 'CIRCLE',
     Square = 'SQUARE',
