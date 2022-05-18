@@ -4,7 +4,6 @@ import { IFluidContainer, SharedDirectory } from 'fluid-framework';
 import { FeltShape } from '.';
 import Icon from '@mdi/react';
 import { mdiCircle } from '@mdi/js';
-import { mdiShape } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';

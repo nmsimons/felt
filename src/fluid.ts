@@ -9,11 +9,9 @@ import {
     generateTestUser,
     InsecureTokenProvider,
 } from '@fluidframework/test-client-utils';
-import { SignalManager } from '@fluid-experimental/data-objects';
 import {
     ContainerSchema,
     IFluidContainer,
-    SharedDirectory,
     SharedMap,
 } from 'fluid-framework';
 

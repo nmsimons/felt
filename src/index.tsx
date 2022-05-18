@@ -8,7 +8,11 @@ import {
     getNextColor,
     Shape,
 } from './util';
-import { Pixi2Fluid, FluidDisplayObject, Fluid2Pixi } from './wrappers';
+import {
+    Pixi2Fluid,
+    FluidDisplayObject,
+    Fluid2Pixi
+} from './wrappers';
 import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
@@ -89,8 +93,8 @@ async function main() {
 
     // get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
-        console.log(`Loaded shape ${fdo.id} from Fluid.`);
-        addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y); // add the Fluid shapes to the local shape data
+         // add the Fluid shapes to the local shape data
+        addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
     });
 
     // function passed into React UX for creating shapes
@@ -103,7 +107,6 @@ async function main() {
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
     fluidMap.on('valueChanged', (changed, local, target) => {
-        console.log('Fluid data updated');
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
             const localShape = localMap.get(changed.key);
@@ -137,7 +140,7 @@ async function main() {
     document.getElementById('canvas')?.appendChild(pixiApp.view);
 }
 
-// initializes the PIXI app
+// initialize the PIXI app
 async function initPixiApp() {
     const app = new PIXI.Application({ width: 610, height: 545 });
     app.stage.sortableChildren = true;
@@ -148,10 +151,8 @@ async function initPixiApp() {
 // wrapper class for a PIXI shape with a few extra methods and properties
 // for creating and managing shapes
 export class FeltShape extends PIXI.Graphics {
-    frames = 0;
     id = '';
     dragging = false;
-    signals = true;
     private _color: Color = Color.Red;
     z = 0;
     readonly shape: Shape = Shape.Circle;
@@ -279,18 +280,6 @@ export class FeltShape extends PIXI.Graphics {
                 this.drawCircle(0, 0, this.size);
                 break;
         }
-    }
-
-    private addLabel(label: string) {
-        const style = new PIXI.TextStyle({
-            fontFamily: 'Arial',
-            fontSize: 36,
-            fontWeight: 'bold',
-            fill: '#ffffff',
-        });
-        const number = new PIXI.Text(label, style);
-        this.addChild(number);
-        number.anchor.set(0.5);
     }
 }
 
