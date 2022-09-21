@@ -2,8 +2,9 @@ import {
     AzureFunctionTokenProvider,
     AzureClient,
     AzureConnectionConfig,
+    AzureRemoteConnectionConfig,
+    AzureLocalConnectionConfig,
     AzureContainerServices,
-    LOCAL_MODE_TENANT_ID,
 } from '@fluidframework/azure-client';
 import {
     generateTestUser,
@@ -28,22 +29,23 @@ const azureUser = {
     userName: user.name,
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure
-    ? {
-          tenantId: process.env.AZURE_TENANT_ID ?? LOCAL_MODE_TENANT_ID,
-          tokenProvider: new AzureFunctionTokenProvider(
-              process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
-              azureUser
-          ),
-          orderer: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
-          storage: process.env.AZURE_STORAGE ?? 'http://localhost:7070',
-      }
-    : {
-          tenantId: LOCAL_MODE_TENANT_ID,
-          tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
-          orderer: 'http://localhost:7070',
-          storage: 'http://localhost:7070',
-      };
+const remoteConnectionConfig: AzureRemoteConnectionConfig = {
+    type: "remote",
+    tenantId: process.env.AZURE_TENANT_ID!,
+    tokenProvider: new AzureFunctionTokenProvider(
+        process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
+        azureUser
+    ),
+    endpoint: process.env.AZURE_ORDERER!,
+}
+
+const localConnectionConfig: AzureLocalConnectionConfig = {
+    type: "local",
+    tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
+    endpoint: 'http://localhost:7070',
+}
+
+const connectionConfig: AzureConnectionConfig = useAzure ? remoteConnectionConfig : localConnectionConfig;
 
 const clientProps = {
     connection: connectionConfig,
