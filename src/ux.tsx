@@ -24,7 +24,6 @@ export function ReactApp(props: {
         <div>
             <Toolbar {...props} />
             <Canvas />
-            <Instructions />
         </div>
     );
 }
@@ -138,21 +137,6 @@ export function ShapeButton(props: {
 
 export function Canvas() {
     return <div id="canvas"></div>;
-}
-
-export function Instructions() {
-    return (
-        <footer className="footer">
-            <div className="content">
-                <p>
-                    Share the URL incuding the goo at the end to make a picture with
-                    some friends.
-                </p>
-                <p>Right-click to change the color of a shape.</p>
-                <p>You can make a lot of shapes but you can't delete them.</p>
-            </div>
-        </footer>
-    );
 }
 
 export function Audience(props: {

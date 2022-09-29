@@ -138,17 +138,21 @@ async function main() {
         }
     };
 
-    const changeColor = () => {
+    const changeColorofSelected = () => {
         if (localSelectionMap.size > 0) {
             localSelectionMap.forEach ((value: FeltShape | undefined) => {
                 if (value != undefined) {
-                    value.color = getNextColor(value.color);
-                    setFluidPosition(value);
+                    changeColor(value, getNextColor(value.color));
                 } else {
                     manageSelection(undefined);
                 }
             })
         }
+    }
+
+    const changeColor = (shape: FeltShape, color: Color) => {
+        shape.color = getNextColor(color);
+        setFluidPosition(shape);
     }
 
     const deleteSelectedShapes = () => {
@@ -205,7 +209,7 @@ async function main() {
             audience={audience}
             shapes={localMap}
             createShape={createShape}
-            changeColor={changeColor}
+            changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
         />,
         document.getElementById('root')
@@ -280,7 +284,7 @@ export class FeltShape extends PIXI.Graphics {
             if (event.data.buttons === 1) {
                 this.zIndex = 9999;
                 this.dragging = true;
-                this.selected = false;
+                //this.selected = false;
                 setFluidPosition(this); // syncs local changes with Fluid data
             }
         };
@@ -319,7 +323,7 @@ export class FeltShape extends PIXI.Graphics {
         // intialize event handlers
         this.on('pointerdown', onDragStart)
             .on('pointerup', onDragEnd)
-            .on('pointerup', onSelect)
+            .on('pointerdown', onSelect)
             .on('pointerupoutside', onDragEnd)
             .on('pointermove', onDragMove)
     }
@@ -351,19 +355,47 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     private setSelection() {
+
+        const handleSize = 16;
+        const biteSize = 4;
+        const color = 0xffffff;
+        const left = -this.width/2 - handleSize/2;
+        const top = -this.height/2 - handleSize/2;
+        const right = this.width/2 - handleSize/2;
+        const bottom = this.height/2 - handleSize/2;
+
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
             this.addChild(this._selectionFrame);
         }
 
         if (this.selected) {
-            this._selectionFrame.beginFill(0xff00ff);
-            this._selectionFrame.drawRect(-this.width/2,-this.height/2,this.width,this.height);
+            this._selectionFrame.beginFill(color);
+            this._selectionFrame.drawRect(left,top,handleSize,handleSize);
             this._selectionFrame.endFill();
             this._selectionFrame.beginHole();
-            this._selectionFrame.drawRect(-this.width/2+2,-this.height/2+2,this.width-4,this.height-4);
-            this._selectionFrame.drawRect(-this.width/2,-this.height/2+12,this.width,this.height-24);
-            this._selectionFrame.drawRect(-this.width/2+12,-this.height/2,this.width-24,this.height);
+            this._selectionFrame.drawRect(left+biteSize,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+            this._selectionFrame.endHole();
+
+            this._selectionFrame.beginFill(color);
+            this._selectionFrame.drawRect(left,bottom,handleSize,handleSize);
+            this._selectionFrame.endFill();
+            this._selectionFrame.beginHole();
+            this._selectionFrame.drawRect(left+biteSize,bottom,handleSize-biteSize,handleSize-biteSize);
+            this._selectionFrame.endHole();
+
+            this._selectionFrame.beginFill(color);
+            this._selectionFrame.drawRect(right,top,handleSize,handleSize);
+            this._selectionFrame.endFill();
+            this._selectionFrame.beginHole();
+            this._selectionFrame.drawRect(right,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+            this._selectionFrame.endHole();
+
+            this._selectionFrame.beginFill(color);
+            this._selectionFrame.drawRect(right,bottom,handleSize,handleSize);
+            this._selectionFrame.endFill();
+            this._selectionFrame.beginHole();
+            this._selectionFrame.drawRect(right,bottom,handleSize-biteSize,handleSize-biteSize);
             this._selectionFrame.endHole();
         } else {
             this._selectionFrame.clear();
