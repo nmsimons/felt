@@ -43,7 +43,7 @@ async function main() {
     // create local map for selected shapes - contains customized PIXI objects
     const localSelectionMap = new Map<string, FeltShape>();
 
-    const manageSelection = (dobj: FeltShape | undefined) => {
+    const setSelected = (dobj: FeltShape | undefined) => {
 
         localSelectionMap.forEach ((value: FeltShape | undefined) => {
             if (value) {
@@ -70,7 +70,7 @@ async function main() {
     }
 
     // create PIXI app
-    const pixiApp = await initPixiApp(manageSelection);
+    const pixiApp = await initPixiApp(setSelected);
 
     // create Fluid map for shapes - contains only the data that needs to be
     // synched between clients
@@ -101,7 +101,7 @@ async function main() {
             x, // x
             y, // y
             setFluidPosition, // function that syncs local data with Fluid
-            manageSelection, // function that manages local selection
+            setSelected, // function that manages local selection
         );
 
         localMap.set(id, fs); // add the new shape to local data
@@ -120,6 +120,8 @@ async function main() {
     ) => {
         const fs = addNewLocalShape(shape, color, id, x, y);
         setFluidPosition(fs);
+
+        return fs;
     };
 
     // get the Fluid shapes that already exist
@@ -133,7 +135,8 @@ async function main() {
     // function passed into React UX for creating shapes
     const createShape = (shape: Shape, color: Color) => {
         if (fluidMap.size < shapeLimit) {
-            addNewShape(shape, color, Guid.create().toString(), 100, 100);
+            const fs = addNewShape(shape, color, Guid.create().toString(), 100, 100);
+            setSelected(fs);
         }
     };
 
@@ -143,7 +146,7 @@ async function main() {
                 if (value != undefined) {
                     changeColor(value, getNextColor(value.color));
                 } else {
-                    manageSelection(undefined);
+                    setSelected(undefined);
                 }
             })
         }
@@ -158,10 +161,10 @@ async function main() {
         if (localSelectionMap.size > 0) {
             localSelectionMap.forEach ((value: FeltShape | undefined) => {
                 if (value != undefined) {
-                    manageSelection(undefined);
+                    setSelected(undefined);
                     deleteShape(value);
                 } else {
-                    manageSelection(undefined);
+                    setSelected(undefined);
                 }
             })
         }
@@ -260,7 +263,7 @@ export class FeltShape extends PIXI.Graphics {
         x: number,
         y: number,
         setFluidPosition: (dobj: FeltShape) => void,
-        manageSelection: (dobj: FeltShape) => void
+        setSelected: (dobj: FeltShape) => void
     ) {
         super();
         this.id = id;
@@ -306,7 +309,7 @@ export class FeltShape extends PIXI.Graphics {
         };
 
         const onSelect = (event: any) => {
-            manageSelection(this);
+            setSelected(this);
         };
 
         // sets local postion and enforces canvas boundary
@@ -339,7 +342,7 @@ export class FeltShape extends PIXI.Graphics {
 
     set selected(value: boolean) {
         this._selected = value;
-        this.setSelection();
+        this.showSelection();
     }
 
     get selected() {
@@ -354,7 +357,7 @@ export class FeltShape extends PIXI.Graphics {
         return this._deleted
     }
 
-    private setSelection() {
+    private showSelection() {
 
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
