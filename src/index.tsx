@@ -48,13 +48,12 @@ async function main() {
         localSelectionMap.forEach ((value: FeltShape | undefined) => {
             if (value) {
                 value.selected = false;
+                localSelectionMap.delete(value.id);
             }
         })
 
-        localSelectionMap.clear();
-
-        if (!(dobj === undefined)) {
-            if (!(dobj.id === undefined))
+        if (dobj) {
+            if (!(dobj.id === undefined) && !localSelectionMap.has(dobj.id))
             {
                 localSelectionMap.set(dobj.id, dobj);
             }
@@ -159,6 +158,7 @@ async function main() {
         if (localSelectionMap.size > 0) {
             localSelectionMap.forEach ((value: FeltShape | undefined) => {
                 if (value != undefined) {
+                    manageSelection(undefined);
                     deleteShape(value);
                 } else {
                     manageSelection(undefined);
@@ -171,7 +171,6 @@ async function main() {
         value.deleted = true;
         setFluidPosition(value);
         localMap.delete(value.id);
-        manageSelection(undefined);
         value.destroy();
     }
 
@@ -183,6 +182,7 @@ async function main() {
             const localShape = localMap.get(changed.key);
             if (localShape) {
                 if (remoteShape.deleted) {
+                    localSelectionMap.delete(localShape.id);
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
@@ -356,6 +356,13 @@ export class FeltShape extends PIXI.Graphics {
 
     private setSelection() {
 
+        if (!this._selectionFrame) {
+            this._selectionFrame = new PIXI.Graphics();
+            this.addChild(this._selectionFrame);
+        }
+
+        this._selectionFrame.clear();
+
         const handleSize = 16;
         const biteSize = 4;
         const color = 0xffffff;
@@ -363,11 +370,6 @@ export class FeltShape extends PIXI.Graphics {
         const top = -this.height/2 - handleSize/2;
         const right = this.width/2 - handleSize/2;
         const bottom = this.height/2 - handleSize/2;
-
-        if (!this._selectionFrame) {
-            this._selectionFrame = new PIXI.Graphics();
-            this.addChild(this._selectionFrame);
-        }
 
         if (this.selected) {
             this._selectionFrame.beginFill(color);
