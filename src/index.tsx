@@ -17,6 +17,7 @@ import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
 import './styles.scss';
+import { NullBlobStorageService } from '@fluidframework/routerlicious-driver';
 
 async function main() {
 
@@ -36,11 +37,41 @@ async function main() {
     const { container, services } = await loadFluidData();
     const audience = services.audience;
 
-    // create PIXI app
-    const pixiApp = await initPixiApp();
-
     // create local map for shapes - contains customized PIXI objects
     const localMap = new Map<string, FeltShape>();
+
+    // create local map for selected shapes - contains customized PIXI objects
+    const localSelectionMap = new Map<string, FeltShape>();
+
+    const manageSelection = (dobj: FeltShape | undefined) => {
+
+        localSelectionMap.forEach ((value: FeltShape | undefined) => {
+            if (value) {
+                value.selected = false;
+            }
+        })
+
+        localSelectionMap.clear();
+
+        if (!(dobj === undefined)) {
+            if (!(dobj.id === undefined))
+            {
+                localSelectionMap.set(dobj.id, dobj);
+            }
+        }
+
+        localSelectionMap.forEach ((value: FeltShape) => {
+            value.selected = true;
+        })
+
+        const [firstKey] = localSelectionMap.keys();
+
+        console.log(firstKey);
+        console.log(localSelectionMap.size);
+    }
+
+    // create PIXI app
+    const pixiApp = await initPixiApp(manageSelection);
 
     // create Fluid map for shapes - contains only the data that needs to be
     // synched between clients
@@ -70,7 +101,8 @@ async function main() {
             id, // id
             x, // x
             y, // y
-            setFluidPosition // function that syncs local data with Fluid
+            setFluidPosition, // function that syncs local data with Fluid
+            manageSelection, // function that manages local selection
         );
 
         localMap.set(id, fs); // add the new shape to local data
@@ -94,7 +126,9 @@ async function main() {
     // get the Fluid shapes that already exist
     fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
          // add the Fluid shapes to the local shape data
-        addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
+        if (!fdo.deleted) {
+            addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
+        }
     });
 
     // function passed into React UX for creating shapes
@@ -104,6 +138,39 @@ async function main() {
         }
     };
 
+    const changeColor = () => {
+        if (localSelectionMap.size > 0) {
+            localSelectionMap.forEach ((value: FeltShape | undefined) => {
+                if (value != undefined) {
+                    value.color = getNextColor(value.color);
+                    setFluidPosition(value);
+                } else {
+                    manageSelection(undefined);
+                }
+            })
+        }
+    }
+
+    const deleteSelectedShapes = () => {
+        if (localSelectionMap.size > 0) {
+            localSelectionMap.forEach ((value: FeltShape | undefined) => {
+                if (value != undefined) {
+                    deleteShape(value);
+                } else {
+                    manageSelection(undefined);
+                }
+            })
+        }
+    }
+
+    const deleteShape = (value: FeltShape) => {
+        value.deleted = true;
+        setFluidPosition(value);
+        localMap.delete(value.id);
+        manageSelection(undefined);
+        value.destroy();
+    }
+
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
     fluidMap.on('valueChanged', (changed, local, target) => {
@@ -111,16 +178,22 @@ async function main() {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
             const localShape = localMap.get(changed.key);
             if (localShape) {
-                Fluid2Pixi(localShape, remoteShape);
+                if (remoteShape.deleted) {
+                    deleteShape(localShape);
+                } else {
+                    Fluid2Pixi(localShape, remoteShape);
+                }
             } else {
-                console.log('Creating shape from Fluid');
-                addNewLocalShape(
-                    remoteShape.shape,
-                    remoteShape.color,
-                    remoteShape.id,
-                    remoteShape.x,
-                    remoteShape.y
-                );
+                if (!remoteShape.deleted) {
+                    console.log('Creating shape from Fluid');
+                    addNewLocalShape(
+                        remoteShape.shape,
+                        remoteShape.color,
+                        remoteShape.id,
+                        remoteShape.x,
+                        remoteShape.y
+                    );
+                }
             }
         }
     });
@@ -132,6 +205,8 @@ async function main() {
             audience={audience}
             shapes={localMap}
             createShape={createShape}
+            changeColor={changeColor}
+            deleteShape={deleteSelectedShapes}
         />,
         document.getElementById('root')
     );
@@ -141,9 +216,20 @@ async function main() {
 }
 
 // initialize the PIXI app
-async function initPixiApp() {
-    const app = new PIXI.Application({ width: 610, height: 545 });
+async function initPixiApp(manageSelection: (dobj: undefined) => void) {
+    var w = 610;
+    var h = 545;
+    const app = new PIXI.Application({ width: w, height: h });
     app.stage.sortableChildren = true;
+
+    let bg: PIXI.Graphics = new PIXI.Graphics();
+    bg.beginFill(0x000000);
+    bg.drawRect(0,0,w,h);
+    bg.endFill();
+    bg.interactive = true;
+    app.stage.addChild(bg);
+
+    bg.on('pointerup', manageSelection);
 
     return app;
 }
@@ -157,6 +243,9 @@ export class FeltShape extends PIXI.Graphics {
     z = 0;
     readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
+    private _selected: boolean = false;
+    private _selectionFrame: PIXI.Graphics | undefined;
+    private _deleted: boolean = false;
 
     constructor(
         app: PIXI.Application,
@@ -166,7 +255,8 @@ export class FeltShape extends PIXI.Graphics {
         id: string,
         x: number,
         y: number,
-        setFluidPosition: (dobj: FeltShape) => void
+        setFluidPosition: (dobj: FeltShape) => void,
+        manageSelection: (dobj: FeltShape) => void
     ) {
         super();
         this.id = id;
@@ -186,25 +276,17 @@ export class FeltShape extends PIXI.Graphics {
         this.x = x;
         this.y = y;
 
-        // event handlers for interaction with PIXI shapes
-        const onRightClick = (event: any) => {
-            this.color = getNextColor(this.color);
-            this.dragging = false;
-            setFluidPosition(this); // syncs local changes with Fluid data
-        };
-
         const onDragStart = (event: any) => {
             if (event.data.buttons === 1) {
-                this.alpha = 0.5;
                 this.zIndex = 9999;
                 this.dragging = true;
+                this.selected = false;
                 setFluidPosition(this); // syncs local changes with Fluid data
             }
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
-                this.alpha = 1;
                 this.zIndex = this.z;
                 this.dragging = false;
                 setFluidPosition(this); // syncs local changes with Fluid data
@@ -213,11 +295,14 @@ export class FeltShape extends PIXI.Graphics {
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
-                this.alpha = 0.5;
                 this.zIndex = 9999;
                 updatePosition(event.data.global.x, event.data.global.y);
                 setFluidPosition(this); // syncs local changes with Fluid data
             }
+        };
+
+        const onSelect = (event: any) => {
+            manageSelection(this);
         };
 
         // sets local postion and enforces canvas boundary
@@ -234,9 +319,9 @@ export class FeltShape extends PIXI.Graphics {
         // intialize event handlers
         this.on('pointerdown', onDragStart)
             .on('pointerup', onDragEnd)
+            .on('pointerup', onSelect)
             .on('pointerupoutside', onDragEnd)
             .on('pointermove', onDragMove)
-            .on('rightclick', onRightClick);
     }
 
     set color(color: Color) {
@@ -246,6 +331,43 @@ export class FeltShape extends PIXI.Graphics {
 
     get color() {
         return this._color;
+    }
+
+    set selected(value: boolean) {
+        this._selected = value;
+        this.setSelection();
+    }
+
+    get selected() {
+        return this._selected
+    }
+
+    set deleted(value: boolean) {
+        this._deleted = value;
+    }
+
+    get deleted() {
+        return this._deleted
+    }
+
+    private setSelection() {
+        if (!this._selectionFrame) {
+            this._selectionFrame = new PIXI.Graphics();
+            this.addChild(this._selectionFrame);
+        }
+
+        if (this.selected) {
+            this._selectionFrame.beginFill(0xff00ff);
+            this._selectionFrame.drawRect(-this.width/2,-this.height/2,this.width,this.height);
+            this._selectionFrame.endFill();
+            this._selectionFrame.beginHole();
+            this._selectionFrame.drawRect(-this.width/2+2,-this.height/2+2,this.width-4,this.height-4);
+            this._selectionFrame.drawRect(-this.width/2,-this.height/2+12,this.width,this.height-24);
+            this._selectionFrame.drawRect(-this.width/2+12,-this.height/2,this.width-24,this.height);
+            this._selectionFrame.endHole();
+        } else {
+            this._selectionFrame.clear();
+        }
     }
 
     private setShape() {

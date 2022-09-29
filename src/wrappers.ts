@@ -10,6 +10,7 @@ export interface FluidDisplayObject {
     z: number;
     dragging: boolean;
     shape: Shape;
+    deleted: boolean;
 }
 
 export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
@@ -22,6 +23,7 @@ export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
         z: dobj.zIndex,
         dragging: dobj.dragging,
         shape: dobj.shape,
+        deleted: dobj.deleted
     };
 };
 
@@ -34,5 +36,6 @@ export const Fluid2Pixi = (
     shapeToUpdate.alpha = sourceObject.alpha;
     shapeToUpdate.zIndex = sourceObject.z;
     shapeToUpdate.color = sourceObject.color;
+    shapeToUpdate.deleted = sourceObject.deleted;
     return shapeToUpdate;
 };

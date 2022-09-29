@@ -7,6 +7,8 @@ import { mdiCircle } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
+import { mdiDeleteForever } from '@mdi/js';
+import { mdiPalette } from '@mdi/js';
 import { Color, Shape as S } from './util';
 
 // eslint-disable-next-line react/prop-types
@@ -15,6 +17,8 @@ export function ReactApp(props: {
     audience: IAzureAudience;
     shapes: Map<string, FeltShape>;
     createShape: any;
+    changeColor: any;
+    deleteShape: any;
 }): JSX.Element {
     return (
         <div>
@@ -28,6 +32,8 @@ export function ReactApp(props: {
 // eslint-disable-next-line react/prop-types
 export function Toolbar(props: {
     createShape: any;
+    changeColor: any;
+    deleteShape: any;
     container: IFluidContainer;
     audience: IAzureAudience;
 }) {
@@ -69,6 +75,22 @@ export function Toolbar(props: {
                                 color="purple"
                                 createFunction={() =>
                                     props.createShape(S.Rectangle, Color.Purple)
+                                }
+                            />
+                            <ShapeButton
+                                icon={mdiPalette}
+                                title="Change color"
+                                color="black"
+                                createFunction={() =>
+                                    props.changeColor()
+                                }
+                            />
+                            <ShapeButton
+                                icon={mdiDeleteForever}
+                                title="Delete"
+                                color="black"
+                                createFunction={() =>
+                                    props.deleteShape()
                                 }
                             />
                         </div>
