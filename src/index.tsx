@@ -274,12 +274,12 @@ async function initPixiApp(manageSelection: (dobj: undefined) => void) {
 export class FeltShape extends PIXI.Graphics {
     id = '';
     dragging = false;
+    deleted = false;
     private _color: Color = Color.Red;
     z = 0;
     readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
     private _selectionFrame: PIXI.Graphics | undefined;
-    private _deleted: boolean = false;
 
     constructor(
         app: PIXI.Application,
@@ -363,14 +363,6 @@ export class FeltShape extends PIXI.Graphics {
 
     get color() {
         return this._color;
-    }
-
-    set deleted(value: boolean) {
-        this._deleted = value;
-    }
-
-    get deleted() {
-        return this._deleted
     }
 
     public showSelected() {
