@@ -1,5 +1,5 @@
 import { SharedMap } from 'fluid-framework';
-import { SignalManager } from '@fluid-experimental/data-objects';
+import { SignalManager, SignalListener } from '@fluid-experimental/data-objects';
 import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -211,6 +211,22 @@ async function main() {
             }
         }
     });
+
+    // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
+    // handle the signal we send and update the local state accordingly.
+    const fluidDragHandler: SignalListener = (
+        clientId: string,
+        local: boolean,
+        payload: FluidDisplayObject
+    ) => {
+        if (!local) {
+            const localShape = localMap.get(payload.id);
+            if (localShape) {
+                Fluid2Pixi(localShape, payload)
+            }
+        }
+    };
+    signaler.onSignal(Signals.ON_DRAG, fluidDragHandler);
 
     // initialize the React UX
     ReactDOM.render(
