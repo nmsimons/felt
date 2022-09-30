@@ -356,11 +356,11 @@ export class FeltShape extends PIXI.Graphics {
 
         // sets local postion and enforces canvas boundary
         const updatePosition = (x: number, y: number) => {
-            if (x >= this.width / 2 && x <= app.renderer.width - this.width / 2) {
+            if (x >= this._shape.width / 2 && x <= app.renderer.width - this._shape.width / 2) {
                 this.x = x;
             }
 
-            if (y >= this.height / 2 && y <= app.renderer.height - this.height / 2) {
+            if (y >= this._shape.height / 2 && y <= app.renderer.height - this._shape.height / 2) {
                 this.y = y;
             }
         };
