@@ -1,4 +1,5 @@
 import { SharedMap } from 'fluid-framework';
+import { SignalManager } from '@fluid-experimental/data-objects';
 import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -11,6 +12,7 @@ import {
 import {
     Pixi2Fluid,
     FluidDisplayObject,
+    Signals,
     Fluid2Pixi
 } from './wrappers';
 import * as UX from './ux';
@@ -39,6 +41,7 @@ async function main() {
 
     // create local map for shapes - contains customized PIXI objects
     const localMap = new Map<string, FeltShape>();
+    const signaler = container.initialObjects.signalManager as SignalManager;
 
     // create local map for selected shapes - contains customized PIXI objects
     const localSelectionMap = new Map<string, FeltShape>();
