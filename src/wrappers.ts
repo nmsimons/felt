@@ -8,7 +8,6 @@ export interface FluidDisplayObject {
     alpha: number;
     color: Color;
     z: number;
-    dragging: boolean;
     shape: Shape;
     deleted: boolean;
 }
@@ -21,7 +20,6 @@ export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
         alpha: dobj.alpha,
         color: dobj.color,
         z: dobj.zIndex,
-        dragging: dobj.dragging,
         shape: dobj.shape,
         deleted: dobj.deleted
     };

@@ -47,7 +47,7 @@ async function main() {
 
         localSelectionMap.forEach ((value: FeltShape | undefined) => {
             if (value) {
-                value.selected = false;
+                value.showUnselected();
                 localSelectionMap.delete(value.id);
             }
         })
@@ -60,7 +60,7 @@ async function main() {
         }
 
         localSelectionMap.forEach ((value: FeltShape) => {
-            value.selected = true;
+            value.showSelected();
         })
 
         const [firstKey] = localSelectionMap.keys();
@@ -250,7 +250,6 @@ export class FeltShape extends PIXI.Graphics {
     z = 0;
     readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
-    private _selected: boolean = false;
     private _selectionFrame: PIXI.Graphics | undefined;
     private _deleted: boolean = false;
 
@@ -340,15 +339,6 @@ export class FeltShape extends PIXI.Graphics {
         return this._color;
     }
 
-    set selected(value: boolean) {
-        this._selected = value;
-        this.showSelection();
-    }
-
-    get selected() {
-        return this._selected
-    }
-
     set deleted(value: boolean) {
         this._deleted = value;
     }
@@ -357,7 +347,7 @@ export class FeltShape extends PIXI.Graphics {
         return this._deleted
     }
 
-    private showSelection() {
+    public showSelected() {
 
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
@@ -374,37 +364,38 @@ export class FeltShape extends PIXI.Graphics {
         const right = this.width/2 - handleSize/2;
         const bottom = this.height/2 - handleSize/2;
 
-        if (this.selected) {
-            this._selectionFrame.beginFill(color);
-            this._selectionFrame.drawRect(left,top,handleSize,handleSize);
-            this._selectionFrame.endFill();
-            this._selectionFrame.beginHole();
-            this._selectionFrame.drawRect(left+biteSize,top+biteSize,handleSize-biteSize,handleSize-biteSize);
-            this._selectionFrame.endHole();
 
-            this._selectionFrame.beginFill(color);
-            this._selectionFrame.drawRect(left,bottom,handleSize,handleSize);
-            this._selectionFrame.endFill();
-            this._selectionFrame.beginHole();
-            this._selectionFrame.drawRect(left+biteSize,bottom,handleSize-biteSize,handleSize-biteSize);
-            this._selectionFrame.endHole();
+        this._selectionFrame.beginFill(color);
+        this._selectionFrame.drawRect(left,top,handleSize,handleSize);
+        this._selectionFrame.endFill();
+        this._selectionFrame.beginHole();
+        this._selectionFrame.drawRect(left+biteSize,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+        this._selectionFrame.endHole();
 
-            this._selectionFrame.beginFill(color);
-            this._selectionFrame.drawRect(right,top,handleSize,handleSize);
-            this._selectionFrame.endFill();
-            this._selectionFrame.beginHole();
-            this._selectionFrame.drawRect(right,top+biteSize,handleSize-biteSize,handleSize-biteSize);
-            this._selectionFrame.endHole();
+        this._selectionFrame.beginFill(color);
+        this._selectionFrame.drawRect(left,bottom,handleSize,handleSize);
+        this._selectionFrame.endFill();
+        this._selectionFrame.beginHole();
+        this._selectionFrame.drawRect(left+biteSize,bottom,handleSize-biteSize,handleSize-biteSize);
+        this._selectionFrame.endHole();
 
-            this._selectionFrame.beginFill(color);
-            this._selectionFrame.drawRect(right,bottom,handleSize,handleSize);
-            this._selectionFrame.endFill();
-            this._selectionFrame.beginHole();
-            this._selectionFrame.drawRect(right,bottom,handleSize-biteSize,handleSize-biteSize);
-            this._selectionFrame.endHole();
-        } else {
-            this._selectionFrame.clear();
-        }
+        this._selectionFrame.beginFill(color);
+        this._selectionFrame.drawRect(right,top,handleSize,handleSize);
+        this._selectionFrame.endFill();
+        this._selectionFrame.beginHole();
+        this._selectionFrame.drawRect(right,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+        this._selectionFrame.endHole();
+
+        this._selectionFrame.beginFill(color);
+        this._selectionFrame.drawRect(right,bottom,handleSize,handleSize);
+        this._selectionFrame.endFill();
+        this._selectionFrame.beginHole();
+        this._selectionFrame.drawRect(right,bottom,handleSize-biteSize,handleSize-biteSize);
+        this._selectionFrame.endHole();
+    }
+
+    public showUnselected() {
+        this._selectionFrame?.clear();
     }
 
     private setShape() {
