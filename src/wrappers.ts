@@ -1,6 +1,5 @@
-import { DisplayObject, Sprite, Graphics } from 'pixi.js';
 import { FeltShape } from '.';
-import { Color, getDeterministicColor, getNextColor, Shape } from './util';
+import { Color, Shape } from './util';
 
 export interface FluidDisplayObject {
     id: string;
@@ -9,17 +8,22 @@ export interface FluidDisplayObject {
     alpha: number;
     color: Color;
     z: number;
-    dragging: boolean;
     shape: Shape;
+    deleted: boolean;
+}
+
+export interface SignalPackage {
+    id: string;
+    x: number;
+    y: number;
+    z: number;
 }
 
 export const Signals = {
     ON_DRAG: 'ON_DRAG',
 } as const;
 
-export const Pixi2Fluid = (
-    dobj: FeltShape
-): FluidDisplayObject => {
+export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
     return {
         id: dobj.id,
         x: dobj.x,
@@ -27,8 +31,8 @@ export const Pixi2Fluid = (
         alpha: dobj.alpha,
         color: dobj.color,
         z: dobj.zIndex,
-        dragging: dobj.dragging,
         shape: dobj.shape,
+        deleted: dobj.deleted
     };
 };
 
@@ -41,18 +45,25 @@ export const Fluid2Pixi = (
     shapeToUpdate.alpha = sourceObject.alpha;
     shapeToUpdate.zIndex = sourceObject.z;
     shapeToUpdate.color = sourceObject.color;
-
-    if (sourceObject.dragging) {
-        shapeToUpdate.frames++;
-    } else {
-        shapeToUpdate.frames = 0;
-    }
-
-    if (shapeToUpdate.signals) {
-        console.log("remote frames (signals):" + shapeToUpdate.frames + " timestamp: " + Date.now());
-    } else {
-        console.log("remote frames (ops):" + shapeToUpdate.frames+ " timestamp: " + Date.now());
-    }
-
+    shapeToUpdate.deleted = sourceObject.deleted;
     return shapeToUpdate;
 };
+
+export const Pixi2Signal = (dobj: FeltShape): SignalPackage => {
+    return {
+        id: dobj.id,
+        x: dobj.x,
+        y: dobj.y,
+        z: dobj.zIndex
+    }
+}
+
+export const Signal2Pixi = (
+    shapeToUpdate: FeltShape,
+    sourceObject: SignalPackage
+) => {
+    shapeToUpdate.x = sourceObject.x;
+    shapeToUpdate.y = sourceObject.y;
+    shapeToUpdate.zIndex = sourceObject.z;
+    return shapeToUpdate;
+}

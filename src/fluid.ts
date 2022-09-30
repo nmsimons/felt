@@ -2,20 +2,20 @@ import {
     AzureFunctionTokenProvider,
     AzureClient,
     AzureConnectionConfig,
+    AzureRemoteConnectionConfig,
+    AzureLocalConnectionConfig,
     AzureContainerServices,
-    LOCAL_MODE_TENANT_ID,
 } from '@fluidframework/azure-client';
 import {
     generateTestUser,
     InsecureTokenProvider,
 } from '@fluidframework/test-client-utils';
-import { SignalManager } from '@fluid-experimental/data-objects';
 import {
     ContainerSchema,
     IFluidContainer,
-    SharedDirectory,
     SharedMap,
 } from 'fluid-framework';
+import { SignalManager } from '@fluid-experimental/data-objects';
 
 // Define the server (Azure or local) we will be using
 const useAzure = process.env.FLUID_CLIENT === 'azure';
@@ -30,22 +30,23 @@ const azureUser = {
     userName: user.name,
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure
-    ? {
-          tenantId: process.env.AZURE_TENANT_ID ?? LOCAL_MODE_TENANT_ID,
-          tokenProvider: new AzureFunctionTokenProvider(
-              process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
-              azureUser
-          ),
-          orderer: process.env.AZURE_ORDERER ?? 'http://localhost:7070',
-          storage: process.env.AZURE_STORAGE ?? 'http://localhost:7070',
-      }
-    : {
-          tenantId: LOCAL_MODE_TENANT_ID,
-          tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
-          orderer: 'http://localhost:7070',
-          storage: 'http://localhost:7070',
-      };
+const remoteConnectionConfig: AzureRemoteConnectionConfig = {
+    type: "remote",
+    tenantId: process.env.AZURE_TENANT_ID!,
+    tokenProvider: new AzureFunctionTokenProvider(
+        process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
+        azureUser
+    ),
+    endpoint: process.env.AZURE_ORDERER!,
+}
+
+const localConnectionConfig: AzureLocalConnectionConfig = {
+    type: "local",
+    tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
+    endpoint: 'http://localhost:7070',
+}
+
+const connectionConfig: AzureConnectionConfig = useAzure ? remoteConnectionConfig : localConnectionConfig;
 
 const clientProps = {
     connection: connectionConfig,
@@ -53,26 +54,25 @@ const clientProps = {
 
 const client = new AzureClient(clientProps);
 
-// Define the schema of our Container. This includes the DDSes/DataObjects that we want to create dynamically and any
+// Define the schema of our Container. This includes the DDSes/DataObjects
+// that we want to create dynamically and any
 // initial DataObjects we want created when the container is first created.
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        /* [id]: DataObject */
-        shapes: SharedDirectory,
-        stats: SharedMap,
+        shapes: SharedMap,
         signalManager: SignalManager,
     },
-    dynamicObjectTypes: [SharedDirectory, SharedMap],
+    dynamicObjectTypes: [SharedMap],
 };
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
-    // We don't have any additional configuration to do here. If we needed to initialize some of our Fluid data, we
-    // could do so here.
+    // We don't have any additional configuration to do here. If we needed to initialize
+    // some of our Fluid data, we could do so here.
 }
 
 /**
- * This function will create a container if no container ID is passed on the hash portion of the URL. If a container ID
- * is provided, it will load the container.
+ * This function will create a container if no container ID is passed on the hash portion of the URL.
+ * If a container ID is provided, it will load the container.
  *
  * @returns The loaded container and container services.
  */
