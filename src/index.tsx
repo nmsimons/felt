@@ -13,7 +13,9 @@ import {
     Pixi2Fluid,
     FluidDisplayObject,
     Signals,
-    Fluid2Pixi
+    Fluid2Pixi,
+    Pixi2Signal,
+    Signal2Pixi
 } from './wrappers';
 import * as UX from './ux';
 import { Guid } from 'guid-typescript';
@@ -83,11 +85,13 @@ async function main() {
     // It's passed in to the CreateShape function which wires it up to the
     // PIXI events for the shape.
     const setFluidPosition = (dobj: FeltShape) => {
-        const fobj = Pixi2Fluid(dobj);
+
         // Store the position in Fluid
         if (dobj.dragging) {
-            signaler.submitSignal(Signals.ON_DRAG, fobj);
+            const sig = Pixi2Signal(dobj);
+            signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
+            const fobj = Pixi2Fluid(dobj);
             fluidMap.set(dobj.id, fobj);
         }
     };
@@ -222,7 +226,7 @@ async function main() {
         if (!local) {
             const localShape = localMap.get(payload.id);
             if (localShape) {
-                Fluid2Pixi(localShape, payload)
+                Signal2Pixi(localShape, payload);
             }
         }
     };
