@@ -218,7 +218,7 @@ async function main() {
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
-    const fluidDragHandler: SignalListener = (
+    const signalHandler: SignalListener = (
         clientId: string,
         local: boolean,
         payload: FluidDisplayObject
@@ -230,7 +230,8 @@ async function main() {
             }
         }
     };
-    signaler.onSignal(Signals.ON_DRAG, fluidDragHandler);
+
+    signaler.onSignal(Signals.ON_DRAG, signalHandler);
 
     // initialize the React UX
     ReactDOM.render(
