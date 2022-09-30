@@ -15,6 +15,7 @@ import {
     IFluidContainer,
     SharedMap,
 } from 'fluid-framework';
+import { SignalManager } from '@fluid-experimental/data-objects';
 
 // Define the server (Azure or local) we will be using
 const useAzure = process.env.FLUID_CLIENT === 'azure';
@@ -59,6 +60,7 @@ const client = new AzureClient(clientProps);
 const containerSchema: ContainerSchema = {
     initialObjects: {
         shapes: SharedMap,
+        signalManager: SignalManager,
     },
     dynamicObjectTypes: [SharedMap],
 };
