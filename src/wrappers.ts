@@ -16,6 +16,7 @@ export interface SignalPackage {
     id: string;
     x: number;
     y: number;
+    z: number;
 }
 
 export const Signals = {
@@ -35,14 +36,6 @@ export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
     };
 };
 
-export const Pixi2Signal = (dobj: FeltShape): SignalPackage => {
-    return {
-        id: dobj.id,
-        x: dobj.x,
-        y: dobj.y
-    }
-}
-
 export const Fluid2Pixi = (
     shapeToUpdate: FeltShape,
     sourceObject: FluidDisplayObject
@@ -56,11 +49,21 @@ export const Fluid2Pixi = (
     return shapeToUpdate;
 };
 
+export const Pixi2Signal = (dobj: FeltShape): SignalPackage => {
+    return {
+        id: dobj.id,
+        x: dobj.x,
+        y: dobj.y,
+        z: dobj.zIndex
+    }
+}
+
 export const Signal2Pixi = (
     shapeToUpdate: FeltShape,
     sourceObject: SignalPackage
 ) => {
     shapeToUpdate.x = sourceObject.x;
     shapeToUpdate.y = sourceObject.y;
+    shapeToUpdate.zIndex = sourceObject.z;
     return shapeToUpdate;
 }

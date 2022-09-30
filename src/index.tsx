@@ -312,16 +312,15 @@ export class FeltShape extends PIXI.Graphics {
 
         const onDragStart = (event: any) => {
             if (event.data.buttons === 1) {
-                this.zIndex = 9999;
+                this.zIndex = 2;
                 this.dragging = true;
-                //this.selected = false;
                 setFluidPosition(this); // syncs local changes with Fluid data
             }
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
-                this.zIndex = this.z;
+                this.zIndex = 1;
                 this.dragging = false;
                 setFluidPosition(this); // syncs local changes with Fluid data
             }
@@ -329,7 +328,6 @@ export class FeltShape extends PIXI.Graphics {
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
-                this.zIndex = 9999;
                 updatePosition(event.data.global.x, event.data.global.y);
                 setFluidPosition(this); // syncs local changes with Fluid data
             }
