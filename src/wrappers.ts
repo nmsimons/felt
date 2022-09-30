@@ -12,6 +12,10 @@ export interface FluidDisplayObject {
     deleted: boolean;
 }
 
+export const Signals = {
+    ON_DRAG: 'ON_DRAG',
+} as const;
+
 export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
     return {
         id: dobj.id,
