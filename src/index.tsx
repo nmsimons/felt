@@ -86,7 +86,7 @@ async function main() {
         const fobj = Pixi2Fluid(dobj);
         // Store the position in Fluid
         if (dobj.dragging) {
-            //signaler.submitSignal(Signals.ON_DRAG, fobj);
+            signaler.submitSignal(Signals.ON_DRAG, fobj);
         } else {
             fluidMap.set(dobj.id, fobj);
         }
