@@ -52,8 +52,9 @@ async function main() {
 
         localSelectionMap.forEach ((value: FeltShape | undefined) => {
             if (value) {
-                value.showUnselected();
+                value.removeSelection();
                 localSelectionMap.delete(value.id);
+                setFluidPosition(value);
             }
         })
 
@@ -65,7 +66,8 @@ async function main() {
         }
 
         localSelectionMap.forEach ((value: FeltShape) => {
-            value.showSelected();
+            value.showSelection();
+            setFluidPosition(value);
         })
 
         const [firstKey] = localSelectionMap.keys();
@@ -200,17 +202,25 @@ async function main() {
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
+                    if (remoteShape.selected) {
+                        localShape.showPresence();
+                    } else {
+                        localShape.removePresence();
+                    }
                 }
             } else {
                 if (!remoteShape.deleted) {
                     console.log('Creating shape from Fluid');
-                    addNewLocalShape(
+                    const newLocalShape = addNewLocalShape(
                         remoteShape.shape,
                         remoteShape.color,
                         remoteShape.id,
                         remoteShape.x,
                         remoteShape.y
                     );
+                    if (remoteShape.selected) {
+                        newLocalShape.showPresence();
+                    }
                 }
             }
         }
@@ -275,11 +285,14 @@ export class FeltShape extends PIXI.Graphics {
     id = '';
     dragging = false;
     deleted = false;
+    selected = false;
     private _color: Color = Color.Red;
     z = 0;
     readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
     private _selectionFrame: PIXI.Graphics | undefined;
+    private _presenceFrame: PIXI.Graphics | undefined;
+    private _shape: PIXI.Graphics;
 
     constructor(
         app: PIXI.Application,
@@ -297,11 +310,15 @@ export class FeltShape extends PIXI.Graphics {
         this.shape = shape;
         this.size = size;
 
-        this.beginFill(0xffffff);
+        this._shape = new PIXI.Graphics();
+        this.addChild(this._shape);
+
+        this._shape.beginFill(0xffffff);
 
         this.setShape();
 
-        this.endFill();
+        this._shape.endFill();
+
         console.log(`initializing color to: ${color}`);
         this.color = color;
 
@@ -358,14 +375,16 @@ export class FeltShape extends PIXI.Graphics {
 
     set color(color: Color) {
         this._color = color;
-        this.tint = Number(color);
+        this._shape.tint = Number(color);
     }
 
     get color() {
         return this._color;
     }
 
-    public showSelected() {
+    public showSelection() {
+
+        this.selected = true;
 
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
@@ -377,52 +396,92 @@ export class FeltShape extends PIXI.Graphics {
         const handleSize = 16;
         const biteSize = 4;
         const color = 0xffffff;
-        const left = -this.width/2 - handleSize/2;
-        const top = -this.height/2 - handleSize/2;
-        const right = this.width/2 - handleSize/2;
-        const bottom = this.height/2 - handleSize/2;
+        const left = -this._shape.width/2 - handleSize/2;
+        const top = -this._shape.height/2 - handleSize/2;
+        const right = this._shape.width/2 - handleSize/2;
+        const bottom = this._shape.height/2 - handleSize/2;
 
+        this._selectionFrame.zIndex = 5;
 
-        this._selectionFrame.beginFill(color);
-        this._selectionFrame.drawRect(left,top,handleSize,handleSize);
-        this._selectionFrame.endFill();
-        this._selectionFrame.beginHole();
-        this._selectionFrame.drawRect(left+biteSize,top+biteSize,handleSize-biteSize,handleSize-biteSize);
-        this._selectionFrame.endHole();
-
-        this._selectionFrame.beginFill(color);
-        this._selectionFrame.drawRect(left,bottom,handleSize,handleSize);
-        this._selectionFrame.endFill();
-        this._selectionFrame.beginHole();
-        this._selectionFrame.drawRect(left+biteSize,bottom,handleSize-biteSize,handleSize-biteSize);
-        this._selectionFrame.endHole();
-
-        this._selectionFrame.beginFill(color);
-        this._selectionFrame.drawRect(right,top,handleSize,handleSize);
-        this._selectionFrame.endFill();
-        this._selectionFrame.beginHole();
-        this._selectionFrame.drawRect(right,top+biteSize,handleSize-biteSize,handleSize-biteSize);
-        this._selectionFrame.endHole();
-
-        this._selectionFrame.beginFill(color);
-        this._selectionFrame.drawRect(right,bottom,handleSize,handleSize);
-        this._selectionFrame.endFill();
-        this._selectionFrame.beginHole();
-        this._selectionFrame.drawRect(right,bottom,handleSize-biteSize,handleSize-biteSize);
-        this._selectionFrame.endHole();
+        this.drawFrame(this._selectionFrame, handleSize, biteSize, color, left, top, right, bottom);
     }
 
-    public showUnselected() {
+    public removeSelection() {
+        this.selected = false;
         this._selectionFrame?.clear();
+    }
+
+    public showPresence() {
+
+        if (!this._presenceFrame) {
+            this._presenceFrame = new PIXI.Graphics();
+            this.addChild(this._presenceFrame);
+        }
+
+        this._presenceFrame.clear();
+
+        const handleSize = 10;
+        const biteSize = 4;
+        const color = 0xaaaaaa;
+        const left = -this._shape.width/2 - handleSize/2;
+        const top = -this._shape.height/2 - handleSize/2;
+        const right = this._shape.width/2 - handleSize/2;
+        const bottom = this._shape.height/2 - handleSize/2;
+
+        this._presenceFrame.zIndex = 4;
+
+        this.drawFrame(this._presenceFrame, handleSize, biteSize, color, left, top, right, bottom);
+    }
+
+    public removePresence() {
+        this._presenceFrame?.clear();
+    }
+
+    private drawFrame(frame: PIXI.Graphics,
+            handleSize: number,
+            biteSize: number,
+            color: number,
+            left: number,
+            top: number,
+            right: number,
+            bottom: number) {
+
+        frame.beginFill(color);
+        frame.drawRect(left,top,handleSize,handleSize);
+        frame.endFill();
+        frame.beginHole();
+        frame.drawRect(left+biteSize,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+        frame.endHole();
+
+        frame.beginFill(color);
+        frame.drawRect(left,bottom,handleSize,handleSize);
+        frame.endFill();
+        frame.beginHole();
+        frame.drawRect(left+biteSize,bottom,handleSize-biteSize,handleSize-biteSize);
+        frame.endHole();
+
+        frame.beginFill(color);
+        frame.drawRect(right,top,handleSize,handleSize);
+        frame.endFill();
+        frame.beginHole();
+        frame.drawRect(right,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+        frame.endHole();
+
+        frame.beginFill(color);
+        frame.drawRect(right,bottom,handleSize,handleSize);
+        frame.endFill();
+        frame.beginHole();
+        frame.drawRect(right,bottom,handleSize-biteSize,handleSize-biteSize);
+        frame.endHole();
     }
 
     private setShape() {
         switch (this.shape) {
             case Shape.Circle:
-                this.drawCircle(0, 0, this.size / 2);
+                this._shape.drawCircle(0, 0, this.size / 2);
                 break;
             case Shape.Square:
-                this.drawRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                this._shape.drawRect(-this.size / 2, -this.size / 2, this.size, this.size);
                 break;
             case Shape.Triangle:
                 // eslint-disable-next-line no-case-declarations
@@ -434,10 +493,10 @@ export class FeltShape extends PIXI.Graphics {
                     this.size / 2,
                     this.size / 2,
                 ];
-                this.drawPolygon(path);
+                this._shape.drawPolygon(path);
                 break;
             case Shape.Rectangle:
-                this.drawRect(
+                this._shape.drawRect(
                     (-this.size * 1.5) / 2,
                     -this.size / 2,
                     this.size * 1.5,
@@ -445,7 +504,7 @@ export class FeltShape extends PIXI.Graphics {
                 );
                 break;
             default:
-                this.drawCircle(0, 0, this.size);
+                this._shape.drawCircle(0, 0, this.size);
                 break;
         }
     }

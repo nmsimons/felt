@@ -10,6 +10,7 @@ export interface FluidDisplayObject {
     z: number;
     shape: Shape;
     deleted: boolean;
+    selected: boolean;
 }
 
 export interface SignalPackage {
@@ -32,7 +33,8 @@ export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
         color: dobj.color,
         z: dobj.zIndex,
         shape: dobj.shape,
-        deleted: dobj.deleted
+        deleted: dobj.deleted,
+        selected: dobj.selected
     };
 };
 
