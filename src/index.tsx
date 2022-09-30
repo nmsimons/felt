@@ -85,7 +85,11 @@ async function main() {
     const setFluidPosition = (dobj: FeltShape) => {
         const fobj = Pixi2Fluid(dobj);
         // Store the position in Fluid
-        fluidMap.set(dobj.id, fobj);
+        if (dobj.dragging) {
+            //signaler.submitSignal(Signals.ON_DRAG, fobj);
+        } else {
+            fluidMap.set(dobj.id, fobj);
+        }
     };
 
     const addNewLocalShape = (
