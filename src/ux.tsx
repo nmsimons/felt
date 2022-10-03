@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { IAzureAudience } from '@fluidframework/azure-client';
-import { IFluidContainer, SharedMap } from 'fluid-framework';
 import { FeltShape } from '.';
 import Icon from '@mdi/react';
 import { mdiCircle } from '@mdi/js';
@@ -13,7 +12,6 @@ import { Color, Shape as S } from './util';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
-    container: IFluidContainer;
     audience: IAzureAudience;
     shapes: Map<string, FeltShape>;
     createShape: any;
@@ -33,7 +31,6 @@ export function Toolbar(props: {
     createShape: any;
     changeColor: any;
     deleteShape: any;
-    container: IFluidContainer;
     audience: IAzureAudience;
 }) {
     const test = mdiCircle;
@@ -99,7 +96,6 @@ export function Toolbar(props: {
                     <div className="navbar-item">
                         <div className="field is-grouped">
                             <Audience
-                                container={props.container}
                                 audience={props.audience}
                             />
                         </div>
@@ -140,10 +136,10 @@ export function Canvas() {
 }
 
 export function Audience(props: {
-    container: IFluidContainer;
     audience: IAzureAudience;
 }): JSX.Element {
-    const { container, audience } = props;
+    const { audience } = props;
+
     // retrieve all the members currently in the session
     const [members, setMembers] = React.useState(
         Array.from(audience.getMembers().values())
@@ -157,29 +153,11 @@ export function Audience(props: {
 
     // Setup a listener to update our users when new clients join the session
     React.useEffect(() => {
-        container.on('connected', setMembersCallback);
         audience.on('membersChanged', setMembersCallback);
         return () => {
-            container.off('connected', () => setMembersCallback);
             audience.off('membersChanged', () => setMembersCallback);
         };
-    }, [container, audience, setMembersCallback]);
-
-    let memberDisplay: JSX.Element[];
-    if (members.length > 3) {
-        const membersToShow = members;
-        memberDisplay = membersToShow.map((v, k) => (
-            <li key={k.toString()}>
-                {v.userName} ({v.userId})
-            </li>
-        ));
-    } else {
-        memberDisplay = members.map((v, k) => (
-            <li key={k.toString()}>
-                {v.userName} ({v.userId})
-            </li>
-        ));
-    }
+    }, [audience, setMembersCallback]);
 
     return (
         <p className="control">

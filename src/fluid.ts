@@ -60,6 +60,7 @@ const client = new AzureClient(clientProps);
 const containerSchema: ContainerSchema = {
     initialObjects: {
         shapes: SharedMap,
+        presence: SharedMap,
         signalManager: SignalManager,
     },
     dynamicObjectTypes: [SharedMap],

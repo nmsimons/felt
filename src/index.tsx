@@ -21,7 +21,6 @@ import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
 import './styles.scss';
-import { NullBlobStorageService } from '@fluidframework/routerlicious-driver';
 
 async function main() {
 
@@ -42,38 +41,38 @@ async function main() {
     const audience = services.audience;
 
     // create local map for shapes - contains customized PIXI objects
-    const localMap = new Map<string, FeltShape>();
+    const localShapes = new Map<string, FeltShape>();
     const signaler = container.initialObjects.signalManager as SignalManager;
 
     // create local map for selected shapes - contains customized PIXI objects
-    const localSelectionMap = new Map<string, FeltShape>();
+    const localSelection = new Map<string, FeltShape>();
 
     const setSelected = (dobj: FeltShape | undefined) => {
 
-        localSelectionMap.forEach ((value: FeltShape | undefined) => {
+        localSelection.forEach ((value: FeltShape | undefined) => {
             if (value) {
                 value.removeSelection();
-                localSelectionMap.delete(value.id);
+                localSelection.delete(value.id);
                 setFluidPosition(value);
             }
         })
 
         if (dobj) {
-            if (!(dobj.id === undefined) && !localSelectionMap.has(dobj.id))
+            if (!(dobj.id === undefined) && !localSelection.has(dobj.id))
             {
-                localSelectionMap.set(dobj.id, dobj);
+                localSelection.set(dobj.id, dobj);
             }
         }
 
-        localSelectionMap.forEach ((value: FeltShape) => {
+        localSelection.forEach ((value: FeltShape) => {
             value.showSelection();
             setFluidPosition(value);
         })
 
-        const [firstKey] = localSelectionMap.keys();
+        const [firstKey] = localSelection.keys();
 
         console.log(firstKey);
-        console.log(localSelectionMap.size);
+        console.log(localSelection.size);
     }
 
     // create PIXI app
@@ -81,7 +80,7 @@ async function main() {
 
     // create Fluid map for shapes - contains only the data that needs to be
     // synched between clients
-    const fluidMap = container.initialObjects.shapes as SharedMap;
+    const fluidShapes = container.initialObjects.shapes as SharedMap;
 
     // This function will be called each time a shape is moved around the canvas.
     // It's passed in to the CreateShape function which wires it up to the
@@ -94,7 +93,7 @@ async function main() {
             signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
             const fobj = Pixi2Fluid(dobj);
-            fluidMap.set(dobj.id, fobj);
+            fluidShapes.set(dobj.id, fobj);
         }
     };
 
@@ -117,7 +116,7 @@ async function main() {
             setSelected, // function that manages local selection
         );
 
-        localMap.set(id, fs); // add the new shape to local data
+        localShapes.set(id, fs); // add the new shape to local data
         pixiApp.stage.addChild(fs); // add the new shape to the PIXI canvas
 
         return fs;
@@ -138,7 +137,7 @@ async function main() {
     };
 
     // get the Fluid shapes that already exist
-    fluidMap.forEach((fdo: FluidDisplayObject, id: string) => {
+    fluidShapes.forEach((fdo: FluidDisplayObject, id: string) => {
          // add the Fluid shapes to the local shape data
         if (!fdo.deleted) {
             addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
@@ -147,15 +146,15 @@ async function main() {
 
     // function passed into React UX for creating shapes
     const createShape = (shape: Shape, color: Color) => {
-        if (fluidMap.size < shapeLimit) {
+        if (fluidShapes.size < shapeLimit) {
             const fs = addNewShape(shape, color, Guid.create().toString(), 100, 100);
             setSelected(fs);
         }
     };
 
     const changeColorofSelected = () => {
-        if (localSelectionMap.size > 0) {
-            localSelectionMap.forEach ((value: FeltShape | undefined) => {
+        if (localSelection.size > 0) {
+            localSelection.forEach ((value: FeltShape | undefined) => {
                 if (value != undefined) {
                     changeColor(value, getNextColor(value.color));
                 } else {
@@ -171,8 +170,8 @@ async function main() {
     }
 
     const deleteSelectedShapes = () => {
-        if (localSelectionMap.size > 0) {
-            localSelectionMap.forEach ((value: FeltShape | undefined) => {
+        if (localSelection.size > 0) {
+            localSelection.forEach ((value: FeltShape | undefined) => {
                 if (value != undefined) {
                     setSelected(undefined);
                     deleteShape(value);
@@ -186,19 +185,19 @@ async function main() {
     const deleteShape = (value: FeltShape) => {
         value.deleted = true;
         setFluidPosition(value);
-        localMap.delete(value.id);
+        localShapes.delete(value.id);
         value.destroy();
     }
 
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
-    fluidMap.on('valueChanged', (changed, local, target) => {
+    fluidShapes.on('valueChanged', (changed, local, target) => {
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
-            const localShape = localMap.get(changed.key);
+            const localShape = localShapes.get(changed.key);
             if (localShape) {
                 if (remoteShape.deleted) {
-                    localSelectionMap.delete(localShape.id);
+                    localSelection.delete(localShape.id);
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
@@ -234,7 +233,7 @@ async function main() {
         payload: FluidDisplayObject
     ) => {
         if (!local) {
-            const localShape = localMap.get(payload.id);
+            const localShape = localShapes.get(payload.id);
             if (localShape) {
                 Signal2Pixi(localShape, payload);
             }
@@ -246,9 +245,8 @@ async function main() {
     // initialize the React UX
     ReactDOM.render(
         <UX.ReactApp
-            container={container}
             audience={audience}
-            shapes={localMap}
+            shapes={localShapes}
             createShape={createShape}
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
