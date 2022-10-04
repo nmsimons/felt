@@ -15,12 +15,16 @@ import {
     Signals,
     Fluid2Pixi,
     Pixi2Signal,
-    Signal2Pixi
+    Signal2Pixi,
+    SignalPackage
 } from './wrappers';
 import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
 import './styles.scss';
+import { stringify } from 'querystring';
+import { MockHandle } from '@fluidframework/test-runtime-utils';
+import { AzureMember } from '@fluidframework/azure-client';
 
 async function main() {
 
@@ -47,32 +51,51 @@ async function main() {
     // create local map for selected shapes - contains customized PIXI objects
     const localSelection = new Map<string, FeltShape>();
 
-    const setSelected = (dobj: FeltShape | undefined) => {
+    const setSelected = async (dobj: FeltShape | undefined) => {
 
-        localSelection.forEach ((value: FeltShape | undefined) => {
+        //Since we don't currently support multi select, clear the current selection
+        localSelection.forEach (async (value: FeltShape | undefined) => {
             if (value) {
                 value.removeSelection();
                 localSelection.delete(value.id);
-                setFluidPosition(value);
+
+                const users: string[] | undefined = fluidPresence.get(value.id);
+                if (users !== undefined) {
+                    const i = users.indexOf(audience.getMyself()!.userId);
+                    if (i !== -1){
+                        users.splice(i, 1);
+                        fluidPresence.set(value.id, users);
+                        console.log("DELETE " + audience.getMyself()!.userId);
+                    }
+                }
             }
         })
 
         if (dobj) {
-            if (!(dobj.id === undefined) && !localSelection.has(dobj.id))
+            if (dobj.id !== undefined && !localSelection.has(dobj.id))
             {
                 localSelection.set(dobj.id, dobj);
+                const users: string[] | undefined = fluidPresence.get(dobj.id);
+                if (users === undefined) {
+                    const newUsers = [];
+                    newUsers.push(audience.getMyself()!.userId);
+                    fluidPresence.set(dobj.id, newUsers);
+                    console.log("ADDED " + audience.getMyself()!.userId);
+                } else {
+                    console.log(users);
+                    const i = users.indexOf(audience.getMyself()!.userId);
+                    if (i === -1){
+                        users.push(audience.getMyself()!.userId);
+                        fluidPresence.set(dobj.id, users);
+                        console.log("UPDATED " + audience.getMyself()!.userId);
+                    }
+                }
             }
         }
 
         localSelection.forEach ((value: FeltShape) => {
             value.showSelection();
-            setFluidPosition(value);
         })
-
-        const [firstKey] = localSelection.keys();
-
-        console.log(firstKey);
-        console.log(localSelection.size);
     }
 
     // create PIXI app
@@ -81,6 +104,8 @@ async function main() {
     // create Fluid map for shapes - contains only the data that needs to be
     // synched between clients
     const fluidShapes = container.initialObjects.shapes as SharedMap;
+
+    const fluidPresence = container.initialObjects.presence as SharedMap;
 
     // This function will be called each time a shape is moved around the canvas.
     // It's passed in to the CreateShape function which wires it up to the
@@ -194,18 +219,13 @@ async function main() {
     fluidShapes.on('valueChanged', (changed, local, target) => {
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
-            const localShape = localShapes.get(changed.key);
+            const localShape = localShapes.get(remoteShape.id);
             if (localShape) {
                 if (remoteShape.deleted) {
                     localSelection.delete(localShape.id);
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
-                    if (remoteShape.selected) {
-                        localShape.showPresence();
-                    } else {
-                        localShape.removePresence();
-                    }
                 }
             } else {
                 if (!remoteShape.deleted) {
@@ -217,20 +237,50 @@ async function main() {
                         remoteShape.x,
                         remoteShape.y
                     );
-                    if (remoteShape.selected) {
-                        newLocalShape.showPresence();
-                    }
                 }
             }
         }
     });
+
+    fluidPresence.on('valueChanged', (changed, local, target) => {
+        console.log("YOYOYOYOYO ")
+        if (!local) {
+            const remote = target.get(changed.key) as string[];
+            const me: AzureMember | undefined = audience.getMyself();
+            if (me) {
+                if (localShapes.has(changed.key)) {
+                    if (remote.length > 1) {
+                        remote.forEach((userId: string) => {
+                            if (userId !== me.userId) {
+                                localShapes.get(changed.key)!.showPresence();
+                            }
+                        })
+                    } else if (remote.length == 1 && remote.indexOf(me.userId) === -1) {
+                        remote.forEach((userId: string) => {
+                            localShapes.get(changed.key)!.showPresence();
+                        })
+                    } else {
+                        localShapes.get(changed.key)!.removePresence();
+                    }
+                }
+            } else {
+                if (localShapes.has(changed.key)) {
+                    if (remote.length > 0) {
+                        localShapes.get(changed.key)!.showPresence();
+                    } else {
+                        localShapes.get(changed.key)!.removePresence();
+                    }
+                }
+            }
+        }
+    })
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
     const signalHandler: SignalListener = (
         clientId: string,
         local: boolean,
-        payload: FluidDisplayObject
+        payload: SignalPackage
     ) => {
         if (!local) {
             const localShape = localShapes.get(payload.id);
@@ -283,7 +333,6 @@ export class FeltShape extends PIXI.Graphics {
     id = '';
     dragging = false;
     deleted = false;
-    selected = false;
     private _color: Color = Color.Red;
     z = 0;
     readonly shape: Shape = Shape.Circle;
@@ -382,8 +431,6 @@ export class FeltShape extends PIXI.Graphics {
 
     public showSelection() {
 
-        this.selected = true;
-
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
             this.addChild(this._selectionFrame);
@@ -405,7 +452,6 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     public removeSelection() {
-        this.selected = false;
         this._selectionFrame?.clear();
     }
 
