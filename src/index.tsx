@@ -24,7 +24,7 @@ import { Guid } from 'guid-typescript';
 import './styles.scss';
 import { stringify } from 'querystring';
 import { MockHandle } from '@fluidframework/test-runtime-utils';
-import { AzureMember } from '@fluidframework/azure-client';
+import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 
 async function main() {
 
@@ -76,12 +76,10 @@ async function main() {
                 const userId = audience.getMyself()!.userId;
                 if (users === undefined) {
                     fluidPresence.set(dobj.id, [userId]);
-                    console.log("ADDED " + userId);
                 } else {
                     console.log(users);
                     addUserToPresenceArray(users, audience.getMyself()!.userId);
                     fluidPresence.set(dobj.id, users);
-                    console.log("UPDATED " + userId);
                 }
             }
         }
@@ -276,11 +274,22 @@ async function main() {
     }
 
     const addUserToPresenceArray = (arr: string[], userId: string) => {
+        flushPresenceArray(arr, userId);
         const i = arr.indexOf(userId);
         if (i === -1){
             arr.push(userId);
         }
 
+    }
+
+    const flushPresenceArray = (arr: string[], userId: string) => {
+        if (audience.getMembers().size === 1) {
+            arr.forEach((value: string, index: number) => {
+                if (value !== userId){
+                    arr.splice(index, 1);
+                }
+            })
+        }
     }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
