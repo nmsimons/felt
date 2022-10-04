@@ -1,5 +1,7 @@
 import { IMember, SharedMap } from 'fluid-framework';
 import { SignalManager, SignalListener } from '@fluid-experimental/data-objects';
+import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
+
 import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -22,9 +24,6 @@ import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
 import './styles.scss';
-import { stringify } from 'querystring';
-import { MockHandle } from '@fluidframework/test-runtime-utils';
-import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 
 async function main() {
 
