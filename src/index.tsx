@@ -1,4 +1,4 @@
-import { SharedMap } from 'fluid-framework';
+import { IMember, SharedMap } from 'fluid-framework';
 import { SignalManager, SignalListener } from '@fluid-experimental/data-objects';
 import * as PIXI from 'pixi.js';
 import React from 'react';
@@ -61,12 +61,9 @@ async function main() {
 
                 const users: string[] | undefined = fluidPresence.get(value.id);
                 if (users !== undefined) {
-                    const i = users.indexOf(audience.getMyself()!.userId);
-                    if (i !== -1){
-                        users.splice(i, 1);
-                        fluidPresence.set(value.id, users);
-                        console.log("DELETE " + audience.getMyself()!.userId);
-                    }
+                    removeUserFromPresenceArray(users, audience.getMyself()!.userId);
+                    fluidPresence.set(value.id, users);
+                    console.log("DELETE " + audience.getMyself()!.userId);
                 }
             }
         })
@@ -76,19 +73,15 @@ async function main() {
             {
                 localSelection.set(dobj.id, dobj);
                 const users: string[] | undefined = fluidPresence.get(dobj.id);
+                const userId = audience.getMyself()!.userId;
                 if (users === undefined) {
-                    const newUsers = [];
-                    newUsers.push(audience.getMyself()!.userId);
-                    fluidPresence.set(dobj.id, newUsers);
-                    console.log("ADDED " + audience.getMyself()!.userId);
+                    fluidPresence.set(dobj.id, [userId]);
+                    console.log("ADDED " + userId);
                 } else {
                     console.log(users);
-                    const i = users.indexOf(audience.getMyself()!.userId);
-                    if (i === -1){
-                        users.push(audience.getMyself()!.userId);
-                        fluidPresence.set(dobj.id, users);
-                        console.log("UPDATED " + audience.getMyself()!.userId);
-                    }
+                    addUserToPresenceArray(users, audience.getMyself()!.userId);
+                    fluidPresence.set(dobj.id, users);
+                    console.log("UPDATED " + userId);
                 }
             }
         }
@@ -242,38 +235,53 @@ async function main() {
         }
     });
 
+    //When a shape is selected in a client it is added to a special SharedMap - this event fires when that happens
     fluidPresence.on('valueChanged', (changed, local, target) => {
-        console.log("YOYOYOYOYO ")
-        if (!local) {
-            const remote = target.get(changed.key) as string[];
-            const me: AzureMember | undefined = audience.getMyself();
-            if (me) {
-                if (localShapes.has(changed.key)) {
-                    if (remote.length > 1) {
-                        remote.forEach((userId: string) => {
-                            if (userId !== me.userId) {
-                                localShapes.get(changed.key)!.showPresence();
-                            }
-                        })
-                    } else if (remote.length == 1 && remote.indexOf(me.userId) === -1) {
-                        remote.forEach((userId: string) => {
-                            localShapes.get(changed.key)!.showPresence();
-                        })
-                    } else {
-                        localShapes.get(changed.key)!.removePresence();
-                    }
-                }
+        const remote = target.get(changed.key).slice();
+        const me: AzureMember | undefined = audience.getMyself();
+
+        if (me) {
+            const i: number = remote.indexOf(me.userId);
+            console.log("local pos " + i + " remote length with local " + remote.length);
+            if (i > -1) {
+                remote.splice(i, 1);
+                console.log("local pos " + i + " remote length without local "+ remote.length);
+            }
+        }
+
+        if (localShapes.has(changed.key)) {
+            if (remote.length > 0) {
+                localShapes.get(changed.key)!.showPresence();
             } else {
-                if (localShapes.has(changed.key)) {
-                    if (remote.length > 0) {
-                        localShapes.get(changed.key)!.showPresence();
-                    } else {
-                        localShapes.get(changed.key)!.removePresence();
-                    }
-                }
+                localShapes.get(changed.key)!.removePresence();
             }
         }
     })
+
+    audience.on("memberRemoved", (clientId: string, member: IMember) => {
+        console.log("Check for " + member.userId);
+        fluidPresence.forEach((value: string[], key: string) => {
+            removeUserFromPresenceArray(value, member.userId)
+            fluidPresence.set(key, value);
+        })
+    })
+
+    const removeUserFromPresenceArray = (arr: string[], userId: string) => {
+        const i = arr.indexOf(userId);
+        if (i > -1) {
+            console.log("Found " + userId);
+            arr.splice(i, 1);
+            removeUserFromPresenceArray(arr, userId);
+        }
+    }
+
+    const addUserToPresenceArray = (arr: string[], userId: string) => {
+        const i = arr.indexOf(userId);
+        if (i === -1){
+            arr.push(userId);
+        }
+
+    }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
