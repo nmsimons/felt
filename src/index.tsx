@@ -147,7 +147,9 @@ async function main() {
         y: number
     ) => {
         const fs = addNewLocalShape(shape, color, id, x, y);
+        fs.zIndex = 1;
         setFluidPosition(fs);
+        setSelected(fs);
 
         return fs;
     };
@@ -164,7 +166,6 @@ async function main() {
     const createShape = (shape: Shape, color: Color) => {
         if (fluidShapes.size < shapeLimit) {
             const fs = addNewShape(shape, color, Guid.create().toString(), 100, 100);
-            setSelected(fs);
         }
     };
 
@@ -198,11 +199,11 @@ async function main() {
         }
     }
 
-    const deleteShape = (value: FeltShape) => {
-        value.deleted = true;
-        setFluidPosition(value);
-        localShapes.delete(value.id);
-        value.destroy();
+    const deleteShape = (shape: FeltShape) => {
+        shape.deleted = true;
+        setFluidPosition(shape);
+        localShapes.delete(shape.id);
+        shape.destroy();
     }
 
     // event handler for detecting remote changes to Fluid data and updating
