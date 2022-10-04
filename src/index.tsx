@@ -62,7 +62,6 @@ async function main() {
                 if (users !== undefined) {
                     removeUserFromPresenceArray(users, audience.getMyself()!.userId);
                     fluidPresence.set(value.id, users);
-                    console.log("DELETE " + audience.getMyself()!.userId);
                 }
             }
         })
@@ -76,7 +75,7 @@ async function main() {
                 if (users === undefined) {
                     fluidPresence.set(dobj.id, [userId]);
                 } else {
-                    console.log(users);
+                    flushPresenceArray(users);
                     addUserToPresenceArray(users, audience.getMyself()!.userId);
                     fluidPresence.set(dobj.id, users);
                 }
@@ -220,7 +219,6 @@ async function main() {
                 }
             } else {
                 if (!remoteShape.deleted) {
-                    console.log('Creating shape from Fluid');
                     const newLocalShape = addNewLocalShape(
                         remoteShape.shape,
                         remoteShape.color,
@@ -240,10 +238,8 @@ async function main() {
 
         if (me) {
             const i: number = remote.indexOf(me.userId);
-            console.log("local pos " + i + " remote length with local " + remote.length);
             if (i > -1) {
                 remote.splice(i, 1);
-                console.log("local pos " + i + " remote length without local "+ remote.length);
             }
         }
 
@@ -257,7 +253,6 @@ async function main() {
     })
 
     audience.on("memberRemoved", (clientId: string, member: IMember) => {
-        console.log("Check for " + member.userId);
         fluidPresence.forEach((value: string[], key: string) => {
             removeUserFromPresenceArray(value, member.userId)
             fluidPresence.set(key, value);
@@ -267,29 +262,23 @@ async function main() {
     const removeUserFromPresenceArray = (arr: string[], userId: string) => {
         const i = arr.indexOf(userId);
         if (i > -1) {
-            console.log("Found " + userId);
             arr.splice(i, 1);
             removeUserFromPresenceArray(arr, userId);
         }
     }
 
     const addUserToPresenceArray = (arr: string[], userId: string) => {
-        flushPresenceArray(arr, userId);
-        const i = arr.indexOf(userId);
-        if (i === -1){
+        if (arr.indexOf(userId) === -1){
             arr.push(userId);
         }
-
     }
 
-    const flushPresenceArray = (arr: string[], userId: string) => {
-        if (audience.getMembers().size === 1) {
-            arr.forEach((value: string, index: number) => {
-                if (value !== userId){
-                    arr.splice(index, 1);
-                }
-            })
-        }
+    const flushPresenceArray = (arr: string[]) => {
+        arr.forEach((value: string, index: number) => {
+            if (!audience.getMembers().has(value)){
+                arr.splice(index, 1);
+            }
+        })
     }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
@@ -383,7 +372,6 @@ export class FeltShape extends PIXI.Graphics {
 
         this._shape.endFill();
 
-        console.log(`initializing color to: ${color}`);
         this.color = color;
 
         this.interactive = true;
