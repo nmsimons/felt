@@ -65,7 +65,6 @@ async function main() {
         })
 
         if (dobj !== undefined && dobj.id !==undefined) {
-            console.log(dobj + " " + dobj.id);
             if (!localSelection.has(dobj.id))
             {
                 localSelection.set(dobj.id, dobj);
