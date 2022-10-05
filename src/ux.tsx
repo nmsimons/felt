@@ -8,6 +8,7 @@ import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
 import { mdiDeleteForever } from '@mdi/js';
 import { mdiPalette } from '@mdi/js';
+import { mdiShape } from '@mdi/js';
 import { Color, Shape as S } from './util';
 
 // eslint-disable-next-line react/prop-types
@@ -47,7 +48,7 @@ export function Toolbar(props: {
     audience: IAzureAudience;
 }) {
     const test = mdiCircle;
-    const shapeButtonColor = "dimgray"
+    const shapeButtonColor = "black"
 
     return (
         <div className="level is-light mb-3 mt-3">
@@ -149,6 +150,19 @@ export function Toolbar(props: {
 
         </div>
     );
+}
+
+export function LabelIcon(props: {
+    icon: any;
+}) {
+
+    return (
+        <Icon className="mr-1"
+            path={props.icon}
+            size={1}
+            color="Gray"
+        />
+    )
 }
 
 export function ShapeButton(props: {
