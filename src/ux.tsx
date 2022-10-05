@@ -20,11 +20,11 @@ export function ReactApp(props: {
 }): JSX.Element {
 
     const keyDownHandler = (e: KeyboardEvent) => {
-        switch(e.key) {
+        switch (e.key) {
             case "Delete": {
                 props.deleteShape();
             }
-            default: {}
+            default: { }
         }
     }
 
@@ -46,74 +46,110 @@ export function Toolbar(props: {
     audience: IAzureAudience;
 }) {
     const test = mdiCircle;
+    const shapeButtonColor = "dimgray"
 
     return (
-        <div className="navbar is-light">
-            <div className="navbar-menu">
-                <div className="navbar-start">
-                    <div className="navbar-item">
-                        <div className="field is-grouped">
-                            <ShapeButton
-                                icon={mdiCircle}
-                                title="Circle"
-                                color="red"
-                                createFunction={() =>
-                                    props.createShape(S.Circle, Color.Red)
-                                }
-                            />
-                            <ShapeButton
-                                icon={mdiSquare}
-                                title="Square"
-                                color="blue"
-                                createFunction={() =>
-                                    props.createShape(S.Square, Color.Blue)
-                                }
-                            />
-                            <ShapeButton
-                                icon={mdiTriangle}
-                                title="Triangle"
-                                color="orange"
-                                createFunction={() =>
-                                    props.createShape(S.Triangle, Color.Orange)
-                                }
-                            />
-                            <ShapeButton
-                                icon={mdiRectangle}
-                                title="Rectangle"
-                                color="purple"
-                                createFunction={() =>
-                                    props.createShape(S.Rectangle, Color.Purple)
-                                }
-                            />
-                            <ShapeButton
-                                icon={mdiPalette}
-                                title="Change color"
-                                color="black"
-                                createFunction={() =>
-                                    props.changeColor()
-                                }
-                            />
-                            <ShapeButton
-                                icon={mdiDeleteForever}
-                                title="Delete"
-                                color="black"
-                                createFunction={() =>
-                                    props.deleteShape()
-                                }
-                            />
-                        </div>
+        <div className="level is-light mb-3 mt-3">
+            <div className="level-left">
+                <div className="level-item">
+                    <div className="field has-addons">
+                        <ShapeButton
+                            icon={mdiCircle}
+                            title="Circle"
+                            color={shapeButtonColor}
+                            createFunction={() =>
+                                props.createShape(S.Circle, Color.Red)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiSquare}
+                            title="Square"
+                            color={shapeButtonColor}
+                            createFunction={() =>
+                                props.createShape(S.Square, Color.Blue)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiTriangle}
+                            title="Triangle"
+                            color={shapeButtonColor}
+                            createFunction={() =>
+                                props.createShape(S.Triangle, Color.Orange)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiRectangle}
+                            title="Rectangle"
+                            color={shapeButtonColor}
+                            createFunction={() =>
+                                props.createShape(S.Rectangle, Color.Purple)
+                            }
+                        />
                     </div>
                 </div>
-                <div className="navbar-end">
-                    <div className="navbar-item">
-                        <div className="field is-grouped">
-                            <Audience
-                                audience={props.audience}
-                            />
-                        </div>
+                <div className="level-item">
+                    <div className="field has-addons">
+                        <ShapeButton
+                            icon={mdiSquare}
+                            title="Red"
+                            color="Red"
+                            createFunction={() =>
+                                props.changeColor(Color.Red)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiSquare}
+                            title="Green"
+                            color="Green"
+                            createFunction={() =>
+                                props.changeColor(Color.Green)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiSquare}
+                            title="Blue"
+                            color="Blue"
+                            createFunction={() =>
+                                props.changeColor(Color.Blue)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiSquare}
+                            title="Orange"
+                            color="Orange"
+                            createFunction={() =>
+                                props.changeColor(Color.Orange)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiSquare}
+                            title="Purple"
+                            color="Purple"
+                            createFunction={() =>
+                                props.changeColor(Color.Purple)
+                            }
+                        />
                     </div>
+                </div>
+                <div className="level-item">
+                    <ShapeButton
+                        icon={mdiDeleteForever}
+                        title="Delete"
+                        color={shapeButtonColor}
+                        createFunction={() =>
+                            props.deleteShape()
+                        }
+                    />
                 </div>
             </div>
+            <div className="level-right">
+                <div className="level-item">
+                    <Audience
+                        audience={props.audience}
+                    />
+                </div>
+            </div>
+
         </div>
     );
 }
@@ -127,7 +163,7 @@ export function ShapeButton(props: {
     return (
         <p className="control">
             <button
-                className="button is-large is-white"
+                className="button is-normal is-light"
                 onClick={props.createFunction}
             >
                 <span className="icon">
@@ -172,8 +208,6 @@ export function Audience(props: {
     }, [audience, setMembersCallback]);
 
     return (
-        <p className="control">
-            <button className="button is-large is-white">{members.length}</button>
-        </p>
+        <div>{members.length}</div>
     );
 }

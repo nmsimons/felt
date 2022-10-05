@@ -53,7 +53,7 @@ async function main() {
     const setSelected = async (dobj: FeltShape | undefined) => {
 
         //Since we don't currently support multi select, clear the current selection
-        localSelection.forEach (async (value: FeltShape | undefined) => {
+        localSelection.forEach (async (value: FeltShape | undefined, key: string) => {
             if (value !== undefined) {
                 value.removeSelection();
                 localSelection.delete(value.id);
@@ -61,6 +61,8 @@ async function main() {
                 const users: string[] = getPresenceArray(value.id);
                 removeUserFromPresenceArray(users, audience.getMyself()!.userId);
                 fluidPresence.set(value.id, users);
+            } else {
+                localSelection.delete(key);
             }
         })
 
@@ -170,34 +172,29 @@ async function main() {
         }
     };
 
-    const changeColorofSelected = () => {
-        if (localSelection.size > 0) {
-            localSelection.forEach ((value: FeltShape | undefined) => {
-                if (value != undefined) {
-                    changeColor(value, getNextColor(value.color));
-                } else {
-                    setSelected(undefined);
-                }
-            })
-        }
+    const changeColorofSelected = (color: Color) => {
+        changeSelectedShapes((shape: FeltShape) => changeColor(shape, color));
     }
 
     const changeColor = (shape: FeltShape, color: Color) => {
-        shape.color = getNextColor(color);
+        shape.color = color;
         setFluidPosition(shape);
     }
 
-    const deleteSelectedShapes = () => {
+    const changeSelectedShapes = (f: Function) => {
         if (localSelection.size > 0) {
-            localSelection.forEach ((value: FeltShape | undefined) => {
-                if (value != undefined) {
-                    setSelected(undefined);
-                    deleteShape(value);
+            localSelection.forEach ((value: FeltShape | undefined, key: string) => {
+                if (value !== undefined) {
+                    f(value);
                 } else {
-                    setSelected(undefined);
+                    localSelection.delete(key);
                 }
             })
         }
+    }
+
+    const deleteSelectedShapes = () => {
+        changeSelectedShapes((shape: FeltShape) => deleteShape(shape));
     }
 
     const deleteShape = (shape: FeltShape) => {
