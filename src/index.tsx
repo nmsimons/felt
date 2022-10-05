@@ -54,37 +54,41 @@ async function main() {
 
         //Since we don't currently support multi select, clear the current selection
         localSelection.forEach (async (value: FeltShape | undefined) => {
-            if (value) {
+            if (value !== undefined) {
                 value.removeSelection();
                 localSelection.delete(value.id);
 
-                const users: string[] | undefined = fluidPresence.get(value.id);
-                if (users !== undefined) {
-                    removeUserFromPresenceArray(users, audience.getMyself()!.userId);
-                    fluidPresence.set(value.id, users);
-                }
+                const users: string[] = getPresenceArray(value.id);
+                removeUserFromPresenceArray(users, audience.getMyself()!.userId);
+                fluidPresence.set(value.id, users);
             }
         })
 
-        if (dobj) {
-            if (dobj.id !== undefined && !localSelection.has(dobj.id))
+        if (dobj !== undefined && dobj.id !==undefined) {
+            console.log(dobj + " " + dobj.id);
+            if (!localSelection.has(dobj.id))
             {
                 localSelection.set(dobj.id, dobj);
-                const users: string[] | undefined = fluidPresence.get(dobj.id);
+                const users: string[] = getPresenceArray(dobj.id);
                 const userId = audience.getMyself()!.userId;
-                if (users === undefined) {
-                    fluidPresence.set(dobj.id, [userId]);
-                } else {
-                    flushPresenceArray(users);
-                    addUserToPresenceArray(users, audience.getMyself()!.userId);
-                    fluidPresence.set(dobj.id, users);
-                }
+                flushPresenceArray(users);
+                addUserToPresenceArray(users, userId);
+                fluidPresence.set(dobj.id, users);
             }
         }
 
         localSelection.forEach ((value: FeltShape) => {
             value.showSelection();
         })
+    }
+
+    const getPresenceArray = (shapeId: string) => {
+        const users: string[] | undefined = fluidPresence.get(shapeId);
+        if (users === undefined) {
+            return [];
+        } else {
+            return users;
+        }
     }
 
     // create PIXI app
