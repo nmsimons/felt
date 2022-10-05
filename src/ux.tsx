@@ -9,6 +9,7 @@ import { mdiRectangle } from '@mdi/js';
 import { mdiDeleteForever } from '@mdi/js';
 import { mdiPalette } from '@mdi/js';
 import { mdiShape } from '@mdi/js';
+import { mdiCloseThick } from '@mdi/js';
 import { Color, Shape as S } from './util';
 
 // eslint-disable-next-line react/prop-types
@@ -132,13 +133,11 @@ export function Toolbar(props: {
                             }
                         />
                     </div>
-                </div>
 
-            </div>
-            <div className="level-right">
+                </div>
                 <div className="level-item">
                     <ShapeButton
-                        icon={mdiDeleteForever}
+                        icon={mdiCloseThick}
                         title="Delete"
                         color={shapeButtonColor}
                         createFunction={() =>
@@ -146,8 +145,8 @@ export function Toolbar(props: {
                         }
                     />
                 </div>
-            </div>
 
+            </div>
         </div>
     );
 }
