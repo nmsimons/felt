@@ -18,6 +18,18 @@ export function ReactApp(props: {
     changeColor: any;
     deleteShape: any;
 }): JSX.Element {
+
+    const keyDownHandler = (e: KeyboardEvent) => {
+        switch(e.key) {
+            case "Delete": {
+                props.deleteShape();
+            }
+            default: {}
+        }
+    }
+
+    window.addEventListener('keydown', (event) => keyDownHandler(event))
+
     return (
         <div>
             <Toolbar {...props} />
