@@ -316,7 +316,7 @@ async function main() {
 
 // initialize the PIXI app
 async function initPixiApp(manageSelection: (dobj: undefined) => void) {
-    var w = 610;
+    var w = 545;
     var h = 545;
     const app = new PIXI.Application({ width: w, height: h });
     app.stage.sortableChildren = true;
