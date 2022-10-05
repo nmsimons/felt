@@ -34,6 +34,7 @@ export function ReactApp(props: {
         <div>
             <Toolbar {...props} />
             <Canvas />
+            <StatusBar {...props} />
         </div>
     );
 }
@@ -131,6 +132,9 @@ export function Toolbar(props: {
                         />
                     </div>
                 </div>
+
+            </div>
+            <div className="level-right">
                 <div className="level-item">
                     <ShapeButton
                         icon={mdiDeleteForever}
@@ -139,13 +143,6 @@ export function Toolbar(props: {
                         createFunction={() =>
                             props.deleteShape()
                         }
-                    />
-                </div>
-            </div>
-            <div className="level-right">
-                <div className="level-item">
-                    <Audience
-                        audience={props.audience}
                     />
                 </div>
             </div>
@@ -183,6 +180,21 @@ export function Canvas() {
     return <div id="canvas"></div>;
 }
 
+export function StatusBar(props: {
+    audience: IAzureAudience;
+}) {
+
+    return (
+        <div className="level is-light mb-3 mt-3">
+            <div className="level-item">
+                <Audience
+                    audience={props.audience}
+                />
+            </div>
+        </div>
+    );
+}
+
 export function Audience(props: {
     audience: IAzureAudience;
 }): JSX.Element {
@@ -208,6 +220,6 @@ export function Audience(props: {
     }, [audience, setMembersCallback]);
 
     return (
-        <div>{members.length}</div>
+        <div>Current co-creators: {members.length - 1}</div>
     );
 }
