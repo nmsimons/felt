@@ -380,11 +380,9 @@ export class FeltShape extends PIXI.Graphics {
         this.y = y;
 
         const onDragStart = (event: any) => {
-            if (event.data.button === 0) {
-                this.zIndex = 2;
-                this.dragging = true;
-                setFluidPosition(this); // syncs local changes with Fluid data
-            }
+            this.zIndex = 2;
+            this.dragging = true;
+            setFluidPosition(this); // syncs local changes with Fluid data
         };
 
         const onDragEnd = (event: any) => {
@@ -403,9 +401,7 @@ export class FeltShape extends PIXI.Graphics {
         };
 
         const onSelect = (event: any) => {
-            if (event.data.button === 0) {
-                setSelected(this);
-            }
+            setSelected(this);
         };
 
         // sets local postion and enforces canvas boundary
