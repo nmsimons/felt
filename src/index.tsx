@@ -1,6 +1,7 @@
 import { IMember, SharedMap } from 'fluid-framework';
 import { SignalManager, SignalListener } from '@fluid-experimental/data-objects';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
+import { SharedCounter } from '@fluidframework/counter/dist/counter';
 
 import * as PIXI from 'pixi.js';
 import React from 'react';
@@ -45,6 +46,8 @@ async function main() {
 
     // create local map for shapes - contains customized PIXI objects
     const localShapes = new Map<string, FeltShape>();
+
+    // initialize signal manager
     const signaler = container.initialObjects.signalManager as SignalManager;
 
     // create local map for selected shapes - contains customized PIXI objects
@@ -99,7 +102,30 @@ async function main() {
     // synched between clients
     const fluidShapes = container.initialObjects.shapes as SharedMap;
 
+    // create Fluid map for presence
     const fluidPresence = container.initialObjects.presence as SharedMap;
+
+    // create counter for shared max z order
+    const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
+
+
+    const bringToFront = (shape: FeltShape) => {
+        console.log(shape.zIndex + " --- " + fluidMaxZIndex.value);
+        if (shape.zIndex < fluidMaxZIndex.value) {
+            fluidMaxZIndex.increment(1);
+            shape.zIndex = fluidMaxZIndex.value;
+            setFluidPosition(shape);
+        }
+    }
+
+    const getMaxZIndex = () => {
+        fluidMaxZIndex.increment(1);
+        return fluidMaxZIndex.value;
+    }
+
+    const bringSelectedToFront = () => {
+        changeSelectedShapes((shape: FeltShape) => bringToFront(shape));
+    }
 
     // This function will be called each time a shape is moved around the canvas.
     // It's passed in to the CreateShape function which wires it up to the
@@ -121,7 +147,8 @@ async function main() {
         color: Color,
         id: string,
         x: number,
-        y: number
+        y: number,
+        z: number
     ): FeltShape => {
         const fs = new FeltShape(
             pixiApp,
@@ -131,6 +158,7 @@ async function main() {
             id, // id
             x, // x
             y, // y
+            z, // zindex
             setFluidPosition, // function that syncs local data with Fluid
             setSelected, // function that manages local selection
         );
@@ -147,13 +175,12 @@ async function main() {
         color: Color,
         id: string,
         x: number,
-        y: number
+        y: number,
+        z: number
     ) => {
-        const fs = addNewLocalShape(shape, color, id, x, y);
-        fs.zIndex = 1;
+        const fs = addNewLocalShape(shape, color, id, x, y, z);
         setFluidPosition(fs);
         setSelected(fs);
-
         return fs;
     };
 
@@ -161,14 +188,14 @@ async function main() {
     fluidShapes.forEach((fdo: FluidDisplayObject, id: string) => {
          // add the Fluid shapes to the local shape data
         if (!fdo.deleted) {
-            addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y);
+            addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y, fdo.z);
         }
     });
 
     // function passed into React UX for creating shapes
     const createShape = (shape: Shape, color: Color) => {
         if (fluidShapes.size < shapeLimit) {
-            const fs = addNewShape(shape, color, Guid.create().toString(), 100, 100);
+            const fs = addNewShape(shape, color, Guid.create().toString(), 100, 100, getMaxZIndex());
         }
     };
 
@@ -224,7 +251,8 @@ async function main() {
                         remoteShape.color,
                         remoteShape.id,
                         remoteShape.x,
-                        remoteShape.y
+                        remoteShape.y,
+                        remoteShape.z
                     );
                 }
             }
@@ -306,6 +334,7 @@ async function main() {
             createShape={createShape}
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
+            bringToFront={bringSelectedToFront}
         />,
         document.getElementById('root')
     );
@@ -340,7 +369,6 @@ export class FeltShape extends PIXI.Graphics {
     dragging = false;
     deleted = false;
     private _color: Color = Color.Red;
-    z = 0;
     readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
     private _selectionFrame: PIXI.Graphics | undefined;
@@ -355,8 +383,9 @@ export class FeltShape extends PIXI.Graphics {
         id: string,
         x: number,
         y: number,
+        z: number,
         setFluidPosition: (dobj: FeltShape) => void,
-        setSelected: (dobj: FeltShape) => void
+        setSelected: (dobj: FeltShape) => void,
     ) {
         super();
         this.id = id;
@@ -378,16 +407,15 @@ export class FeltShape extends PIXI.Graphics {
         this.buttonMode = true;
         this.x = x;
         this.y = y;
+        this.zIndex = z;
 
         const onDragStart = (event: any) => {
-            this.zIndex = 2;
             this.dragging = true;
             setFluidPosition(this); // syncs local changes with Fluid data
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
-                this.zIndex = 1;
                 this.dragging = false;
                 setFluidPosition(this); // syncs local changes with Fluid data
             }

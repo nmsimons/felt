@@ -16,6 +16,7 @@ import {
     SharedMap,
 } from 'fluid-framework';
 import { SignalManager } from '@fluid-experimental/data-objects';
+import { SharedCounter } from '@fluidframework/counter';
 
 // Define the server (Azure or local) we will be using
 const useAzure = process.env.FLUID_CLIENT === 'azure';
@@ -62,6 +63,7 @@ const containerSchema: ContainerSchema = {
         shapes: SharedMap,
         presence: SharedMap,
         signalManager: SignalManager,
+        maxZOrder: SharedCounter,
     },
     dynamicObjectTypes: [SharedMap],
 };

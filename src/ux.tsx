@@ -10,6 +10,7 @@ import { mdiDeleteForever } from '@mdi/js';
 import { mdiPalette } from '@mdi/js';
 import { mdiShape } from '@mdi/js';
 import { mdiCloseThick } from '@mdi/js';
+import { mdiArrangeBringForward } from '@mdi/js';
 import { Color, Shape as S } from './util';
 
 // eslint-disable-next-line react/prop-types
@@ -19,6 +20,7 @@ export function ReactApp(props: {
     createShape: any;
     changeColor: any;
     deleteShape: any;
+    bringToFront: any;
 }): JSX.Element {
 
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -46,6 +48,7 @@ export function Toolbar(props: {
     createShape: any;
     changeColor: any;
     deleteShape: any;
+    bringToFront: any;
     audience: IAzureAudience;
 }) {
     const test = mdiCircle;
@@ -137,6 +140,16 @@ export function Toolbar(props: {
                 </div>
                 <div className="level-item">
                     <ShapeButton
+                        icon={mdiArrangeBringForward}
+                        title="Bring to front"
+                        color={shapeButtonColor}
+                        createFunction={() =>
+                            props.bringToFront()
+                        }
+                    />
+                </div>
+                <div className="level-item">
+                    <ShapeButton
                         icon={mdiCloseThick}
                         title="Delete"
                         color={shapeButtonColor}
@@ -145,7 +158,6 @@ export function Toolbar(props: {
                         }
                     />
                 </div>
-
             </div>
         </div>
     );
