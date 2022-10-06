@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { Props, useEffect } from 'react';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import { FeltShape } from '.';
 import Icon from '@mdi/react';
-import { mdiCircle } from '@mdi/js';
+import { mdiCircle, mdiSelectionEllipseArrowInside } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
@@ -21,6 +21,7 @@ export function ReactApp(props: {
     changeColor: any;
     deleteShape: any;
     bringToFront: any;
+    selected: () => boolean;
 }): JSX.Element {
 
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -32,7 +33,7 @@ export function ReactApp(props: {
         }
     }
 
-    window.addEventListener('keydown', (event) => keyDownHandler(event))
+    window.addEventListener('keydown', (event) => keyDownHandler(event));
 
     return (
         <div>
@@ -50,9 +51,17 @@ export function Toolbar(props: {
     deleteShape: any;
     bringToFront: any;
     audience: IAzureAudience;
+    selected: () => boolean;
 }) {
-    const test = mdiCircle;
     const shapeButtonColor = "black"
+
+    const [selected, getSelected] = React.useState(props.selected);
+
+    const options = {
+        once: true
+    }
+
+    window.addEventListener('onselection', () => getSelected(props.selected), options);
 
     return (
         <div className="level is-light mb-3 mt-3">
@@ -63,6 +72,7 @@ export function Toolbar(props: {
                             icon={mdiCircle}
                             title="Circle"
                             color={shapeButtonColor}
+                            disabled={false}
                             createFunction={() =>
                                 props.createShape(S.Circle, Color.Red)
                             }
@@ -71,6 +81,7 @@ export function Toolbar(props: {
                             icon={mdiSquare}
                             title="Square"
                             color={shapeButtonColor}
+                            disabled={false}
                             createFunction={() =>
                                 props.createShape(S.Square, Color.Blue)
                             }
@@ -79,6 +90,7 @@ export function Toolbar(props: {
                             icon={mdiTriangle}
                             title="Triangle"
                             color={shapeButtonColor}
+                            disabled={false}
                             createFunction={() =>
                                 props.createShape(S.Triangle, Color.Orange)
                             }
@@ -87,6 +99,7 @@ export function Toolbar(props: {
                             icon={mdiRectangle}
                             title="Rectangle"
                             color={shapeButtonColor}
+                            disabled={false}
                             createFunction={() =>
                                 props.createShape(S.Rectangle, Color.Purple)
                             }
@@ -99,6 +112,7 @@ export function Toolbar(props: {
                             icon={mdiSquare}
                             title="Red"
                             color="Red"
+                            disabled={!selected}
                             createFunction={() =>
                                 props.changeColor(Color.Red)
                             }
@@ -107,6 +121,7 @@ export function Toolbar(props: {
                             icon={mdiSquare}
                             title="Green"
                             color="Green"
+                            disabled={!selected}
                             createFunction={() =>
                                 props.changeColor(Color.Green)
                             }
@@ -115,6 +130,7 @@ export function Toolbar(props: {
                             icon={mdiSquare}
                             title="Blue"
                             color="Blue"
+                            disabled={!selected}
                             createFunction={() =>
                                 props.changeColor(Color.Blue)
                             }
@@ -123,6 +139,7 @@ export function Toolbar(props: {
                             icon={mdiSquare}
                             title="Orange"
                             color="Orange"
+                            disabled={!selected}
                             createFunction={() =>
                                 props.changeColor(Color.Orange)
                             }
@@ -131,6 +148,7 @@ export function Toolbar(props: {
                             icon={mdiSquare}
                             title="Purple"
                             color="Purple"
+                            disabled={!selected}
                             createFunction={() =>
                                 props.changeColor(Color.Purple)
                             }
@@ -143,6 +161,7 @@ export function Toolbar(props: {
                         icon={mdiArrangeBringForward}
                         title="Bring to front"
                         color={shapeButtonColor}
+                        disabled={!selected}
                         createFunction={() =>
                             props.bringToFront()
                         }
@@ -153,6 +172,7 @@ export function Toolbar(props: {
                         icon={mdiCloseThick}
                         title="Delete"
                         color={shapeButtonColor}
+                        disabled={!selected}
                         createFunction={() =>
                             props.deleteShape()
                         }
@@ -181,12 +201,14 @@ export function ShapeButton(props: {
     title: string;
     color: string;
     createFunction: any;
+    disabled: boolean;
 }) {
     return (
         <p className="control">
             <button
                 className="button is-normal is-light"
                 onClick={props.createFunction}
+                disabled={props.disabled}
             >
                 <span className="icon">
                     <Icon

@@ -84,6 +84,12 @@ async function main() {
         localSelection.forEach ((value: FeltShape) => {
             value.showSelection();
         })
+
+        emitSelectionEvent();
+    }
+
+    const emitSelectionEvent = () => {
+        window.dispatchEvent(new Event('onselection'));
     }
 
     const getPresenceArray = (shapeId: string) => {
@@ -215,6 +221,7 @@ async function main() {
                     f(value);
                 } else {
                     localSelection.delete(key);
+                    emitSelectionEvent();
                 }
             })
         }
@@ -227,8 +234,10 @@ async function main() {
     const deleteShape = (shape: FeltShape) => {
         shape.deleted = true;
         setFluidPosition(shape);
+        localSelection.delete(shape.id);
         localShapes.delete(shape.id);
         shape.destroy();
+        emitSelectionEvent();
     }
 
     // event handler for detecting remote changes to Fluid data and updating
@@ -240,6 +249,7 @@ async function main() {
             if (localShape) {
                 if (remoteShape.deleted) {
                     localSelection.delete(localShape.id);
+                    emitSelectionEvent();
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
@@ -335,6 +345,7 @@ async function main() {
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
             bringToFront={bringSelectedToFront}
+            selected={() => {return localSelection.size > 0}}
         />,
         document.getElementById('root')
     );
