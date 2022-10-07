@@ -236,6 +236,7 @@ async function main() {
         setFluidPosition(shape);
         localSelection.delete(shape.id);
         localShapes.delete(shape.id);
+        fluidPresence.delete(shape.id);
         shape.destroy();
         emitSelectionEvent();
     }
@@ -271,21 +272,23 @@ async function main() {
 
     //When a shape is selected in a client it is added to a special SharedMap - this event fires when that happens
     fluidPresence.on('valueChanged', (changed, local, target) => {
-        const remote = target.get(changed.key).slice();
-        const me: AzureMember | undefined = audience.getMyself();
+        if (target.has(changed.key)) {
+            const remote = target.get(changed.key).slice();
+            const me: AzureMember | undefined = audience.getMyself();
 
-        if (me) {
-            const i: number = remote.indexOf(me.userId);
-            if (i > -1) {
-                remote.splice(i, 1);
+            if (me) {
+                const i: number = remote.indexOf(me.userId);
+                if (i > -1) {
+                    remote.splice(i, 1);
+                }
             }
-        }
 
-        if (localShapes.has(changed.key)) {
-            if (remote.length > 0) {
-                localShapes.get(changed.key)!.showPresence();
-            } else {
-                localShapes.get(changed.key)!.removePresence();
+            if (localShapes.has(changed.key)) {
+                if (remote.length > 0) {
+                    localShapes.get(changed.key)!.showPresence();
+                } else {
+                    localShapes.get(changed.key)!.removePresence();
+                }
             }
         }
     })
