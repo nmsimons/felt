@@ -1,14 +1,10 @@
 import React, { Props, useEffect } from 'react';
 import { IAzureAudience } from '@fluidframework/azure-client';
-import { FeltShape } from '.';
 import Icon from '@mdi/react';
 import { mdiCircle, mdiSelectionEllipseArrowInside } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
-import { mdiDeleteForever } from '@mdi/js';
-import { mdiPalette } from '@mdi/js';
-import { mdiShape } from '@mdi/js';
 import { mdiCloseThick } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { Color, Shape as S } from './util';
@@ -16,7 +12,6 @@ import { Color, Shape as S } from './util';
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
     audience: IAzureAudience;
-    shapes: Map<string, FeltShape>;
     createShape: any;
     changeColor: any;
     deleteShape: any;
@@ -32,8 +27,9 @@ export function ReactApp(props: {
             default: { }
         }
     }
-
-    window.addEventListener('keydown', (event) => keyDownHandler(event));
+    React.useEffect(() => {
+        window.addEventListener('keydown', (event) => keyDownHandler(event));
+    }, [])
 
     return (
         <div>
@@ -55,13 +51,12 @@ export function Toolbar(props: {
 }) {
     const shapeButtonColor = "black"
 
+    React.useEffect(() => {
+        window.addEventListener('onselection', () => getSelected(props.selected));
+    }, [])
+
     const [selected, getSelected] = React.useState(props.selected);
 
-    const options = {
-        once: true
-    }
-
-    window.addEventListener('onselection', () => getSelected(props.selected), options);
 
     return (
         <div className="level is-light mb-3 mt-3">

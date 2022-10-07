@@ -340,7 +340,6 @@ async function main() {
     ReactDOM.render(
         <UX.ReactApp
             audience={audience}
-            shapes={localShapes}
             createShape={createShape}
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
