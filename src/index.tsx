@@ -357,6 +357,8 @@ async function main() {
     async function createPixiApp() {
         const pixiApp = await initPixiApp();
 
+        pixiApp.stage.sortableChildren = true;
+
         // Create the scaled stage and then add stuff to it
         const scaledContainer = createScaledContainer(pixiApp);
 
@@ -396,6 +398,7 @@ const createScaledContainer = (app: PIXI.Application) => {
     container.scale.y = actualHeight(app) / HEIGHT;
     container.x = app.screen.width / 2 - actualWidth(app) / 2;
     container.y = app.screen.height / 2 - actualHeight(app) / 2;
+    container.sortableChildren = true;
 
     return container;
 }
