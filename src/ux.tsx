@@ -160,8 +160,6 @@ export function Toolbar(props: {
                             props.bringToFront()
                         }
                     />
-                </div>
-                <div className="level-item">
                     <ShapeButton
                         icon={mdiCloseThick}
                         title="Delete"

@@ -378,8 +378,8 @@ async function initPixiApp() {
 
     // The PixiJS application instance
     const app = new PIXI.Application({
-        width: 500,
-        height: 500,
+        width: 600,
+        height: 600,
         autoDensity: true, // Handles high DPI screens
         backgroundColor: 0xffffff
     });
