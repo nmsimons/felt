@@ -148,27 +148,28 @@ export function Toolbar(props: {
                             }
                         />
                     </div>
-
                 </div>
                 <div className="level-item">
-                    <ShapeButton
-                        icon={mdiArrangeBringForward}
-                        title="Bring to front"
-                        color={shapeButtonColor}
-                        disabled={!selected}
-                        createFunction={() =>
-                            props.bringToFront()
-                        }
-                    />
-                    <ShapeButton
-                        icon={mdiCloseThick}
-                        title="Delete"
-                        color={shapeButtonColor}
-                        disabled={!selected}
-                        createFunction={() =>
-                            props.deleteShape()
-                        }
-                    />
+                    <div className="field has-addons">
+                        <ShapeButton
+                            icon={mdiArrangeBringForward}
+                            title="Bring to front"
+                            color={shapeButtonColor}
+                            disabled={!selected}
+                            createFunction={() =>
+                                props.bringToFront()
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiCloseThick}
+                            title="Delete"
+                            color={shapeButtonColor}
+                            disabled={!selected}
+                            createFunction={() =>
+                                props.deleteShape()
+                            }
+                        />
+                    </div>
                 </div>
             </div>
         </div>
@@ -216,7 +217,7 @@ export function ShapeButton(props: {
 
 export function Canvas() {
     return (
-    <div id="canvas"></div>
+        <div id="canvas"></div>
     );
 }
 
