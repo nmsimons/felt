@@ -1,7 +1,7 @@
-import React, { Props, useEffect } from 'react';
+import React from 'react';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import Icon from '@mdi/react';
-import { mdiCircle, mdiSelectionEllipseArrowInside } from '@mdi/js';
+import { mdiCircle } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
@@ -56,7 +56,6 @@ export function Toolbar(props: {
     }, [])
 
     const [selected, getSelected] = React.useState(props.selected);
-
 
     return (
         <div className="level is-light mb-3 mt-3">
@@ -181,7 +180,6 @@ export function Toolbar(props: {
 export function LabelIcon(props: {
     icon: any;
 }) {
-
     return (
         <Icon className="mr-1"
             path={props.icon}
@@ -219,7 +217,9 @@ export function ShapeButton(props: {
 }
 
 export function Canvas() {
-    return <div id="canvas"></div>;
+    return (
+    <div id="canvas"></div>
+    );
 }
 
 export function StatusBar(props: {

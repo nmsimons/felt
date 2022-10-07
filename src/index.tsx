@@ -56,7 +56,7 @@ async function main() {
     const setSelected = async (dobj: FeltShape | undefined) => {
 
         //Since we don't currently support multi select, clear the current selection
-        localSelection.forEach (async (value: FeltShape | undefined, key: string) => {
+        localSelection.forEach(async (value: FeltShape | undefined, key: string) => {
             if (value !== undefined) {
                 value.removeSelection();
                 localSelection.delete(value.id);
@@ -69,9 +69,8 @@ async function main() {
             }
         })
 
-        if (dobj !== undefined && dobj.id !==undefined) {
-            if (!localSelection.has(dobj.id))
-            {
+        if (dobj !== undefined && dobj.id !== undefined) {
+            if (!localSelection.has(dobj.id)) {
                 localSelection.set(dobj.id, dobj);
                 const users: string[] = getPresenceArray(dobj.id);
                 const userId = audience.getMyself()!.userId;
@@ -81,7 +80,7 @@ async function main() {
             }
         }
 
-        localSelection.forEach ((value: FeltShape) => {
+        localSelection.forEach((value: FeltShape) => {
             value.showSelection();
         })
 
@@ -102,7 +101,7 @@ async function main() {
     }
 
     // create PIXI app
-    const pixiApp = await initPixiApp(setSelected);
+    const pixiApp = await createPixiApp();
 
     // create Fluid map for shapes - contains only the data that needs to be
     // synched between clients
@@ -157,7 +156,7 @@ async function main() {
         z: number
     ): FeltShape => {
         const fs = new FeltShape(
-            pixiApp,
+            pixiApp!,
             shape,
             color,
             size,
@@ -170,7 +169,7 @@ async function main() {
         );
 
         localShapes.set(id, fs); // add the new shape to local data
-        pixiApp.stage.addChild(fs); // add the new shape to the PIXI canvas
+        pixiApp!.stage.addChild(fs); // add the new shape to the PIXI canvas
 
         return fs;
     };
@@ -192,7 +191,7 @@ async function main() {
 
     // get the Fluid shapes that already exist
     fluidShapes.forEach((fdo: FluidDisplayObject, id: string) => {
-         // add the Fluid shapes to the local shape data
+        // add the Fluid shapes to the local shape data
         if (!fdo.deleted) {
             addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y, fdo.z);
         }
@@ -216,7 +215,7 @@ async function main() {
 
     const changeSelectedShapes = (f: Function) => {
         if (localSelection.size > 0) {
-            localSelection.forEach ((value: FeltShape | undefined, key: string) => {
+            localSelection.forEach((value: FeltShape | undefined, key: string) => {
                 if (value !== undefined) {
                     f(value);
                 } else {
@@ -309,14 +308,14 @@ async function main() {
     }
 
     const addUserToPresenceArray = (arr: string[], userId: string) => {
-        if (arr.indexOf(userId) === -1){
+        if (arr.indexOf(userId) === -1) {
             arr.push(userId);
         }
     }
 
     const flushPresenceArray = (arr: string[]) => {
         arr.forEach((value: string, index: number) => {
-            if (!audience.getMembers().has(value)){
+            if (!audience.getMembers().has(value)) {
                 arr.splice(index, 1);
             }
         })
@@ -347,32 +346,86 @@ async function main() {
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
             bringToFront={bringSelectedToFront}
-            selected={() => {return localSelection.size > 0}}
+            selected={() => { return localSelection.size > 0 }}
         />,
         document.getElementById('root')
     );
 
     // insert the PIXI canvas in the page
-    document.getElementById('canvas')?.appendChild(pixiApp.view);
+    document.getElementById('canvas')?.appendChild(pixiApp!.view);
+
+    async function createPixiApp() {
+        const pixiApp = await initPixiApp();
+
+        // Create the scaled stage and then add stuff to it
+        const scaledContainer = createScaledContainer(pixiApp);
+
+        pixiApp.stage.removeChildren();
+
+        pixiApp.stage.addChild(scaledContainer);
+
+        // make background clickable
+        addBackgroundShape(setSelected, pixiApp);
+        return pixiApp;
+    }
 }
 
 // initialize the PIXI app
-async function initPixiApp(manageSelection: (dobj: undefined) => void) {
-    var w = 545;
-    var h = 545;
-    const app = new PIXI.Application({ width: w, height: h });
-    app.stage.sortableChildren = true;
+async function initPixiApp() {
+    PIXI.settings.RESOLUTION = window.devicePixelRatio || 1;
 
-    let bg: PIXI.Graphics = new PIXI.Graphics();
+    // The PixiJS application instance
+    const app = new PIXI.Application({
+        width: 500,
+        height: 500,
+        autoDensity: true, // Handles high DPI screens
+        backgroundColor: 0xffffff
+    });
+
+    return app
+}
+
+// Clear the stage and create a new scaled container; the
+// provided callback will be called with the new container
+const createScaledContainer = (app: PIXI.Application) => {
+    // This is the stage for the new scene
+    const container = new PIXI.Container();
+    container.width = WIDTH;
+    container.height = HEIGHT;
+    container.scale.x = actualWidth(app) / WIDTH;
+    container.scale.y = actualHeight(app) / HEIGHT;
+    container.x = app.screen.width / 2 - actualWidth(app) / 2;
+    container.y = app.screen.height / 2 - actualHeight(app) / 2;
+
+    return container;
+}
+
+const WIDTH: number = 500;
+
+const HEIGHT: number = 500;
+
+const actualWidth = (app: PIXI.Application) => {
+    const { width, height } = app.screen;
+    const isWidthConstrained = width < height;
+    return isWidthConstrained ? width : height;
+}
+
+const actualHeight = (app: PIXI.Application) => {
+    const { width, height } = app.screen;
+    const isHeightConstrained = width > height;
+    return isHeightConstrained ? height : width;
+}
+
+const addBackgroundShape = (manageSelection: (dobj: undefined) => void, app: PIXI.Application) => {
+    var bg: PIXI.Graphics = new PIXI.Graphics();
     bg.beginFill(0x000000);
-    bg.drawRect(0,0,w,h);
+    bg.drawRect(0, 0, app.screen.width, app.screen.height);
     bg.endFill();
     bg.interactive = true;
+
     app.stage.addChild(bg);
 
     bg.on('pointerup', manageSelection);
-
-    return app;
 }
 
 // wrapper class for a PIXI shape with a few extra methods and properties
@@ -447,11 +500,11 @@ export class FeltShape extends PIXI.Graphics {
 
         // sets local postion and enforces canvas boundary
         const updatePosition = (x: number, y: number) => {
-            if (x >= this._shape.width / 2 && x <= app.renderer.width - this._shape.width / 2) {
+            if (x >= this._shape.width / 2 && x <= app.screen.width - this._shape.width / 2) {
                 this.x = x;
             }
 
-            if (y >= this._shape.height / 2 && y <= app.renderer.height - this._shape.height / 2) {
+            if (y >= this._shape.height / 2 && y <= app.screen.height - this._shape.height / 2) {
                 this.y = y;
             }
         };
@@ -485,10 +538,10 @@ export class FeltShape extends PIXI.Graphics {
         const handleSize = 16;
         const biteSize = 4;
         const color = 0xffffff;
-        const left = -this._shape.width/2 - handleSize/2;
-        const top = -this._shape.height/2 - handleSize/2;
-        const right = this._shape.width/2 - handleSize/2;
-        const bottom = this._shape.height/2 - handleSize/2;
+        const left = -this._shape.width / 2 - handleSize / 2;
+        const top = -this._shape.height / 2 - handleSize / 2;
+        const right = this._shape.width / 2 - handleSize / 2;
+        const bottom = this._shape.height / 2 - handleSize / 2;
 
         this._selectionFrame.zIndex = 5;
 
@@ -511,10 +564,10 @@ export class FeltShape extends PIXI.Graphics {
         const handleSize = 10;
         const biteSize = 4;
         const color = 0xaaaaaa;
-        const left = -this._shape.width/2 - handleSize/2;
-        const top = -this._shape.height/2 - handleSize/2;
-        const right = this._shape.width/2 - handleSize/2;
-        const bottom = this._shape.height/2 - handleSize/2;
+        const left = -this._shape.width / 2 - handleSize / 2;
+        const top = -this._shape.height / 2 - handleSize / 2;
+        const right = this._shape.width / 2 - handleSize / 2;
+        const bottom = this._shape.height / 2 - handleSize / 2;
 
         this._presenceFrame.zIndex = 4;
 
@@ -526,40 +579,40 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     private drawFrame(frame: PIXI.Graphics,
-            handleSize: number,
-            biteSize: number,
-            color: number,
-            left: number,
-            top: number,
-            right: number,
-            bottom: number) {
+        handleSize: number,
+        biteSize: number,
+        color: number,
+        left: number,
+        top: number,
+        right: number,
+        bottom: number) {
 
         frame.beginFill(color);
-        frame.drawRect(left,top,handleSize,handleSize);
+        frame.drawRect(left, top, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(left+biteSize,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+        frame.drawRect(left + biteSize, top + biteSize, handleSize - biteSize, handleSize - biteSize);
         frame.endHole();
 
         frame.beginFill(color);
-        frame.drawRect(left,bottom,handleSize,handleSize);
+        frame.drawRect(left, bottom, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(left+biteSize,bottom,handleSize-biteSize,handleSize-biteSize);
+        frame.drawRect(left + biteSize, bottom, handleSize - biteSize, handleSize - biteSize);
         frame.endHole();
 
         frame.beginFill(color);
-        frame.drawRect(right,top,handleSize,handleSize);
+        frame.drawRect(right, top, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(right,top+biteSize,handleSize-biteSize,handleSize-biteSize);
+        frame.drawRect(right, top + biteSize, handleSize - biteSize, handleSize - biteSize);
         frame.endHole();
 
         frame.beginFill(color);
-        frame.drawRect(right,bottom,handleSize,handleSize);
+        frame.drawRect(right, bottom, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(right,bottom,handleSize-biteSize,handleSize-biteSize);
+        frame.drawRect(right, bottom, handleSize - biteSize, handleSize - biteSize);
         frame.endHole();
     }
 
