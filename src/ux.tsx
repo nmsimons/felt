@@ -208,13 +208,12 @@ export function StatusBar(props: {
     const [, setChecked] = React.useState(props.signals());
 
     const handleChange = () => {
-        console.log(props.signals());
         props.toggleSignals()
         setChecked(props.signals());
     };
 
     return (
-        <div className="level is-light mb-3 mt-0">
+        <div className="level is-light mb-0 mt-0">
             <div className="level-left">
                 <div className="level-item">
                     <Audience audience={props.audience} />
