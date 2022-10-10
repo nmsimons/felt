@@ -54,9 +54,9 @@ export const Pixi2Signal = (dobj: FeltShape): SignalPackage => {
         id: dobj.id,
         x: dobj.x,
         y: dobj.y,
-        z: dobj.zIndex
-    }
-}
+        z: dobj.zIndex,
+    };
+};
 
 export const Signal2Pixi = (
     shapeToUpdate: FeltShape,
@@ -66,4 +66,4 @@ export const Signal2Pixi = (
     shapeToUpdate.y = sourceObject.y;
     shapeToUpdate.zIndex = sourceObject.z;
     return shapeToUpdate;
-}
+};

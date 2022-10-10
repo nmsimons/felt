@@ -17,19 +17,21 @@ export function ReactApp(props: {
     deleteShape: any;
     bringToFront: any;
     selected: () => boolean;
+    toggleSignals: any;
+    signals: () => boolean;
 }): JSX.Element {
-
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
-            case "Delete": {
+            case 'Delete': {
                 props.deleteShape();
             }
-            default: { }
+            default: {
+            }
         }
-    }
+    };
     React.useEffect(() => {
         window.addEventListener('keydown', (event) => keyDownHandler(event));
-    }, [])
+    }, []);
 
     return (
         <div>
@@ -49,11 +51,11 @@ export function Toolbar(props: {
     audience: IAzureAudience;
     selected: () => boolean;
 }) {
-    const shapeButtonColor = "black"
+    const shapeButtonColor = 'black';
 
     React.useEffect(() => {
         window.addEventListener('onselection', () => getSelected(props.selected));
-    }, [])
+    }, []);
 
     const [selected, getSelected] = React.useState(props.selected);
 
@@ -107,45 +109,35 @@ export function Toolbar(props: {
                             title="Red"
                             color="Red"
                             disabled={!selected}
-                            createFunction={() =>
-                                props.changeColor(Color.Red)
-                            }
+                            createFunction={() => props.changeColor(Color.Red)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Green"
                             color="Green"
                             disabled={!selected}
-                            createFunction={() =>
-                                props.changeColor(Color.Green)
-                            }
+                            createFunction={() => props.changeColor(Color.Green)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Blue"
                             color="Blue"
                             disabled={!selected}
-                            createFunction={() =>
-                                props.changeColor(Color.Blue)
-                            }
+                            createFunction={() => props.changeColor(Color.Blue)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Orange"
                             color="Orange"
                             disabled={!selected}
-                            createFunction={() =>
-                                props.changeColor(Color.Orange)
-                            }
+                            createFunction={() => props.changeColor(Color.Orange)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Purple"
                             color="Purple"
                             disabled={!selected}
-                            createFunction={() =>
-                                props.changeColor(Color.Purple)
-                            }
+                            createFunction={() => props.changeColor(Color.Purple)}
                         />
                     </div>
                 </div>
@@ -156,18 +148,14 @@ export function Toolbar(props: {
                             title="Bring to front"
                             color={shapeButtonColor}
                             disabled={!selected}
-                            createFunction={() =>
-                                props.bringToFront()
-                            }
+                            createFunction={() => props.bringToFront()}
                         />
                         <ShapeButton
                             icon={mdiCloseThick}
                             title="Delete"
                             color={shapeButtonColor}
                             disabled={!selected}
-                            createFunction={() =>
-                                props.deleteShape()
-                            }
+                            createFunction={() => props.deleteShape()}
                         />
                     </div>
                 </div>
@@ -176,16 +164,8 @@ export function Toolbar(props: {
     );
 }
 
-export function LabelIcon(props: {
-    icon: any;
-}) {
-    return (
-        <Icon className="mr-1"
-            path={props.icon}
-            size={1}
-            color="Gray"
-        />
-    )
+export function LabelIcon(props: { icon: any }) {
+    return <Icon className="mr-1" path={props.icon} size={1} color="Gray" />;
 }
 
 export function ShapeButton(props: {
@@ -216,29 +196,50 @@ export function ShapeButton(props: {
 }
 
 export function Canvas() {
-    return (
-        <div id="canvas"></div>
-    );
+    return <div id="canvas"></div>;
 }
 
 export function StatusBar(props: {
-    audience: IAzureAudience;
-}) {
+    audience: IAzureAudience
+    toggleSignals: any;
+    signals: () => boolean
+ }) {
+
+    const [, setChecked] = React.useState(props.signals());
+
+    const handleChange = () => {
+        console.log(props.signals());
+        props.toggleSignals()
+        setChecked(props.signals());
+    };
 
     return (
-        <div className="level is-light mb-3 mt-3">
-            <div className="level-item">
-                <Audience
-                    audience={props.audience}
-                />
+        <div className="level is-light mb-3 mt-0">
+            <div className="level-left">
+                <div className="level-item">
+                    <Audience audience={props.audience} />
+                </div>
+            </div>
+            <div className="level-right">
+                <div className="level-item">
+                    <div className="field">
+                        <input
+                            id="switchRoundedInfo"
+                            type="checkbox"
+                            name="switchRoundedInfo"
+                            className="switch is-rounded is-info"
+                            checked={props.signals()}
+                            onChange={handleChange}
+                        />
+                        <label htmlFor="switchRoundedInfo">Use signals</label>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
-export function Audience(props: {
-    audience: IAzureAudience;
-}): JSX.Element {
+export function Audience(props: { audience: IAzureAudience }): JSX.Element {
     const { audience } = props;
 
     // retrieve all the members currently in the session
@@ -260,7 +261,5 @@ export function Audience(props: {
         };
     }, [audience, setMembersCallback]);
 
-    return (
-        <div>Current co-creators: {members.length - 1}</div>
-    );
+    return <div>Current co-creators: {members.length - 1}</div>;
 }

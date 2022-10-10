@@ -10,11 +10,7 @@ import {
     generateTestUser,
     InsecureTokenProvider,
 } from '@fluidframework/test-client-utils';
-import {
-    ContainerSchema,
-    IFluidContainer,
-    SharedMap,
-} from 'fluid-framework';
+import { ContainerSchema, IFluidContainer, SharedMap } from 'fluid-framework';
 import { SignalManager } from '@fluid-experimental/data-objects';
 import { SharedCounter } from '@fluidframework/counter';
 
@@ -32,22 +28,24 @@ const azureUser = {
 };
 
 const remoteConnectionConfig: AzureRemoteConnectionConfig = {
-    type: "remote",
+    type: 'remote',
     tenantId: process.env.AZURE_TENANT_ID!,
     tokenProvider: new AzureFunctionTokenProvider(
         process.env.AZURE_FUNCTION_TOKEN_PROVIDER_URL!,
         azureUser
     ),
     endpoint: process.env.AZURE_ORDERER!,
-}
+};
 
 const localConnectionConfig: AzureLocalConnectionConfig = {
-    type: "local",
+    type: 'local',
     tokenProvider: new InsecureTokenProvider('VALUE_NOT_USED', user),
     endpoint: 'http://localhost:7070',
-}
+};
 
-const connectionConfig: AzureConnectionConfig = useAzure ? remoteConnectionConfig : localConnectionConfig;
+const connectionConfig: AzureConnectionConfig = useAzure
+    ? remoteConnectionConfig
+    : localConnectionConfig;
 
 const clientProps = {
     connection: connectionConfig,

@@ -3,6 +3,8 @@
 $navbar-breakpoint: 0px;
 
 @import '~bulma/bulma';
+@import 'bulma';
+@import '~bulma-switch';
 
 body {
     max-width: fit-content;

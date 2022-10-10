@@ -7,11 +7,7 @@ import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { loadFluidData } from './fluid';
-import {
-    Color,
-    getNextColor,
-    Shape,
-} from './util';
+import { Color, getNextColor, Shape } from './util';
 import {
     Pixi2Fluid,
     FluidDisplayObject,
@@ -19,7 +15,7 @@ import {
     Fluid2Pixi,
     Pixi2Signal,
     Signal2Pixi,
-    SignalPackage
+    SignalPackage,
 } from './wrappers';
 import * as UX from './ux';
 import { Guid } from 'guid-typescript';
@@ -27,7 +23,6 @@ import { Guid } from 'guid-typescript';
 import './styles.scss';
 
 async function main() {
-
     // create the root element for React
     const root = document.createElement('div');
     root.id = 'root';
@@ -54,7 +49,6 @@ async function main() {
     const localSelection = new Map<string, FeltShape>();
 
     const setSelected = async (dobj: FeltShape | undefined) => {
-
         //Since we don't currently support multi select, clear the current selection
         localSelection.forEach(async (value: FeltShape | undefined, key: string) => {
             if (value !== undefined) {
@@ -67,7 +61,7 @@ async function main() {
             } else {
                 localSelection.delete(key);
             }
-        })
+        });
 
         if (dobj !== undefined && dobj.id !== undefined) {
             if (!localSelection.has(dobj.id)) {
@@ -82,14 +76,14 @@ async function main() {
 
         localSelection.forEach((value: FeltShape) => {
             value.showSelection();
-        })
+        });
 
         emitSelectionEvent();
-    }
+    };
 
     const emitSelectionEvent = () => {
         window.dispatchEvent(new Event('onselection'));
-    }
+    };
 
     const getPresenceArray = (shapeId: string) => {
         const users: string[] | undefined = fluidPresence.get(shapeId);
@@ -98,7 +92,7 @@ async function main() {
         } else {
             return users;
         }
-    }
+    };
 
     // create PIXI app
     const pixiApp = await createPixiApp();
@@ -113,32 +107,36 @@ async function main() {
     // create counter for shared max z order
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
-
     const bringToFront = (shape: FeltShape) => {
-        console.log(shape.zIndex + " --- " + fluidMaxZIndex.value);
+        console.log(shape.zIndex + ' --- ' + fluidMaxZIndex.value);
         if (shape.zIndex < fluidMaxZIndex.value) {
             fluidMaxZIndex.increment(1);
             shape.zIndex = fluidMaxZIndex.value;
             setFluidPosition(shape);
         }
-    }
+    };
 
     const getMaxZIndex = () => {
         fluidMaxZIndex.increment(1);
         return fluidMaxZIndex.value;
-    }
+    };
 
     const bringSelectedToFront = () => {
         changeSelectedShapes((shape: FeltShape) => bringToFront(shape));
-    }
+    };
+
+    let useSignals: boolean = true;
+
+    const toggleSignals = () => {
+        useSignals = !useSignals;
+    };
 
     // This function will be called each time a shape is moved around the canvas.
     // It's passed in to the CreateShape function which wires it up to the
     // PIXI events for the shape.
     const setFluidPosition = (dobj: FeltShape) => {
-
         // Store the position in Fluid
-        if (dobj.dragging) {
+        if (dobj.dragging && useSignals) {
             const sig = Pixi2Signal(dobj);
             signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
@@ -165,7 +163,7 @@ async function main() {
             y, // y
             z, // zindex
             setFluidPosition, // function that syncs local data with Fluid
-            setSelected, // function that manages local selection
+            setSelected // function that manages local selection
         );
 
         localShapes.set(id, fs); // add the new shape to local data
@@ -200,18 +198,25 @@ async function main() {
     // function passed into React UX for creating shapes
     const createShape = (shape: Shape, color: Color) => {
         if (fluidShapes.size < shapeLimit) {
-            const fs = addNewShape(shape, color, Guid.create().toString(), 100, 100, getMaxZIndex());
+            const fs = addNewShape(
+                shape,
+                color,
+                Guid.create().toString(),
+                100,
+                100,
+                getMaxZIndex()
+            );
         }
     };
 
     const changeColorofSelected = (color: Color) => {
         changeSelectedShapes((shape: FeltShape) => changeColor(shape, color));
-    }
+    };
 
     const changeColor = (shape: FeltShape, color: Color) => {
         shape.color = color;
         setFluidPosition(shape);
-    }
+    };
 
     const changeSelectedShapes = (f: Function) => {
         if (localSelection.size > 0) {
@@ -222,13 +227,13 @@ async function main() {
                     localSelection.delete(key);
                     emitSelectionEvent();
                 }
-            })
+            });
         }
-    }
+    };
 
     const deleteSelectedShapes = () => {
         changeSelectedShapes((shape: FeltShape) => deleteShape(shape));
-    }
+    };
 
     const deleteShape = (shape: FeltShape) => {
         shape.deleted = true;
@@ -238,7 +243,7 @@ async function main() {
         fluidPresence.delete(shape.id);
         shape.destroy();
         emitSelectionEvent();
-    }
+    };
 
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
@@ -290,14 +295,14 @@ async function main() {
                 }
             }
         }
-    })
+    });
 
-    audience.on("memberRemoved", (clientId: string, member: IMember) => {
+    audience.on('memberRemoved', (clientId: string, member: IMember) => {
         fluidPresence.forEach((value: string[], key: string) => {
-            removeUserFromPresenceArray(value, member.userId)
+            removeUserFromPresenceArray(value, member.userId);
             fluidPresence.set(key, value);
-        })
-    })
+        });
+    });
 
     const removeUserFromPresenceArray = (arr: string[], userId: string) => {
         const i = arr.indexOf(userId);
@@ -305,21 +310,21 @@ async function main() {
             arr.splice(i, 1);
             removeUserFromPresenceArray(arr, userId);
         }
-    }
+    };
 
     const addUserToPresenceArray = (arr: string[], userId: string) => {
         if (arr.indexOf(userId) === -1) {
             arr.push(userId);
         }
-    }
+    };
 
     const flushPresenceArray = (arr: string[]) => {
         arr.forEach((value: string, index: number) => {
             if (!audience.getMembers().has(value)) {
                 arr.splice(index, 1);
             }
-        })
-    }
+        });
+    };
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
@@ -346,7 +351,11 @@ async function main() {
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
             bringToFront={bringSelectedToFront}
-            selected={() => { return localSelection.size > 0 }}
+            selected={() => {
+                return localSelection.size > 0;
+            }}
+            toggleSignals={toggleSignals}
+            signals={() => { return useSignals }}
         />,
         document.getElementById('root')
     );
@@ -381,10 +390,10 @@ async function initPixiApp() {
         width: 600,
         height: 600,
         autoDensity: true, // Handles high DPI screens
-        backgroundColor: 0xffffff
+        backgroundColor: 0xffffff,
     });
 
-    return app
+    return app;
 }
 
 // Clear the stage and create a new scaled container; the
@@ -401,7 +410,7 @@ const createScaledContainer = (app: PIXI.Application) => {
     container.sortableChildren = true;
 
     return container;
-}
+};
 
 const WIDTH: number = 500;
 
@@ -411,15 +420,18 @@ const actualWidth = (app: PIXI.Application) => {
     const { width, height } = app.screen;
     const isWidthConstrained = width < height;
     return isWidthConstrained ? width : height;
-}
+};
 
 const actualHeight = (app: PIXI.Application) => {
     const { width, height } = app.screen;
     const isHeightConstrained = width > height;
     return isHeightConstrained ? height : width;
-}
+};
 
-const addBackgroundShape = (manageSelection: (dobj: undefined) => void, app: PIXI.Application) => {
+const addBackgroundShape = (
+    manageSelection: (dobj: undefined) => void,
+    app: PIXI.Application
+) => {
     var bg: PIXI.Graphics = new PIXI.Graphics();
     bg.beginFill(0x000000);
     bg.drawRect(0, 0, app.screen.width, app.screen.height);
@@ -429,7 +441,7 @@ const addBackgroundShape = (manageSelection: (dobj: undefined) => void, app: PIX
     app.stage.addChild(bg);
 
     bg.on('pointerup', manageSelection);
-}
+};
 
 // wrapper class for a PIXI shape with a few extra methods and properties
 // for creating and managing shapes
@@ -454,7 +466,7 @@ export class FeltShape extends PIXI.Graphics {
         y: number,
         z: number,
         setFluidPosition: (dobj: FeltShape) => void,
-        setSelected: (dobj: FeltShape) => void,
+        setSelected: (dobj: FeltShape) => void
     ) {
         super();
         this.id = id;
@@ -503,11 +515,17 @@ export class FeltShape extends PIXI.Graphics {
 
         // sets local postion and enforces canvas boundary
         const updatePosition = (x: number, y: number) => {
-            if (x >= this._shape.width / 2 && x <= app.screen.width - this._shape.width / 2) {
+            if (
+                x >= this._shape.width / 2 &&
+                x <= app.screen.width - this._shape.width / 2
+            ) {
                 this.x = x;
             }
 
-            if (y >= this._shape.height / 2 && y <= app.screen.height - this._shape.height / 2) {
+            if (
+                y >= this._shape.height / 2 &&
+                y <= app.screen.height - this._shape.height / 2
+            ) {
                 this.y = y;
             }
         };
@@ -517,7 +535,7 @@ export class FeltShape extends PIXI.Graphics {
             .on('pointerup', onDragEnd)
             .on('pointerdown', onSelect)
             .on('pointerupoutside', onDragEnd)
-            .on('pointermove', onDragMove)
+            .on('pointermove', onDragMove);
     }
 
     set color(color: Color) {
@@ -530,7 +548,6 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     public showSelection() {
-
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
             this.addChild(this._selectionFrame);
@@ -548,7 +565,16 @@ export class FeltShape extends PIXI.Graphics {
 
         this._selectionFrame.zIndex = 5;
 
-        this.drawFrame(this._selectionFrame, handleSize, biteSize, color, left, top, right, bottom);
+        this.drawFrame(
+            this._selectionFrame,
+            handleSize,
+            biteSize,
+            color,
+            left,
+            top,
+            right,
+            bottom
+        );
     }
 
     public removeSelection() {
@@ -556,7 +582,6 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     public showPresence() {
-
         if (!this._presenceFrame) {
             this._presenceFrame = new PIXI.Graphics();
             this.addChild(this._presenceFrame);
@@ -574,41 +599,66 @@ export class FeltShape extends PIXI.Graphics {
 
         this._presenceFrame.zIndex = 4;
 
-        this.drawFrame(this._presenceFrame, handleSize, biteSize, color, left, top, right, bottom);
+        this.drawFrame(
+            this._presenceFrame,
+            handleSize,
+            biteSize,
+            color,
+            left,
+            top,
+            right,
+            bottom
+        );
     }
 
     public removePresence() {
         this._presenceFrame?.clear();
     }
 
-    private drawFrame(frame: PIXI.Graphics,
+    private drawFrame(
+        frame: PIXI.Graphics,
         handleSize: number,
         biteSize: number,
         color: number,
         left: number,
         top: number,
         right: number,
-        bottom: number) {
-
+        bottom: number
+    ) {
         frame.beginFill(color);
         frame.drawRect(left, top, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(left + biteSize, top + biteSize, handleSize - biteSize, handleSize - biteSize);
+        frame.drawRect(
+            left + biteSize,
+            top + biteSize,
+            handleSize - biteSize,
+            handleSize - biteSize
+        );
         frame.endHole();
 
         frame.beginFill(color);
         frame.drawRect(left, bottom, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(left + biteSize, bottom, handleSize - biteSize, handleSize - biteSize);
+        frame.drawRect(
+            left + biteSize,
+            bottom,
+            handleSize - biteSize,
+            handleSize - biteSize
+        );
         frame.endHole();
 
         frame.beginFill(color);
         frame.drawRect(right, top, handleSize, handleSize);
         frame.endFill();
         frame.beginHole();
-        frame.drawRect(right, top + biteSize, handleSize - biteSize, handleSize - biteSize);
+        frame.drawRect(
+            right,
+            top + biteSize,
+            handleSize - biteSize,
+            handleSize - biteSize
+        );
         frame.endHole();
 
         frame.beginFill(color);
@@ -625,7 +675,12 @@ export class FeltShape extends PIXI.Graphics {
                 this._shape.drawCircle(0, 0, this.size / 2);
                 break;
             case Shape.Square:
-                this._shape.drawRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                this._shape.drawRect(
+                    -this.size / 2,
+                    -this.size / 2,
+                    this.size,
+                    this.size
+                );
                 break;
             case Shape.Triangle:
                 // eslint-disable-next-line no-case-declarations
