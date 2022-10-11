@@ -203,7 +203,7 @@ export function StatusBar(props: {
     audience: IAzureAudience
     toggleSignals: any;
     signals: () => boolean
- }) {
+}) {
 
     const [, setChecked] = React.useState(props.signals());
 
@@ -213,15 +213,10 @@ export function StatusBar(props: {
     };
 
     return (
-        <div className="level is-light mb-0 mt-0">
+        <div className="level mb-0 mt-0">
             <div className="level-left">
                 <div className="level-item">
-                    <Audience audience={props.audience} />
-                </div>
-            </div>
-            <div className="level-right">
-                <div className="level-item">
-                    <div className="field">
+                    <div className="field mt-0 mb-0">
                         <input
                             id="switchRoundedInfo"
                             type="checkbox"
@@ -230,8 +225,13 @@ export function StatusBar(props: {
                             checked={props.signals()}
                             onChange={handleChange}
                         />
-                        <label htmlFor="switchRoundedInfo">Use signals</label>
+                        <label className="mb-3 mt-0" htmlFor="switchRoundedInfo">Use signals</label>
                     </div>
+                </div>
+            </div>
+            <div className="level-right">
+                <div className="level-item mb-2 mt-0">
+                    <Audience audience={props.audience} />
                 </div>
             </div>
         </div>
