@@ -7,6 +7,7 @@ import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
 import { mdiCloseThick } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
+import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
 
 // eslint-disable-next-line react/prop-types
@@ -33,11 +34,22 @@ export function ReactApp(props: {
         window.addEventListener('keydown', (event) => keyDownHandler(event));
     }, []);
 
+    const [infopaneIsOpen, toggleInfopane] = React.useState(false);
+
+    const showInfopane = () => {
+        toggleInfopane(true);
+    }
+
+    const hideInfopane = () => {
+        toggleInfopane(false);
+    }
+
     return (
         <div>
-            <Toolbar {...props} />
+            <Toolbar {...props} showInfopane={showInfopane} />
             <Canvas />
             <StatusBar {...props} />
+            <Infopane isOpen={infopaneIsOpen} close={hideInfopane} />
         </div>
     );
 }
@@ -50,6 +62,7 @@ export function Toolbar(props: {
     bringToFront: any;
     audience: IAzureAudience;
     selected: () => boolean;
+    showInfopane: any;
 }) {
     const shapeButtonColor = 'black';
 
@@ -69,7 +82,7 @@ export function Toolbar(props: {
                             title="Circle"
                             color={shapeButtonColor}
                             disabled={false}
-                            createFunction={() =>
+                            function={() =>
                                 props.createShape(S.Circle, Color.Red)
                             }
                         />
@@ -78,7 +91,7 @@ export function Toolbar(props: {
                             title="Square"
                             color={shapeButtonColor}
                             disabled={false}
-                            createFunction={() =>
+                            function={() =>
                                 props.createShape(S.Square, Color.Blue)
                             }
                         />
@@ -87,7 +100,7 @@ export function Toolbar(props: {
                             title="Triangle"
                             color={shapeButtonColor}
                             disabled={false}
-                            createFunction={() =>
+                            function={() =>
                                 props.createShape(S.Triangle, Color.Orange)
                             }
                         />
@@ -96,7 +109,7 @@ export function Toolbar(props: {
                             title="Rectangle"
                             color={shapeButtonColor}
                             disabled={false}
-                            createFunction={() =>
+                            function={() =>
                                 props.createShape(S.Rectangle, Color.Purple)
                             }
                         />
@@ -109,35 +122,35 @@ export function Toolbar(props: {
                             title="Red"
                             color="Red"
                             disabled={!selected}
-                            createFunction={() => props.changeColor(Color.Red)}
+                            function={() => props.changeColor(Color.Red)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Green"
                             color="Green"
                             disabled={!selected}
-                            createFunction={() => props.changeColor(Color.Green)}
+                            function={() => props.changeColor(Color.Green)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Blue"
                             color="Blue"
                             disabled={!selected}
-                            createFunction={() => props.changeColor(Color.Blue)}
+                            function={() => props.changeColor(Color.Blue)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Orange"
                             color="Orange"
                             disabled={!selected}
-                            createFunction={() => props.changeColor(Color.Orange)}
+                            function={() => props.changeColor(Color.Orange)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Purple"
                             color="Purple"
                             disabled={!selected}
-                            createFunction={() => props.changeColor(Color.Purple)}
+                            function={() => props.changeColor(Color.Purple)}
                         />
                     </div>
                 </div>
@@ -148,14 +161,29 @@ export function Toolbar(props: {
                             title="Bring to front"
                             color={shapeButtonColor}
                             disabled={!selected}
-                            createFunction={() => props.bringToFront()}
+                            function={() => props.bringToFront()}
                         />
                         <ShapeButton
                             icon={mdiCloseThick}
                             title="Delete"
                             color={shapeButtonColor}
                             disabled={!selected}
-                            createFunction={() => props.deleteShape()}
+                            function={() => props.deleteShape()}
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="level-right">
+                <div className="level-item">
+                    <div className="field has-addons">
+                        <ShapeButton
+                            icon={mdiInformationOutline}
+                            title="Info"
+                            color={shapeButtonColor}
+                            disabled={false}
+                            function={() =>
+                                props.showInfopane()
+                            }
                         />
                     </div>
                 </div>
@@ -172,14 +200,14 @@ export function ShapeButton(props: {
     icon: any;
     title: string;
     color: string;
-    createFunction: any;
+    function: any;
     disabled: boolean;
 }) {
     return (
         <p className="control">
             <button
                 className="button is-normal is-light"
-                onClick={props.createFunction}
+                onClick={props.function}
                 disabled={props.disabled}
             >
                 <span className="icon">
@@ -261,4 +289,33 @@ export function Audience(props: { audience: IAzureAudience }): JSX.Element {
     }, [audience, setMembersCallback]);
 
     return <div>Current co-creators: {members.length - 1}</div>;
+}
+
+export function Infopane(props: {
+    isOpen: boolean,
+    close: any;
+}): JSX.Element {
+
+    let isActive: string = "";
+
+    if (props.isOpen) {
+        isActive = " is-active";
+    } else {
+        isActive = "";
+    };
+
+    return (
+        <div id="infopane" className={"modal" + isActive}>
+            <div onClick={props.close} className="modal-background"></div>
+            <div className="modal-content">
+                <div className="message is-info">
+                    <div className="message-header">
+                        <p>Fluid Framework demo app</p>
+                        <button onClick={props.close} className="delete" aria-label="delete"></button>
+                    </div>
+                    <div className="message-body">To see Fluid in action, share the URL including the goo at the end.</div>
+                </div>
+            </div>
+        </div>
+    )
 }
