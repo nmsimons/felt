@@ -67,7 +67,9 @@ export function Toolbar(props: {
     const shapeButtonColor = 'black';
 
     React.useEffect(() => {
-        props.selectionManager.addEventListener('changed', () => getSelected(props.selectionManager.selected));
+        props.selectionManager.onChanged = () => {
+            getSelected(props.selectionManager.selected);
+        }
     }, []);
 
     const [selected, getSelected] = React.useState(props.selectionManager.selected);

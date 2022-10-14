@@ -21,74 +21,57 @@ import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
 import './styles.scss';
-import { stringify } from 'querystring';
 
 async function main() {
 
     // Create a map that fires an event when it changes
     class Selection extends Map<string, FeltShape> {
 
-        private _onChanged: () => void;
+        public onChanged?: () => void;
 
-        constructor(onChanged: () => void) {
+        constructor() {
             super();
 
-            this._onChanged = onChanged;
         }
 
         public delete(key: string): boolean {
             const b = super.delete(key);
-            this._onChanged();
+            if (this.onChanged !== undefined) {
+                this.onChanged();
+            }
             return b;
         }
 
         public set(key: string, value: FeltShape): this {
             const b = super.set(key, value);
-            this._onChanged();
+            if (this.onChanged !== undefined) {
+                this.onChanged();
+            }
             return b;
         }
 
-    }
-
-    // This class is used to pass selection state and eventing to the React app
-    class SelectionManager extends EventTarget {
-
-        public selection: Selection;
-
-        constructor() {
-            super()
-
-            this.selection = new Selection(this.emitSelectionEvent);
-        }
-
-        private _changed: Event = new Event("changed");
-
-        private emitSelectionEvent = () => {
-            this.dispatchEvent(this._changed);
-        }
-
         public get selected() {
-            return this.selection.size != 0;
+            return this.size > 0;
         }
     }
 
     const setSelected = async (dobj: FeltShape | undefined) => {
         //Since we don't currently support multi select, clear the current selection
-        selectionManager.selection.forEach(async (value: FeltShape | undefined, key: string) => {
+        selection.forEach(async (value: FeltShape | undefined, key: string) => {
             if (value !== undefined) {
                 value.removeSelection();
-                selectionManager.selection.delete(value.id);
+                selection.delete(value.id);
                 const users: string[] = getPresenceArray(value.id);
                 removeUserFromPresenceArray(users, audience.getMyself()!.userId);
                 fluidPresence.set(value.id, users);
             } else {
-                selectionManager.selection.delete(key);
+                selection.delete(key);
             }
         });
 
         if (dobj !== undefined && dobj.id !== undefined) {
-            if (!selectionManager.selection.has(dobj.id)) {
-                selectionManager.selection.set(dobj.id, dobj);
+            if (!selection.has(dobj.id)) {
+                selection.set(dobj.id, dobj);
                 const users: string[] = getPresenceArray(dobj.id);
                 const userId = audience.getMyself()!.userId;
                 flushPresenceArray(users);
@@ -97,7 +80,7 @@ async function main() {
             }
         }
 
-        selectionManager.selection.forEach((value: FeltShape) => {
+        selection.forEach((value: FeltShape) => {
             value.showSelection();
         });
     };
@@ -124,8 +107,9 @@ async function main() {
     // initialize signal manager
     const signaler = container.initialObjects.signalManager as SignalManager;
 
-    const selectionManager = new SelectionManager();
-
+    // initialize the selection object which is used to manage local selection and is passed
+    // to the React app for state and events
+    const selection = new Selection();
 
     const getPresenceArray = (shapeId: string) => {
         const users: string[] | undefined = fluidPresence.get(shapeId);
@@ -166,6 +150,7 @@ async function main() {
         changeSelectedShapes((shape: FeltShape) => bringToFront(shape));
     };
 
+    // flag to allow the app to switch between using ops and signals or just ops.
     let useSignals: boolean = true;
 
     const toggleSignals = () => {
@@ -260,12 +245,12 @@ async function main() {
     };
 
     const changeSelectedShapes = (f: Function) => {
-        if (selectionManager.selection.size > 0) {
-            selectionManager.selection.forEach((value: FeltShape | undefined, key: string) => {
+        if (selection.size > 0) {
+            selection.forEach((value: FeltShape | undefined, key: string) => {
                 if (value !== undefined) {
                     f(value);
                 } else {
-                    selectionManager.selection.delete(key);
+                    selection.delete(key);
                 }
             });
         }
@@ -280,7 +265,7 @@ async function main() {
         setFluidPosition(shape);
         localShapes.delete(shape.id);
         fluidPresence.delete(shape.id);
-        selectionManager.selection.delete(shape.id);
+        selection.delete(shape.id);
         shape.destroy();
     };
 
@@ -292,7 +277,7 @@ async function main() {
             const localShape = localShapes.get(remoteShape.id);
             if (localShape) {
                 if (remoteShape.deleted) {
-                    selectionManager.selection.delete(localShape.id);
+                    selection.delete(localShape.id);
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
@@ -356,6 +341,7 @@ async function main() {
         }
     };
 
+    // semi optimal tidy of the presence array
     const flushPresenceArray = (arr: string[]) => {
         arr.forEach((value: string, index: number) => {
             if (!audience.getMembers().has(value)) {
@@ -391,7 +377,7 @@ async function main() {
             bringToFront={bringSelectedToFront}
             toggleSignals={toggleSignals}
             signals={() => { return useSignals }}
-            selectionManager={selectionManager}
+            selectionManager={selection}
         />,
         document.getElementById('root')
     );
