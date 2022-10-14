@@ -21,25 +21,86 @@ import * as UX from './ux';
 import { Guid } from 'guid-typescript';
 
 import './styles.scss';
+import { stringify } from 'querystring';
 
 async function main() {
 
+    // Create a map that fires an event when it changes
+    class Selection extends Map<string, FeltShape> {
+
+        private _onChanged: () => void;
+
+        constructor(onChanged: () => void) {
+            super();
+
+            this._onChanged = onChanged;
+        }
+
+        public delete(key: string): boolean {
+            const b = super.delete(key);
+            this._onChanged();
+            return b;
+        }
+
+        public set(key: string, value: FeltShape): this {
+            const b = super.set(key, value);
+            this._onChanged();
+            return b;
+        }
+
+    }
+
+    // This class is used to pass selection state and eventing to the React app
     class SelectionManager extends EventTarget {
+
+        public selection: Selection;
 
         constructor() {
             super()
+
+            this.selection = new Selection(this.emitSelectionEvent);
         }
 
         private _changed: Event = new Event("changed");
 
-        public emitSelectionEvent = () => {
+        private emitSelectionEvent = () => {
             this.dispatchEvent(this._changed);
         }
 
         public get selected() {
-            return localSelection.size > 0
+            return this.selection.size != 0;
         }
     }
+
+    const setSelected = async (dobj: FeltShape | undefined) => {
+        //Since we don't currently support multi select, clear the current selection
+        selectionManager.selection.forEach(async (value: FeltShape | undefined, key: string) => {
+            if (value !== undefined) {
+                value.removeSelection();
+                selectionManager.selection.delete(value.id);
+                const users: string[] = getPresenceArray(value.id);
+                removeUserFromPresenceArray(users, audience.getMyself()!.userId);
+                fluidPresence.set(value.id, users);
+            } else {
+                selectionManager.selection.delete(key);
+            }
+        });
+
+        if (dobj !== undefined && dobj.id !== undefined) {
+            if (!selectionManager.selection.has(dobj.id)) {
+                selectionManager.selection.set(dobj.id, dobj);
+                const users: string[] = getPresenceArray(dobj.id);
+                const userId = audience.getMyself()!.userId;
+                flushPresenceArray(users);
+                addUserToPresenceArray(users, userId);
+                fluidPresence.set(dobj.id, users);
+            }
+        }
+
+        selectionManager.selection.forEach((value: FeltShape) => {
+            value.showSelection();
+        });
+    };
 
     // create the root element for React
     const root = document.createElement('div');
@@ -65,41 +126,6 @@ async function main() {
 
     const selectionManager = new SelectionManager();
 
-    // create local map for selected shapes - contains customized PIXI objects
-    const localSelection = new Map<string, FeltShape>();
-
-    const setSelected = async (dobj: FeltShape | undefined) => {
-        //Since we don't currently support multi select, clear the current selection
-        localSelection.forEach(async (value: FeltShape | undefined, key: string) => {
-            if (value !== undefined) {
-                value.removeSelection();
-                localSelection.delete(value.id);
-
-                const users: string[] = getPresenceArray(value.id);
-                removeUserFromPresenceArray(users, audience.getMyself()!.userId);
-                fluidPresence.set(value.id, users);
-            } else {
-                localSelection.delete(key);
-            }
-        });
-
-        if (dobj !== undefined && dobj.id !== undefined) {
-            if (!localSelection.has(dobj.id)) {
-                localSelection.set(dobj.id, dobj);
-                const users: string[] = getPresenceArray(dobj.id);
-                const userId = audience.getMyself()!.userId;
-                flushPresenceArray(users);
-                addUserToPresenceArray(users, userId);
-                fluidPresence.set(dobj.id, users);
-            }
-        }
-
-        localSelection.forEach((value: FeltShape) => {
-            value.showSelection();
-        });
-
-        selectionManager.emitSelectionEvent();
-    };
 
     const getPresenceArray = (shapeId: string) => {
         const users: string[] | undefined = fluidPresence.get(shapeId);
@@ -124,7 +150,6 @@ async function main() {
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
     const bringToFront = (shape: FeltShape) => {
-        console.log(shape.zIndex + ' --- ' + fluidMaxZIndex.value);
         if (shape.zIndex < fluidMaxZIndex.value) {
             fluidMaxZIndex.increment(1);
             shape.zIndex = fluidMaxZIndex.value;
@@ -235,13 +260,12 @@ async function main() {
     };
 
     const changeSelectedShapes = (f: Function) => {
-        if (localSelection.size > 0) {
-            localSelection.forEach((value: FeltShape | undefined, key: string) => {
+        if (selectionManager.selection.size > 0) {
+            selectionManager.selection.forEach((value: FeltShape | undefined, key: string) => {
                 if (value !== undefined) {
                     f(value);
                 } else {
-                    localSelection.delete(key);
-                    selectionManager.emitSelectionEvent();
+                    selectionManager.selection.delete(key);
                 }
             });
         }
@@ -254,11 +278,10 @@ async function main() {
     const deleteShape = (shape: FeltShape) => {
         shape.deleted = true;
         setFluidPosition(shape);
-        localSelection.delete(shape.id);
         localShapes.delete(shape.id);
         fluidPresence.delete(shape.id);
+        selectionManager.selection.delete(shape.id);
         shape.destroy();
-        selectionManager.emitSelectionEvent();
     };
 
     // event handler for detecting remote changes to Fluid data and updating
@@ -269,8 +292,7 @@ async function main() {
             const localShape = localShapes.get(remoteShape.id);
             if (localShape) {
                 if (remoteShape.deleted) {
-                    localSelection.delete(localShape.id);
-                    selectionManager.emitSelectionEvent();
+                    selectionManager.selection.delete(localShape.id);
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
