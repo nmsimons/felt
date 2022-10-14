@@ -35,19 +35,43 @@ async function main() {
         }
 
         public delete(key: string): boolean {
-            const b = super.delete(key);
+            const shape: FeltShape | undefined = this.get(key);
+
+            if (shape !== undefined) {
+                shape.removeSelection()
+                const users: string[] = getPresenceArray(shape.id);
+                removeUserFromPresenceArray(users, audience.getMyself()!.userId);
+                fluidPresence.set(shape.id, users);
+                const b = super.delete(key);
+                if (this.onChanged !== undefined) {
+                    this.onChanged();
+                }
+                return b;
+            } else {
+                return super.delete(key);
+            }
+        }
+
+        public set(key: string, value: FeltShape): this {
+            value.showSelection();
+            const users: string[] = getPresenceArray(value.id);
+            const userId = audience.getMyself()!.userId;
+            flushPresenceArray(users);
+            addUserToPresenceArray(users, userId);
+            fluidPresence.set(value.id, users);
+            const b = super.set(key, value); // we have to do this BEFORE the event fires
             if (this.onChanged !== undefined) {
                 this.onChanged();
             }
             return b;
         }
 
-        public set(key: string, value: FeltShape): this {
-            const b = super.set(key, value);
-            if (this.onChanged !== undefined) {
-                this.onChanged();
-            }
-            return b;
+        public clear(): void {
+            this.forEach(async (value: FeltShape | undefined, key: string) => {
+                this.delete(key);
+            });
+
+            super.clear();
         }
 
         public get selected() {
@@ -57,32 +81,13 @@ async function main() {
 
     const setSelected = async (dobj: FeltShape | undefined) => {
         //Since we don't currently support multi select, clear the current selection
-        selection.forEach(async (value: FeltShape | undefined, key: string) => {
-            if (value !== undefined) {
-                value.removeSelection();
-                selection.delete(value.id);
-                const users: string[] = getPresenceArray(value.id);
-                removeUserFromPresenceArray(users, audience.getMyself()!.userId);
-                fluidPresence.set(value.id, users);
-            } else {
-                selection.delete(key);
-            }
-        });
+        selection.clear();
 
         if (dobj !== undefined && dobj.id !== undefined) {
             if (!selection.has(dobj.id)) {
                 selection.set(dobj.id, dobj);
-                const users: string[] = getPresenceArray(dobj.id);
-                const userId = audience.getMyself()!.userId;
-                flushPresenceArray(users);
-                addUserToPresenceArray(users, userId);
-                fluidPresence.set(dobj.id, users);
             }
         }
-
-        selection.forEach((value: FeltShape) => {
-            value.showSelection();
-        });
     };
 
     // create the root element for React
