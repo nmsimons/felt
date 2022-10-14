@@ -23,6 +23,24 @@ import { Guid } from 'guid-typescript';
 import './styles.scss';
 
 async function main() {
+
+    class SelectionManager extends EventTarget {
+
+        constructor() {
+            super()
+        }
+
+        private _changed: Event = new Event("changed");
+
+        public emitSelectionEvent = () => {
+            this.dispatchEvent(this._changed);
+        }
+
+        public get selected() {
+            return localSelection.size > 0
+        }
+    }
+
     // create the root element for React
     const root = document.createElement('div');
     root.id = 'root';
@@ -44,6 +62,8 @@ async function main() {
 
     // initialize signal manager
     const signaler = container.initialObjects.signalManager as SignalManager;
+
+    const selectionManager = new SelectionManager();
 
     // create local map for selected shapes - contains customized PIXI objects
     const localSelection = new Map<string, FeltShape>();
@@ -78,11 +98,7 @@ async function main() {
             value.showSelection();
         });
 
-        emitSelectionEvent();
-    };
-
-    const emitSelectionEvent = () => {
-        window.dispatchEvent(new Event('onselection'));
+        selectionManager.emitSelectionEvent();
     };
 
     const getPresenceArray = (shapeId: string) => {
@@ -225,7 +241,7 @@ async function main() {
                     f(value);
                 } else {
                     localSelection.delete(key);
-                    emitSelectionEvent();
+                    selectionManager.emitSelectionEvent();
                 }
             });
         }
@@ -242,7 +258,7 @@ async function main() {
         localShapes.delete(shape.id);
         fluidPresence.delete(shape.id);
         shape.destroy();
-        emitSelectionEvent();
+        selectionManager.emitSelectionEvent();
     };
 
     // event handler for detecting remote changes to Fluid data and updating
@@ -254,7 +270,7 @@ async function main() {
             if (localShape) {
                 if (remoteShape.deleted) {
                     localSelection.delete(localShape.id);
-                    emitSelectionEvent();
+                    selectionManager.emitSelectionEvent();
                     deleteShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape);
@@ -351,11 +367,9 @@ async function main() {
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
             bringToFront={bringSelectedToFront}
-            selected={() => {
-                return localSelection.size > 0;
-            }}
             toggleSignals={toggleSignals}
             signals={() => { return useSignals }}
+            selectionManager={selectionManager}
         />,
         document.getElementById('root')
     );

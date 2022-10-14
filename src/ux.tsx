@@ -17,9 +17,9 @@ export function ReactApp(props: {
     changeColor: any;
     deleteShape: any;
     bringToFront: any;
-    selected: () => boolean;
     toggleSignals: any;
     signals: () => boolean;
+    selectionManager: any;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -61,16 +61,16 @@ export function Toolbar(props: {
     deleteShape: any;
     bringToFront: any;
     audience: IAzureAudience;
-    selected: () => boolean;
     showInfopane: any;
+    selectionManager: any;
 }) {
     const shapeButtonColor = 'black';
 
     React.useEffect(() => {
-        window.addEventListener('onselection', () => getSelected(props.selected));
+        props.selectionManager.addEventListener('changed', () => getSelected(props.selectionManager.selected));
     }, []);
 
-    const [selected, getSelected] = React.useState(props.selected);
+    const [selected, getSelected] = React.useState(props.selectionManager.selected);
 
     return (
         <div className="level is-light mb-3 mt-3">
