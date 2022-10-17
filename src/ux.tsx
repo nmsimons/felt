@@ -5,6 +5,7 @@ import { mdiCircle } from '@mdi/js';
 import { mdiSquare } from '@mdi/js';
 import { mdiTriangle } from '@mdi/js';
 import { mdiRectangle } from '@mdi/js';
+import { mdiShape } from '@mdi/js';
 import { mdiCloseThick } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
@@ -14,6 +15,7 @@ import { Color, Shape as S } from './util';
 export function ReactApp(props: {
     audience: IAzureAudience;
     createShape: any;
+    createLotsOfShapes: any;
     changeColor: any;
     deleteShape: any;
     bringToFront: any;
@@ -57,6 +59,7 @@ export function ReactApp(props: {
 // eslint-disable-next-line react/prop-types
 export function Toolbar(props: {
     createShape: any;
+    createLotsOfShapes: any;
     changeColor: any;
     deleteShape: any;
     bringToFront: any;
@@ -109,6 +112,15 @@ export function Toolbar(props: {
                             disabled={false}
                             function={() =>
                                 props.createShape(S.Rectangle, Color.Purple)
+                            }
+                        />
+                        <ShapeButton
+                            icon={mdiShape}
+                            title="Lots of shapes"
+                            color={shapeButtonColor}
+                            disabled={false}
+                            function={() =>
+                                props.createLotsOfShapes(100)
                             }
                         />
                     </div>

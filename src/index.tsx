@@ -7,7 +7,7 @@ import * as PIXI from 'pixi.js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { loadFluidData } from './fluid';
-import { Color, getNextColor, Shape } from './util';
+import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
 import {
     Pixi2Fluid,
     FluidDisplayObject,
@@ -230,12 +230,34 @@ async function main() {
                 shape,
                 color,
                 Guid.create().toString(),
-                100,
-                100,
+                size,
+                size,
                 getMaxZIndex()
             );
         }
     };
+
+    const createLotsOfShapes = (amount: number) => {
+        let shape = Shape.Circle;
+        let color = Color.Red;
+
+        for (let index = 0; index < amount; index++) {
+
+            shape = getNextShape(shape);
+            color = getNextColor(color);
+
+            if (fluidShapes.size < shapeLimit) {
+                const fs = addNewShape(
+                    shape,
+                    color,
+                    Guid.create().toString(),
+                    getRandomInt(size, pixiApp.screen.width - size),
+                    getRandomInt(size, pixiApp.screen.height - size),
+                    getMaxZIndex()
+                );
+            }
+        }
+    }
 
     const changeColorofSelected = (color: Color) => {
         changeSelectedShapes((shape: FeltShape) => changeColor(shape, color));
@@ -374,6 +396,7 @@ async function main() {
         <UX.ReactApp
             audience={audience}
             createShape={createShape}
+            createLotsOfShapes={createLotsOfShapes}
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
             bringToFront={bringSelectedToFront}
