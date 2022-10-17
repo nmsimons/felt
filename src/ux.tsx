@@ -38,11 +38,11 @@ export function ReactApp(props: {
 
     const showInfopane = () => {
         toggleInfopane(true);
-    }
+    };
 
     const hideInfopane = () => {
         toggleInfopane(false);
-    }
+    };
 
     return (
         <div>
@@ -69,7 +69,7 @@ export function Toolbar(props: {
     React.useEffect(() => {
         props.selectionManager.onChanged = () => {
             getSelected(props.selectionManager.selected);
-        }
+        };
     }, []);
 
     const [selected, getSelected] = React.useState(props.selectionManager.selected);
@@ -84,18 +84,14 @@ export function Toolbar(props: {
                             title="Circle"
                             color={shapeButtonColor}
                             disabled={false}
-                            function={() =>
-                                props.createShape(S.Circle, Color.Red)
-                            }
+                            function={() => props.createShape(S.Circle, Color.Red)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Square"
                             color={shapeButtonColor}
                             disabled={false}
-                            function={() =>
-                                props.createShape(S.Square, Color.Blue)
-                            }
+                            function={() => props.createShape(S.Square, Color.Blue)}
                         />
                         <ShapeButton
                             icon={mdiTriangle}
@@ -183,9 +179,7 @@ export function Toolbar(props: {
                             title="Info"
                             color={shapeButtonColor}
                             disabled={false}
-                            function={() =>
-                                props.showInfopane()
-                            }
+                            function={() => props.showInfopane()}
                         />
                     </div>
                 </div>
@@ -230,15 +224,14 @@ export function Canvas() {
 }
 
 export function StatusBar(props: {
-    audience: IAzureAudience
+    audience: IAzureAudience;
     toggleSignals: any;
-    signals: () => boolean
+    signals: () => boolean;
 }) {
-
     const [, setChecked] = React.useState(props.signals());
 
     const handleChange = () => {
-        props.toggleSignals()
+        props.toggleSignals();
         setChecked(props.signals());
     };
 
@@ -255,7 +248,9 @@ export function StatusBar(props: {
                             checked={props.signals()}
                             onChange={handleChange}
                         />
-                        <label className="mb-3 mt-0" htmlFor="switchRoundedInfo">Use signals</label>
+                        <label className="mb-3 mt-0" htmlFor="switchRoundedInfo">
+                            Use signals
+                        </label>
                     </div>
                 </div>
             </div>
@@ -293,31 +288,34 @@ export function Audience(props: { audience: IAzureAudience }): JSX.Element {
     return <div>Current co-creators: {members.length - 1}</div>;
 }
 
-export function Infopane(props: {
-    isOpen: boolean,
-    close: any;
-}): JSX.Element {
-
-    let isActive: string = "";
+export function Infopane(props: { isOpen: boolean; close: any }): JSX.Element {
+    let isActive: string = '';
 
     if (props.isOpen) {
-        isActive = " is-active";
+        isActive = ' is-active';
     } else {
-        isActive = "";
-    };
+        isActive = '';
+    }
 
     return (
-        <div id="infopane" className={"modal" + isActive}>
+        <div id="infopane" className={'modal' + isActive}>
             <div onClick={props.close} className="modal-background"></div>
-            <div className="modal-content">
+            <div className="modal-content is-light">
                 <div className="message is-info">
                     <div className="message-header">
                         <p>Fluid Framework demo app</p>
-                        <button onClick={props.close} className="delete" aria-label="delete"></button>
+                        <button
+                            onClick={props.close}
+                            className="delete"
+                            aria-label="delete"
+                        ></button>
                     </div>
-                    <div className="message-body">To see Fluid in action, share the URL including the goo at the end.</div>
+                    <div className="message-body">
+                        To see Fluid in action, share the URL including the goo at
+                        the end.
+                    </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }

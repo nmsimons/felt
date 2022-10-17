@@ -23,22 +23,19 @@ import { Guid } from 'guid-typescript';
 import './styles.scss';
 
 async function main() {
-
     // Create a map that fires an event when it changes
     class Selection extends Map<string, FeltShape> {
-
         public onChanged?: () => void;
 
         constructor() {
             super();
-
         }
 
         public delete(key: string): boolean {
             const shape: FeltShape | undefined = this.get(key);
 
             if (shape !== undefined) {
-                shape.removeSelection()
+                shape.removeSelection();
                 const users: string[] = getPresenceArray(shape.id);
                 removeUserFromPresenceArray(users, audience.getMyself()!.userId);
                 fluidPresence.set(shape.id, users);
@@ -381,7 +378,9 @@ async function main() {
             deleteShape={deleteSelectedShapes}
             bringToFront={bringSelectedToFront}
             toggleSignals={toggleSignals}
-            signals={() => { return useSignals }}
+            signals={() => {
+                return useSignals;
+            }}
             selectionManager={selection}
         />,
         document.getElementById('root')
