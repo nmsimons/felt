@@ -225,7 +225,7 @@ async function main() {
 
     // function passed into React UX for creating shapes
     const createShape = (shape: Shape, color: Color) => {
-        if (fluidShapes.size < shapeLimit) {
+        if (localShapes.size < shapeLimit) {
             const fs = addNewShape(
                 shape,
                 color,
@@ -246,7 +246,7 @@ async function main() {
             shape = getNextShape(shape);
             color = getNextColor(color);
 
-            if (fluidShapes.size < shapeLimit) {
+            if (localShapes.size < shapeLimit) {
                 const fs = addNewShape(
                     shape,
                     color,
