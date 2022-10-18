@@ -33,12 +33,18 @@ async function main() {
 
         public delete(key: string): boolean {
             const shape: FeltShape | undefined = this.get(key);
+            const me: AzureMember | undefined = audience.getMyself();
 
             if (shape !== undefined) {
                 shape.removeSelection();
                 const users: string[] = getPresenceArray(shape.id);
-                removeUserFromPresenceArray(users, audience.getMyself()!.userId);
-                fluidPresence.set(shape.id, users);
+                if (me !== undefined) {
+                    removeUserFromPresenceArray(users, me.userId);
+                    fluidPresence.set(shape.id, users);
+                } else {
+                    console.log("Failed to set presence!!!");
+                }
+
                 const b = super.delete(key);
                 if (this.onChanged !== undefined) {
                     this.onChanged();
@@ -52,10 +58,15 @@ async function main() {
         public set(key: string, value: FeltShape): this {
             value.showSelection();
             const users: string[] = getPresenceArray(value.id);
-            const userId = audience.getMyself()!.userId;
-            flushPresenceArray(users);
-            addUserToPresenceArray(users, userId);
-            fluidPresence.set(value.id, users);
+            const me: AzureMember | undefined = audience.getMyself();
+
+            if (me != undefined) {
+                flushPresenceArray(users);
+                addUserToPresenceArray(users, me.userId);
+                fluidPresence.set(value.id, users);
+            } else {
+                console.log("Failed to set presence!!!");
+            }
             const b = super.set(key, value); // we have to do this BEFORE the event fires
             if (this.onChanged !== undefined) {
                 this.onChanged();
@@ -327,7 +338,7 @@ async function main() {
             const remote = target.get(changed.key).slice();
             const me: AzureMember | undefined = audience.getMyself();
 
-            if (me) {
+            if (me !== undefined) {
                 const i: number = remote.indexOf(me.userId);
                 if (i > -1) {
                     remote.splice(i, 1);
