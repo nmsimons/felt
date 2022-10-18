@@ -150,7 +150,7 @@ async function main() {
         if (shape.zIndex < fluidMaxZIndex.value) {
             fluidMaxZIndex.increment(1);
             shape.zIndex = fluidMaxZIndex.value;
-            setFluidPosition(shape);
+            shape.fluidSync();
         }
     };
 
@@ -173,7 +173,7 @@ async function main() {
     // This function will be called each time a shape is moved around the canvas.
     // It's passed in to the CreateShape function which wires it up to the
     // PIXI events for the shape.
-    const setFluidPosition = (dobj: FeltShape) => {
+    const updateFluidData = (dobj: FeltShape) => {
         // Store the position in Fluid
         if (dobj.dragging && useSignals) {
             const sig = Pixi2Signal(dobj);
@@ -201,7 +201,7 @@ async function main() {
             x, // x
             y, // y
             z, // zindex
-            setFluidPosition, // function that syncs local data with Fluid
+            updateFluidData, // function that syncs local data with Fluid
             setSelected // function that manages local selection
         );
 
@@ -221,7 +221,7 @@ async function main() {
         z: number
     ) => {
         const fs = addNewLocalShape(shape, color, id, x, y, z);
-        setFluidPosition(fs);
+        fs.fluidSync();
         setSelected(fs);
         return fs;
     };
@@ -276,7 +276,7 @@ async function main() {
 
     const changeColor = (shape: FeltShape, color: Color) => {
         shape.color = color;
-        setFluidPosition(shape);
+        shape.fluidSync(); // sync color with Fluid
     };
 
     const changeSelectedShapes = (f: Function) => {
@@ -296,11 +296,23 @@ async function main() {
     };
 
     const deleteShape = (shape: FeltShape) => {
+        // Set local flag to deleted and sync with Fluid
         shape.deleted = true;
-        setFluidPosition(shape);
+
+        // Sync local shape with Fluid
+        shape.fluidSync();
+
+        // Remove shape from local map
         localShapes.delete(shape.id);
+
+        // Remove shape from fluid presence map
         fluidPresence.delete(shape.id);
+
+        // Remove the shape from the canvas
         selection.delete(shape.id);
+
+        // Destroy the local shape object (Note: the Fluid object still exists, is marked
+        // deleted, and is garbage)
         shape.destroy();
     };
 
@@ -310,7 +322,7 @@ async function main() {
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject;
             const localShape = localShapes.get(remoteShape.id);
-            if (localShape) {
+            if (localShape !== undefined) {
                 if (remoteShape.deleted) {
                     selection.delete(localShape.id);
                     deleteShape(localShape);
@@ -515,6 +527,7 @@ export class FeltShape extends PIXI.Graphics {
     private _selectionFrame: PIXI.Graphics | undefined;
     private _presenceFrame: PIXI.Graphics | undefined;
     private _shape: PIXI.Graphics;
+    public fluidSync: () => void;
 
     constructor(
         app: PIXI.Application,
@@ -525,25 +538,22 @@ export class FeltShape extends PIXI.Graphics {
         x: number,
         y: number,
         z: number,
-        setFluidPosition: (dobj: FeltShape) => void,
+        updateFluidData: (dobj: FeltShape) => void,
         setSelected: (dobj: FeltShape) => void
     ) {
         super();
+
+        this.fluidSync = () => updateFluidData(this);
+
         this.id = id;
         this.shape = shape;
         this.size = size;
-
         this._shape = new PIXI.Graphics();
         this.addChild(this._shape);
-
         this._shape.beginFill(0xffffff);
-
         this.setShape();
-
         this._shape.endFill();
-
         this.color = color;
-
         this.interactive = true;
         this.buttonMode = true;
         this.x = x;
@@ -552,20 +562,20 @@ export class FeltShape extends PIXI.Graphics {
 
         const onDragStart = (event: any) => {
             this.dragging = true;
-            setFluidPosition(this); // syncs local changes with Fluid data
+            updateFluidData(this); // syncs local changes with Fluid data
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
                 this.dragging = false;
-                setFluidPosition(this); // syncs local changes with Fluid data
+                updateFluidData(this); // syncs local changes with Fluid data
             }
         };
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
                 updatePosition(event.data.global.x, event.data.global.y);
-                setFluidPosition(this); // syncs local changes with Fluid data
+                updateFluidData(this); // syncs local changes with Fluid data
             }
         };
 
