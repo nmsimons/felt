@@ -23,7 +23,13 @@ import { Guid } from 'guid-typescript';
 import './styles.scss';
 
 async function main() {
-    // Create a map that fires an event when it changes
+
+    // Initialize Fluid
+    const { container, services } = await loadFluidData();
+    const audience = services.audience;
+
+    // Define a custom map for storing selected objects that fires an event when it changes
+    // and syncs with fluid data to show presence in other clients
     class Selection extends Map<string, FeltShape> {
         public onChanged?: () => void;
 
@@ -103,27 +109,24 @@ async function main() {
     root.id = 'root';
     document.body.appendChild(root);
 
-    // disable right-click context menu since right-click changes shape color
+    // disable right-click context menu since right-click is reserved
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
     // set some constants for shapes
     const shapeLimit = 999;
     const size = 60;
 
-    // Initialize Fluid
-    const { container, services } = await loadFluidData();
-    const audience = services.audience;
-
-    // create local map for shapes - contains customized PIXI objects
+    // create a local map for shapes - contains customized PIXI objects
     const localShapes = new Map<string, FeltShape>();
 
     // initialize signal manager
     const signaler = container.initialObjects.signalManager as SignalManager;
 
-    // initialize the selection object which is used to manage local selection and is passed
+    // initialize the selection object (a custom map) which is used to manage local selection and is passed
     // to the React app for state and events
     const selection = new Selection();
 
+    // fetches the array of users for a specific shape from the Shared Map used to track presence
     const getPresenceArray = (shapeId: string) => {
         const users: string[] | undefined = fluidPresence.get(shapeId);
         if (users === undefined) {
@@ -143,17 +146,18 @@ async function main() {
     // create Fluid map for presence
     const fluidPresence = container.initialObjects.presence as SharedMap;
 
-    // create counter for shared max z order
+    // create fluid counter for shared max z order
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
+    // brings the shape to the top of the zorder and syncs with Fluid
     const bringToFront = (shape: FeltShape) => {
         if (shape.zIndex < fluidMaxZIndex.value) {
-            fluidMaxZIndex.increment(1);
-            shape.zIndex = fluidMaxZIndex.value;
+            shape.zIndex = getMaxZIndex();
             shape.fluidSync();
         }
     };
 
+    // increments the zorder by one and returns the value
     const getMaxZIndex = () => {
         fluidMaxZIndex.increment(1);
         return fluidMaxZIndex.value;
@@ -166,13 +170,16 @@ async function main() {
     // flag to allow the app to switch between using ops and signals or just ops.
     let useSignals: boolean = true;
 
+    // function to toggle the signals flag
     const toggleSignals = () => {
         useSignals = !useSignals;
     };
 
-    // This function will be called each time a shape is moved around the canvas.
+    // This function needs to be called each time a shape is changed.
     // It's passed in to the CreateShape function which wires it up to the
-    // PIXI events for the shape.
+    // PIXI events for the shape. It is also called when a shape property is changed
+    // Note: it shouldn't be called if a shape property is changed because of a change
+    // in another client. Only if the change originates locally.
     const updateFluidData = (dobj: FeltShape) => {
         // Store the position in Fluid
         if (dobj.dragging && useSignals) {
@@ -184,6 +191,9 @@ async function main() {
         }
     };
 
+
+    // Creates a new FeltShape object which is the local object that represents
+    // all shapes on the canvas
     const addNewLocalShape = (
         shape: Shape,
         color: Color,
@@ -248,6 +258,7 @@ async function main() {
         }
     };
 
+    // function passed into React UX for creating lots of different shapes at once
     const createLotsOfShapes = (amount: number) => {
         let shape = Shape.Circle;
         let color = Color.Red;
@@ -279,6 +290,8 @@ async function main() {
         shape.fluidSync(); // sync color with Fluid
     };
 
+    // A function that iterates over all selected shapes and calls the passed function
+    // for each shape
     const changeSelectedShapes = (f: Function) => {
         if (selection.size > 0) {
             selection.forEach((value: FeltShape | undefined, key: string) => {
@@ -320,18 +333,18 @@ async function main() {
     // the local data
     fluidShapes.on('valueChanged', (changed, local, target) => {
         if (!local) {
-            const remoteShape = target.get(changed.key) as FluidDisplayObject;
-            const localShape = localShapes.get(remoteShape.id);
-            if (localShape !== undefined) {
+            const remoteShape = target.get(changed.key) as FluidDisplayObject; // get the shape that changed from the shared map
+            const localShape = localShapes.get(remoteShape.id); // get the local instance of that shape
+            if (localShape !== undefined) { // check to see if the local shape exists
                 if (remoteShape.deleted) {
                     selection.delete(localShape.id);
                     deleteShape(localShape);
                 } else {
-                    Fluid2Pixi(localShape, remoteShape);
+                    Fluid2Pixi(localShape, remoteShape); // sync up the properties of the local shape with the remote shape
                 }
             } else {
                 if (!remoteShape.deleted) {
-                    const newLocalShape = addNewLocalShape(
+                    const newLocalShape = addNewLocalShape( // create the local shape as it didn't exist using the properties of the remote shape
                         remoteShape.shape,
                         remoteShape.color,
                         remoteShape.id,
