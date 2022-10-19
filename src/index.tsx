@@ -281,10 +281,14 @@ async function main() {
         }
     }
 
+    // Function passed to React to change the color of selected shapes
     const changeColorofSelected = (color: Color) => {
         changeSelectedShapes((shape: FeltShape) => changeColor(shape, color));
     };
 
+    // Changes the color of a shape and syncs with the Fluid data
+    // Note, the sync happens outside of the local object to allow clients
+    // to apply remote changes without triggering more syncs
     const changeColor = (shape: FeltShape, color: Color) => {
         shape.color = color;
         shape.fluidSync(); // sync color with Fluid
@@ -304,12 +308,13 @@ async function main() {
         }
     };
 
+    // Function passed to React to delete selected shapes
     const deleteSelectedShapes = () => {
         changeSelectedShapes((shape: FeltShape) => deleteShape(shape));
     };
 
     const deleteShape = (shape: FeltShape) => {
-        // Set local flag to deleted and sync with Fluid
+        // Set local flag to deleted
         shape.deleted = true;
 
         // Sync local shape with Fluid
@@ -325,7 +330,7 @@ async function main() {
         selection.delete(shape.id);
 
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
-        // deleted, and is garbage)
+        // deleted, and is garbage). TODO: Garbage collection
         shape.destroy();
     };
 
@@ -357,7 +362,7 @@ async function main() {
         }
     });
 
-    //When a shape is selected in a client it is added to a special SharedMap - this event fires when that happens
+    // When a shape is selected in a client it is added to a special SharedMap for showing presence - this event fires when that happens
     fluidPresence.on('valueChanged', (changed, local, target) => {
         if (target.has(changed.key)) {
             const remote = target.get(changed.key).slice();
@@ -380,6 +385,8 @@ async function main() {
         }
     });
 
+    // When a user leaves the session, remove all that users presence data from
+    // the presence shared map. Note, all clients run this code right now
     audience.on('memberRemoved', (clientId: string, member: IMember) => {
         fluidPresence.forEach((value: string[], key: string) => {
             removeUserFromPresenceArray(value, member.userId);
@@ -401,7 +408,10 @@ async function main() {
         }
     };
 
-    // semi optimal tidy of the presence array
+    // semi optimal tidy of the presence array to remove
+    // stray data from previous sessions. This is currently run
+    // fairly frequently but really only needs to run when a session is
+    // started.
     const flushPresenceArray = (arr: string[]) => {
         arr.forEach((value: string, index: number) => {
             if (!audience.getMembers().has(value)) {
