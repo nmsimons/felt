@@ -45,7 +45,7 @@ async function main() {
                 shape.removeSelection();
                 const users: string[] = getPresenceArray(shape.id);
                 if (me !== undefined) {
-                    removeUserFromPresenceArray(users, me.userId);
+                    removeUserFromPresenceArray({ arr: users, userId: me.userId });
                     fluidPresence.set(shape.id, users);
                 } else {
                     console.log("Failed to set presence!!!");
@@ -68,7 +68,7 @@ async function main() {
 
             if (me != undefined) {
                 flushPresenceArray(users);
-                addUserToPresenceArray(users, me.userId);
+                addUserToPresenceArray({ arr: users, userId: me.userId });
                 fluidPresence.set(value.id, users);
             } else {
                 console.log("Failed to set presence!!!");
@@ -93,7 +93,7 @@ async function main() {
         }
     }
 
-    const setSelected = async (dobj: FeltShape | undefined) => {
+    async function setSelected(dobj: FeltShape | undefined): Promise<void> {
         //Since we don't currently support multi select, clear the current selection
         selection.clear();
 
@@ -102,7 +102,7 @@ async function main() {
                 selection.set(dobj.id, dobj);
             }
         }
-    };
+    }
 
     // create the root element for React
     const root = document.createElement('div');
@@ -127,14 +127,14 @@ async function main() {
     const selection = new Selection();
 
     // fetches the array of users for a specific shape from the Shared Map used to track presence
-    const getPresenceArray = (shapeId: string) => {
+    function getPresenceArray(shapeId: string): string[] {
         const users: string[] | undefined = fluidPresence.get(shapeId);
         if (users === undefined) {
             return [];
         } else {
             return users;
         }
-    };
+    }
 
     // create PIXI app
     const pixiApp = await createPixiApp();
@@ -150,37 +150,37 @@ async function main() {
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
     // brings the shape to the top of the zorder and syncs with Fluid
-    const bringToFront = (shape: FeltShape) => {
+    function bringToFront(shape: FeltShape): void {
         if (shape.zIndex < fluidMaxZIndex.value) {
             shape.zIndex = getMaxZIndex();
             shape.fluidSync();
         }
-    };
+    }
 
     // increments the zorder by one and returns the value
-    const getMaxZIndex = () => {
+    function getMaxZIndex(): number {
         fluidMaxZIndex.increment(1);
         return fluidMaxZIndex.value;
-    };
+    }
 
-    const bringSelectedToFront = () => {
+    function bringSelectedToFront(): void {
         changeSelectedShapes((shape: FeltShape) => bringToFront(shape));
-    };
+    }
 
     // flag to allow the app to switch between using ops and signals or just ops.
     let useSignals: boolean = true;
 
     // function to toggle the signals flag
-    const toggleSignals = () => {
+    function toggleSignals(): void {
         useSignals = !useSignals;
-    };
+    }
 
     // This function needs to be called each time a shape is changed.
     // It's passed in to the CreateShape function which wires it up to the
     // PIXI events for the shape. It is also called when a shape property is changed
     // Note: it shouldn't be called if a shape property is changed because of a change
     // in another client. Only if the change originates locally.
-    const updateFluidData = (dobj: FeltShape) => {
+    function updateFluidData(dobj: FeltShape): void {
         // Store the position in Fluid
         if (dobj.dragging && useSignals) {
             const sig = Pixi2Signal(dobj);
@@ -189,29 +189,27 @@ async function main() {
             const fobj = Pixi2Fluid(dobj);
             fluidShapes.set(dobj.id, fobj);
         }
-    };
+    }
 
 
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
-    const addNewLocalShape = (
-        shape: Shape,
+    function addNewLocalShape(shape: Shape,
         color: Color,
         id: string,
         x: number,
         y: number,
-        z: number
-    ): FeltShape => {
+        z: number): FeltShape {
         const fs = new FeltShape(
             pixiApp!,
             shape,
             color,
             size,
-            id, // id
-            x, // x
-            y, // y
-            z, // zindex
-            updateFluidData, // function that syncs local data with Fluid
+            id,
+            x,
+            y,
+            z,
+            updateFluidData,
             setSelected // function that manages local selection
         );
 
@@ -219,22 +217,20 @@ async function main() {
         pixiApp!.stage.addChild(fs); // add the new shape to the PIXI canvas
 
         return fs;
-    };
+    }
 
     // adds a new shape
-    const addNewShape = (
-        shape: Shape,
+    function addNewShape(shape: Shape,
         color: Color,
         id: string,
         x: number,
         y: number,
-        z: number
-    ) => {
+        z: number): FeltShape {
         const fs = addNewLocalShape(shape, color, id, x, y, z);
         fs.fluidSync();
         setSelected(fs);
         return fs;
-    };
+    }
 
     // get the Fluid shapes that already exist
     fluidShapes.forEach((fdo: FluidDisplayObject, id: string) => {
@@ -245,7 +241,7 @@ async function main() {
     });
 
     // function passed into React UX for creating shapes
-    const createShape = (shape: Shape, color: Color) => {
+    function createShape(shape: Shape, color: Color): void {
         if (localShapes.size < shapeLimit) {
             const fs = addNewShape(
                 shape,
@@ -256,10 +252,10 @@ async function main() {
                 getMaxZIndex()
             );
         }
-    };
+    }
 
     // function passed into React UX for creating lots of different shapes at once
-    const createLotsOfShapes = (amount: number) => {
+    function createLotsOfShapes(amount: number): void {
         let shape = Shape.Circle;
         let color = Color.Red;
 
@@ -282,21 +278,21 @@ async function main() {
     }
 
     // Function passed to React to change the color of selected shapes
-    const changeColorofSelected = (color: Color) => {
+    function changeColorofSelected(color: Color): void {
         changeSelectedShapes((shape: FeltShape) => changeColor(shape, color));
-    };
+    }
 
     // Changes the color of a shape and syncs with the Fluid data
     // Note, the sync happens outside of the local object to allow clients
     // to apply remote changes without triggering more syncs
-    const changeColor = (shape: FeltShape, color: Color) => {
+    function changeColor(shape: FeltShape, color: Color): void {
         shape.color = color;
         shape.fluidSync(); // sync color with Fluid
-    };
+    }
 
     // A function that iterates over all selected shapes and calls the passed function
     // for each shape
-    const changeSelectedShapes = (f: Function) => {
+    function changeSelectedShapes(f: Function): void {
         if (selection.size > 0) {
             selection.forEach((value: FeltShape | undefined, key: string) => {
                 if (value !== undefined) {
@@ -306,14 +302,14 @@ async function main() {
                 }
             });
         }
-    };
+    }
 
     // Function passed to React to delete selected shapes
-    const deleteSelectedShapes = () => {
+    function deleteSelectedShapes(): void {
         changeSelectedShapes((shape: FeltShape) => deleteShape(shape));
-    };
+    }
 
-    const deleteShape = (shape: FeltShape) => {
+    function deleteShape(shape: FeltShape): void {
         // Set local flag to deleted
         shape.deleted = true;
 
@@ -332,7 +328,7 @@ async function main() {
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
         // deleted, and is garbage). TODO: Garbage collection
         shape.destroy();
-    };
+    }
 
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
@@ -389,36 +385,36 @@ async function main() {
     // the presence shared map. Note, all clients run this code right now
     audience.on('memberRemoved', (clientId: string, member: IMember) => {
         fluidPresence.forEach((value: string[], key: string) => {
-            removeUserFromPresenceArray(value, member.userId);
+            removeUserFromPresenceArray({ arr: value, userId: member.userId });
             fluidPresence.set(key, value);
         });
     });
 
-    const removeUserFromPresenceArray = (arr: string[], userId: string) => {
+    function removeUserFromPresenceArray({ arr, userId }: { arr: string[]; userId: string; }): void {
         const i = arr.indexOf(userId);
         if (i > -1) {
             arr.splice(i, 1);
-            removeUserFromPresenceArray(arr, userId);
+            removeUserFromPresenceArray({ arr, userId });
         }
-    };
+    }
 
-    const addUserToPresenceArray = (arr: string[], userId: string) => {
+    function addUserToPresenceArray({ arr, userId }: { arr: string[]; userId: string; }): void {
         if (arr.indexOf(userId) === -1) {
             arr.push(userId);
         }
-    };
+    }
 
     // semi optimal tidy of the presence array to remove
     // stray data from previous sessions. This is currently run
     // fairly frequently but really only needs to run when a session is
     // started.
-    const flushPresenceArray = (arr: string[]) => {
+    function flushPresenceArray(arr: string[]): void {
         arr.forEach((value: string, index: number) => {
             if (!audience.getMembers().has(value)) {
                 arr.splice(index, 1);
             }
         });
-    };
+    }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
