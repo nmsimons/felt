@@ -10,6 +10,8 @@ import { mdiCloseThick } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
+import { SharedMap } from 'fluid-framework';
+import { Shapes, shapeLimit } from './index';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
@@ -22,6 +24,8 @@ export function ReactApp(props: {
     toggleSignals: any;
     signals: () => boolean;
     selectionManager: any;
+    localShapes: any;
+    fluidShapes: any;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -66,6 +70,7 @@ export function Toolbar(props: {
     audience: IAzureAudience;
     showInfopane: any;
     selectionManager: any;
+    localShapes: Shapes;
 }) {
     const shapeButtonColor = 'black';
 
@@ -239,6 +244,8 @@ export function StatusBar(props: {
     audience: IAzureAudience;
     toggleSignals: any;
     signals: () => boolean;
+    localShapes: Shapes;
+    fluidShapes: SharedMap;
 }) {
     const [, setChecked] = React.useState(props.signals());
 
@@ -246,6 +253,20 @@ export function StatusBar(props: {
         props.toggleSignals();
         setChecked(props.signals());
     };
+
+    const [localCount, getLocalCount] = React.useState(props.localShapes.size);
+
+    React.useEffect(() => {
+        props.localShapes.onChanged = () => {
+            getLocalCount(props.localShapes.size);
+        };
+    }, []);
+
+    const [fluidCount, getFluidCount] = React.useState(props.fluidShapes.size);
+
+    React.useEffect(() => {
+        props.fluidShapes.on("valueChanged", () => getFluidCount(props.fluidShapes.size));
+    }, []);
 
     return (
         <div className="level mb-0 mt-0">
@@ -267,6 +288,12 @@ export function StatusBar(props: {
                 </div>
             </div>
             <div className="level-right">
+                <div className="level-item mb-2 mt-0">
+                    <p>Local: {localCount}</p>
+                </div>
+                <div className="level-item mb-2 mt-0">
+                    <p>Fluid: {fluidCount}</p>
+                </div>
                 <div className="level-item mb-2 mt-0">
                     <Audience audience={props.audience} />
                 </div>

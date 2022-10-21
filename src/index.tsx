@@ -22,6 +22,42 @@ import { Guid } from 'guid-typescript';
 
 import './styles.scss';
 
+// defines a custom map for storing local shapes that fires and event when the map changes
+export class Shapes extends Map<string, FeltShape> {
+    public onChanged?: () => void;
+
+    constructor() {
+        super();
+    }
+
+    public set(key: string, value: FeltShape): this {
+        const o = super.set(key, value);
+        if (this.onChanged !== undefined) {
+            this.onChanged();
+        }
+        return o;
+    }
+
+    public delete(key: string): boolean {
+        const b = super.delete(key);
+        if (this.onChanged !== undefined) {
+            this.onChanged();
+        }
+        return b
+    }
+
+    public clear(): void {
+        super.clear;
+        if (this.onChanged !== undefined) {
+            this.onChanged();
+        }
+    }
+}
+
+// set some constants for shapes
+export const shapeLimit = 99;
+export const size = 60;
+
 async function main() {
 
     // Initialize Fluid
@@ -30,8 +66,7 @@ async function main() {
 
     // Define a custom map for storing selected objects that fires an event when it changes
     // and syncs with fluid data to show presence in other clients
-    class Selection extends Map<string, FeltShape> {
-        public onChanged?: () => void;
+    class Selection extends Shapes {
 
         constructor() {
             super();
@@ -50,15 +85,8 @@ async function main() {
                 } else {
                     console.log("Failed to set presence!!!");
                 }
-
-                const b = super.delete(key);
-                if (this.onChanged !== undefined) {
-                    this.onChanged();
-                }
-                return b;
-            } else {
-                return super.delete(key);
             }
+            return super.delete(key);
         }
 
         public set(key: string, value: FeltShape): this {
@@ -73,11 +101,7 @@ async function main() {
             } else {
                 console.log("Failed to set presence!!!");
             }
-            const b = super.set(key, value); // we have to do this BEFORE the event fires
-            if (this.onChanged !== undefined) {
-                this.onChanged();
-            }
-            return b;
+            return super.set(key, value);
         }
 
         public clear(): void {
@@ -104,6 +128,7 @@ async function main() {
         }
     }
 
+
     // create the root element for React
     const root = document.createElement('div');
     root.id = 'root';
@@ -112,12 +137,8 @@ async function main() {
     // disable right-click context menu since right-click is reserved
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
-    // set some constants for shapes
-    const shapeLimit = 999;
-    const size = 60;
-
     // create a local map for shapes - contains customized PIXI objects
-    const localShapes = new Map<string, FeltShape>();
+    const localShapes = new Shapes();
 
     // initialize signal manager
     const signaler = container.initialObjects.signalManager as SignalManager;
@@ -447,6 +468,8 @@ async function main() {
                 return useSignals;
             }}
             selectionManager={selection}
+            localShapes={localShapes}
+            fluidShapes={fluidShapes}
         />,
         document.getElementById('root')
     );
