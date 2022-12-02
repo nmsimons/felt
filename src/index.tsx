@@ -80,6 +80,7 @@ async function main() {
                 if (me !== undefined) {
                     removeUserFromPresenceArray({ arr: users, userId: me.userId });
                     fluidPresence.set(shape.id, users);
+                    if (users.length === 0) fluidPresence.delete(shape.id);
                 } else {
                     console.log('Failed to set presence!!!');
                 }
