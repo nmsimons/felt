@@ -335,7 +335,6 @@ async function main() {
     function deleteAllShapes(): void {
         localShapes.forEach((value: FeltShape, key: string) => {
             deleteShape(value);
-            console.log("delete " + key);
         })
     }
 
