@@ -1,0 +1,4 @@
+AZURE_TENANT_ID=a8e17ca8-2152-4f8d-9a6e-d5c43f3179e3
+AZURE_ORDERER=https://us.fluidrelay.azure.com
+AZURE_FUNCTION_TOKEN_PROVIDER_URL=https://fluid-token-mint.azurewebsites.net/api/gettoken
+FLUID_CLIENT=azure

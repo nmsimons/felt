@@ -124,9 +124,7 @@ export function Toolbar(props: {
                             title="Lots of shapes"
                             color={shapeButtonColor}
                             disabled={false}
-                            function={() =>
-                                props.createLotsOfShapes(100)
-                            }
+                            function={() => props.createLotsOfShapes(100)}
                         />
                     </div>
                 </div>
@@ -265,7 +263,9 @@ export function StatusBar(props: {
     const [fluidCount, getFluidCount] = React.useState(props.fluidShapes.size);
 
     React.useEffect(() => {
-        props.fluidShapes.on("valueChanged", () => getFluidCount(props.fluidShapes.size));
+        props.fluidShapes.on('valueChanged', () =>
+            getFluidCount(props.fluidShapes.size)
+        );
     }, []);
 
     return (

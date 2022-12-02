@@ -14,11 +14,15 @@ export enum Color {
 }
 
 export function getNextColor(current: Color) {
-    return Object.values(Color)[(Object.values(Color).indexOf(current) + 1) % Object.values(Color).length];
+    return Object.values(Color)[
+        (Object.values(Color).indexOf(current) + 1) % Object.values(Color).length
+    ];
 }
 
 export function getNextShape(current: Shape) {
-    return Object.values(Shape)[(Object.values(Shape).indexOf(current) + 1) % Object.values(Shape).length];
+    return Object.values(Shape)[
+        (Object.values(Shape).indexOf(current) + 1) % Object.values(Shape).length
+    ];
 }
 
 export function getRandomInt(min: number, max: number) {

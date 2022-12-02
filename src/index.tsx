@@ -22,7 +22,7 @@ import { Guid } from 'guid-typescript';
 
 import './styles.scss';
 
-// defines a custom map for storing local shapes that fires and event when the map changes
+// defines a custom map for storing local shapes that fires an event when the map changes
 export class Shapes extends Map<string, FeltShape> {
     public onChanged?: () => void;
 
@@ -43,7 +43,7 @@ export class Shapes extends Map<string, FeltShape> {
         if (this.onChanged !== undefined) {
             this.onChanged();
         }
-        return b
+        return b;
     }
 
     public clear(): void {
@@ -59,7 +59,6 @@ export const shapeLimit = 999;
 export const size = 60;
 
 async function main() {
-
     // Initialize Fluid
     const { container, services } = await loadFluidData();
     const audience = services.audience;
@@ -67,7 +66,6 @@ async function main() {
     // Define a custom map for storing selected objects that fires an event when it changes
     // and syncs with fluid data to show presence in other clients
     class Selection extends Shapes {
-
         constructor() {
             super();
         }
@@ -83,7 +81,7 @@ async function main() {
                     removeUserFromPresenceArray({ arr: users, userId: me.userId });
                     fluidPresence.set(shape.id, users);
                 } else {
-                    console.log("Failed to set presence!!!");
+                    console.log('Failed to set presence!!!');
                 }
             }
             return super.delete(key);
@@ -99,7 +97,7 @@ async function main() {
                 addUserToPresenceArray({ arr: users, userId: me.userId });
                 fluidPresence.set(value.id, users);
             } else {
-                console.log("Failed to set presence!!!");
+                console.log('Failed to set presence!!!');
             }
             return super.set(key, value);
         }
@@ -127,7 +125,6 @@ async function main() {
             }
         }
     }
-
 
     // create the root element for React
     const root = document.createElement('div');
@@ -212,15 +209,16 @@ async function main() {
         }
     }
 
-
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
-    function addNewLocalShape(shape: Shape,
+    function addNewLocalShape(
+        shape: Shape,
         color: Color,
         id: string,
         x: number,
         y: number,
-        z: number): FeltShape {
+        z: number
+    ): FeltShape {
         const fs = new FeltShape(
             pixiApp!,
             shape,
@@ -241,15 +239,18 @@ async function main() {
     }
 
     // adds a new shape
-    function addNewShape(shape: Shape,
+    function addNewShape(
+        shape: Shape,
         color: Color,
         id: string,
         x: number,
         y: number,
-        z: number): FeltShape {
+        z: number,
+        selectShape: boolean = true
+    ): FeltShape {
         const fs = addNewLocalShape(shape, color, id, x, y, z);
         fs.fluidSync();
-        setSelected(fs);
+        if (selectShape) setSelected(fs);
         return fs;
     }
 
@@ -281,7 +282,6 @@ async function main() {
         let color = Color.Red;
 
         for (let index = 0; index < amount; index++) {
-
             shape = getNextShape(shape);
             color = getNextColor(color);
 
@@ -292,7 +292,8 @@ async function main() {
                     Guid.create().toString(),
                     getRandomInt(size, pixiApp.screen.width - size),
                     getRandomInt(size, pixiApp.screen.height - size),
-                    getMaxZIndex()
+                    getMaxZIndex(),
+                    false
                 );
             }
         }
@@ -357,7 +358,8 @@ async function main() {
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject; // get the shape that changed from the shared map
             const localShape = localShapes.get(remoteShape.id); // get the local instance of that shape
-            if (localShape !== undefined) { // check to see if the local shape exists
+            if (localShape !== undefined) {
+                // check to see if the local shape exists
                 if (remoteShape.deleted) {
                     selection.delete(localShape.id);
                     deleteShape(localShape);
@@ -366,7 +368,8 @@ async function main() {
                 }
             } else {
                 if (!remoteShape.deleted) {
-                    const newLocalShape = addNewLocalShape( // create the local shape as it didn't exist using the properties of the remote shape
+                    const newLocalShape = addNewLocalShape(
+                        // create the local shape as it didn't exist using the properties of the remote shape
                         remoteShape.shape,
                         remoteShape.color,
                         remoteShape.id,
@@ -411,7 +414,13 @@ async function main() {
         });
     });
 
-    function removeUserFromPresenceArray({ arr, userId }: { arr: string[]; userId: string; }): void {
+    function removeUserFromPresenceArray({
+        arr,
+        userId,
+    }: {
+        arr: string[];
+        userId: string;
+    }): void {
         const i = arr.indexOf(userId);
         if (i > -1) {
             arr.splice(i, 1);
@@ -419,7 +428,13 @@ async function main() {
         }
     }
 
-    function addUserToPresenceArray({ arr, userId }: { arr: string[]; userId: string; }): void {
+    function addUserToPresenceArray({
+        arr,
+        userId,
+    }: {
+        arr: string[];
+        userId: string;
+    }): void {
         if (arr.indexOf(userId) === -1) {
             arr.push(userId);
         }
