@@ -332,6 +332,13 @@ async function main() {
         changeSelectedShapes((shape: FeltShape) => deleteShape(shape));
     }
 
+    function deleteAllShapes(): void {
+        localShapes.forEach((value: FeltShape, key: string) => {
+            deleteShape(value);
+            console.log("delete " + key);
+        })
+    }
+
     function deleteShape(shape: FeltShape): void {
         // Set local flag to deleted
         shape.deleted = true;
@@ -348,6 +355,8 @@ async function main() {
         // Remove the shape from the canvas
         selection.delete(shape.id);
 
+        fluidShapes.delete(shape.id);
+
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
         // deleted, and is garbage). TODO: Garbage collection
         shape.destroy();
@@ -358,6 +367,7 @@ async function main() {
     fluidShapes.on('valueChanged', (changed, local, target) => {
         if (!local) {
             const remoteShape = target.get(changed.key) as FluidDisplayObject; // get the shape that changed from the shared map
+            if (remoteShape === undefined) return;
             const localShape = localShapes.get(remoteShape.id); // get the local instance of that shape
             if (localShape !== undefined) {
                 // check to see if the local shape exists
@@ -478,6 +488,7 @@ async function main() {
             createLotsOfShapes={createLotsOfShapes}
             changeColor={changeColorofSelected}
             deleteShape={deleteSelectedShapes}
+            deleteAllShapes={deleteAllShapes}
             bringToFront={bringSelectedToFront}
             toggleSignals={toggleSignals}
             signals={() => {

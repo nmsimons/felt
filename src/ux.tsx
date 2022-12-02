@@ -1,12 +1,8 @@
 import React from 'react';
 import { IAzureAudience } from '@fluidframework/azure-client';
 import Icon from '@mdi/react';
-import { mdiCircle } from '@mdi/js';
-import { mdiSquare } from '@mdi/js';
-import { mdiTriangle } from '@mdi/js';
-import { mdiRectangle } from '@mdi/js';
-import { mdiShape } from '@mdi/js';
-import { mdiCloseThick } from '@mdi/js';
+import { mdiCircle, mdiSquare, mdiTriangle, mdiRectangle, mdiShape } from '@mdi/js';
+import { mdiCloseThick, mdiEraser } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
@@ -20,6 +16,7 @@ export function ReactApp(props: {
     createLotsOfShapes: any;
     changeColor: any;
     deleteShape: any;
+    deleteAllShapes: any;
     bringToFront: any;
     toggleSignals: any;
     signals: () => boolean;
@@ -66,6 +63,7 @@ export function Toolbar(props: {
     createLotsOfShapes: any;
     changeColor: any;
     deleteShape: any;
+    deleteAllShapes:any;
     bringToFront: any;
     audience: IAzureAudience;
     showInfopane: any;
@@ -182,6 +180,17 @@ export function Toolbar(props: {
                             color={shapeButtonColor}
                             disabled={!selected}
                             function={() => props.deleteShape()}
+                        />
+                    </div>
+                </div>
+                <div className="level-item">
+                    <div className="field has-addons">
+                        <ShapeButton
+                            icon={mdiEraser}
+                            title="Clear all"
+                            color={shapeButtonColor}
+                            disabled={false}
+                            function={() => props.deleteAllShapes()}
                         />
                     </div>
                 </div>
