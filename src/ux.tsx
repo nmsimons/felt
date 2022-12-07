@@ -298,7 +298,7 @@ export function StatusBar(props: {
             </div>
             <div className="level-right">
                 <div className="level-item mb-2 mt-0">
-                    <p>Count: {fluidCount}</p>
+                    <p>Shapes: {fluidCount}</p>
                 </div>
                 <div className="level-item mb-2 mt-0">
                     <Audience audience={props.audience} />
