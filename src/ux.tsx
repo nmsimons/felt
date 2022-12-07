@@ -122,7 +122,7 @@ export function Toolbar(props: {
                             title="Lots of shapes"
                             color={shapeButtonColor}
                             disabled={false}
-                            function={() => props.createLotsOfShapes(100)}
+                            function={() => props.createLotsOfShapes(10)}
                         />
                     </div>
                 </div>

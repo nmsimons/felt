@@ -55,7 +55,7 @@ export class Shapes extends Map<string, FeltShape> {
 }
 
 // set some constants for shapes
-export const shapeLimit = 999;
+export const shapeLimit = 100;
 export const size = 60;
 
 async function main() {
