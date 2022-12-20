@@ -63,6 +63,22 @@ async function main() {
     const { container, services } = await loadFluidData();
     const audience = services.audience;
 
+    container.on("connected", () => {
+        console.log("CONNECTED");
+    })
+
+    container.on("disconnected", () => {
+        console.log("DISCONNECTED");
+    })
+
+    container.on("saved", () => {
+        console.log("SAVED");
+    })
+
+    container.on("dirty", () => {
+        console.log("DIRTY");
+    })
+
     // Define a custom map for storing selected objects that fires an event when it changes
     // and syncs with fluid data to show presence in other clients
     class Selection extends Shapes {
@@ -345,16 +361,20 @@ async function main() {
         // Sync local shape with Fluid
         shape.fluidSync();
 
-        // Remove shape from local map
-        localShapes.delete(shape.id);
-
         // Remove shape from fluid presence map
         fluidPresence.delete(shape.id);
 
+        fluidShapes.delete(shape.id);
+
+        deleteLocalShape(shape);
+    }
+
+    function deleteLocalShape(shape: FeltShape): void {
+        // Remove shape from local map
+        localShapes.delete(shape.id);
+
         // Remove the shape from the canvas
         selection.delete(shape.id);
-
-        fluidShapes.delete(shape.id);
 
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
         // deleted, and is garbage). TODO: Garbage collection
@@ -371,8 +391,7 @@ async function main() {
             if (localShape !== undefined) {
                 // check to see if the local shape exists
                 if (remoteShape.deleted) {
-                    selection.delete(localShape.id);
-                    deleteShape(localShape);
+                    deleteLocalShape(localShape);
                 } else {
                     Fluid2Pixi(localShape, remoteShape); // sync up the properties of the local shape with the remote shape
                 }
