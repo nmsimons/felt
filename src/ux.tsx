@@ -69,6 +69,7 @@ export function Toolbar(props: {
     showInfopane: any;
     selectionManager: any;
     localShapes: Shapes;
+    fluidShapes: SharedMap;
 }) {
     const shapeButtonColor = 'black';
 
@@ -78,7 +79,14 @@ export function Toolbar(props: {
         };
     }, []);
 
+    React.useEffect(() => {
+        props.localShapes.onChanged = () =>
+            getMaxReached(props.localShapes.maxReached);
+    }, []);
+
     const [selected, getSelected] = React.useState(props.selectionManager.selected);
+
+    const [maxReached, getMaxReached] = React.useState(props.localShapes.maxReached);
 
     return (
         <div className="level is-light mb-3 mt-3">
@@ -89,21 +97,21 @@ export function Toolbar(props: {
                             icon={mdiCircle}
                             title="Circle"
                             color={shapeButtonColor}
-                            disabled={false}
+                            disabled={maxReached}
                             function={() => props.createShape(S.Circle, Color.Red)}
                         />
                         <ShapeButton
                             icon={mdiSquare}
                             title="Square"
                             color={shapeButtonColor}
-                            disabled={false}
+                            disabled={maxReached}
                             function={() => props.createShape(S.Square, Color.Blue)}
                         />
                         <ShapeButton
                             icon={mdiTriangle}
                             title="Triangle"
                             color={shapeButtonColor}
-                            disabled={false}
+                            disabled={maxReached}
                             function={() =>
                                 props.createShape(S.Triangle, Color.Orange)
                             }
@@ -112,7 +120,7 @@ export function Toolbar(props: {
                             icon={mdiRectangle}
                             title="Rectangle"
                             color={shapeButtonColor}
-                            disabled={false}
+                            disabled={maxReached}
                             function={() =>
                                 props.createShape(S.Rectangle, Color.Purple)
                             }
@@ -121,7 +129,7 @@ export function Toolbar(props: {
                             icon={mdiShape}
                             title="Lots of shapes"
                             color={shapeButtonColor}
-                            disabled={false}
+                            disabled={maxReached}
                             function={() => props.createLotsOfShapes(100)}
                         />
                     </div>
@@ -260,14 +268,6 @@ export function StatusBar(props: {
         props.toggleSignals();
         setChecked(props.signals());
     };
-
-    const [localCount, getLocalCount] = React.useState(props.localShapes.size);
-
-    React.useEffect(() => {
-        props.localShapes.onChanged = () => {
-            getLocalCount(props.localShapes.size);
-        };
-    }, []);
 
     const [fluidCount, getFluidCount] = React.useState(props.fluidShapes.size);
 

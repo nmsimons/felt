@@ -25,17 +25,23 @@ import './styles.scss';
 // defines a custom map for storing local shapes that fires an event when the map changes
 export class Shapes extends Map<string, FeltShape> {
     public onChanged?: () => void;
+    private _max: number;
 
-    constructor() {
+    constructor(recommendedMax: number) {
         super();
+        this._max = recommendedMax;
+    }
+
+    public get maxReached(): boolean {
+        return this.size >= this._max;
     }
 
     public set(key: string, value: FeltShape): this {
-        const o = super.set(key, value);
+        super.set(key, value);
         if (this.onChanged !== undefined) {
             this.onChanged();
         }
-        return o;
+        return this;
     }
 
     public delete(key: string): boolean {
@@ -59,31 +65,38 @@ export const shapeLimit = 100;
 export const size = 60;
 
 async function main() {
+    let disconnect: number = 0;
+    let dirty: number = 0;
+
+    console.log(performance.now() + ": BOOT")
+
     // Initialize Fluid
     const { container, services } = await loadFluidData();
     const audience = services.audience;
 
     container.on("connected", () => {
-        console.log("CONNECTED");
+        console.log("CONNECTED after " + (performance.now() - disconnect) + " milliseconds.");
     })
 
     container.on("disconnected", () => {
+        disconnect = performance.now();
         console.log("DISCONNECTED");
     })
 
     container.on("saved", () => {
-        console.log("SAVED");
+        console.log("SAVED after " + (performance.now() - dirty) + " milliseconds.");
     })
 
     container.on("dirty", () => {
+        dirty = performance.now();
         console.log("DIRTY");
     })
 
     // Define a custom map for storing selected objects that fires an event when it changes
     // and syncs with fluid data to show presence in other clients
     class Selection extends Shapes {
-        constructor() {
-            super();
+        constructor(max: number) {
+            super(max);
         }
 
         public delete(key: string): boolean {
@@ -152,14 +165,14 @@ async function main() {
     document.addEventListener('contextmenu', (event) => event.preventDefault());
 
     // create a local map for shapes - contains customized PIXI objects
-    const localShapes = new Shapes();
+    const localShapes = new Shapes(shapeLimit);
 
     // initialize signal manager
     const signaler = container.initialObjects.signalManager as SignalManager;
 
     // initialize the selection object (a custom map) which is used to manage local selection and is passed
     // to the React app for state and events
-    const selection = new Selection();
+    const selection = new Selection(shapeLimit);
 
     // fetches the array of users for a specific shape from the Shared Map used to track presence
     function getPresenceArray(shapeId: string): string[] {
@@ -281,16 +294,16 @@ async function main() {
 
     // function passed into React UX for creating shapes
     function createShape(shape: Shape, color: Color): void {
-        if (localShapes.size < shapeLimit) {
-            const fs = addNewShape(
-                shape,
-                color,
-                Guid.create().toString(),
-                size,
-                size,
-                getMaxZIndex()
-            );
-        }
+        if (localShapes.maxReached) return
+
+        const fs = addNewShape(
+            shape,
+            color,
+            Guid.create().toString(),
+            size,
+            size,
+            getMaxZIndex()
+        );
     }
 
     // function passed into React UX for creating lots of different shapes at once
@@ -397,7 +410,7 @@ async function main() {
                 }
             } else {
                 if (!remoteShape.deleted) {
-                    const newLocalShape = addNewLocalShape(
+                    addNewLocalShape(
                         // create the local shape as it didn't exist using the properties of the remote shape
                         remoteShape.shape,
                         remoteShape.color,
