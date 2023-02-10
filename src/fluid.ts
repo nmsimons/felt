@@ -1,11 +1,12 @@
 import {
-    AzureFunctionTokenProvider,
     AzureClient,
-    AzureConnectionConfig,
     AzureRemoteConnectionConfig,
     AzureLocalConnectionConfig,
     AzureContainerServices,
     AzureClientProps,
+    AzureMember,
+    ITokenProvider,
+    ITokenResponse
 } from '@fluidframework/azure-client';
 import {
     generateTestUser,
@@ -14,6 +15,49 @@ import {
 import { ContainerSchema, IFluidContainer, SharedMap } from 'fluid-framework';
 import { Signaler } from '@fluid-experimental/data-objects';
 import { SharedCounter } from '@fluidframework/counter';
+
+import axios from "axios";
+
+/**
+ * Token Provider implementation for connecting to an Azure Function endpoint for
+ * Azure Fluid Relay token resolution.
+ */
+export class AzureFunctionTokenProvider implements ITokenProvider {
+    /**
+     * Creates a new instance using configuration parameters.
+     * @param azFunctionUrl - URL to Azure Function endpoint
+     * @param user - User object
+     */
+    constructor(
+        private readonly azFunctionUrl: string,
+        private readonly user?: Pick<AzureMember, "userId" | "userName" | "additionalDetails">,
+    ) { }
+
+    public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+        return {
+            jwt: await this.getToken(tenantId, documentId),
+        };
+    }
+
+    public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+        return {
+            jwt: await this.getToken(tenantId, documentId),
+        };
+    }
+
+    private async getToken(tenantId: string, documentId: string | undefined): Promise<string> {
+        const response = await axios.get(this.azFunctionUrl, {
+            params: {
+                tenantId,
+                documentId,
+                userId: this.user?.userId,
+                userName: this.user?.userName,
+                additionalDetails: this.user?.additionalDetails,
+            },
+        });
+        return response.data as string;
+    }
+}
 
 // Define the server (Azure or local) we will be using
 const useAzure = process.env.FLUID_CLIENT === 'azure';
