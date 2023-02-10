@@ -5,13 +5,14 @@ import {
     AzureRemoteConnectionConfig,
     AzureLocalConnectionConfig,
     AzureContainerServices,
+    AzureClientProps,
 } from '@fluidframework/azure-client';
 import {
     generateTestUser,
     InsecureTokenProvider,
 } from '@fluidframework/test-client-utils';
 import { ContainerSchema, IFluidContainer, SharedMap } from 'fluid-framework';
-import { SignalManager } from '@fluid-experimental/data-objects';
+import { Signaler } from '@fluid-experimental/data-objects';
 import { SharedCounter } from '@fluidframework/counter';
 
 // Define the server (Azure or local) we will be using
@@ -43,11 +44,11 @@ const localConnectionConfig: AzureLocalConnectionConfig = {
     endpoint: 'http://localhost:7070',
 };
 
-const connectionConfig: AzureConnectionConfig = useAzure
+const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
     ? remoteConnectionConfig
     : localConnectionConfig;
 
-const clientProps = {
+const clientProps: AzureClientProps = {
     connection: connectionConfig,
 };
 
@@ -60,7 +61,7 @@ const containerSchema: ContainerSchema = {
     initialObjects: {
         shapes: SharedMap,
         presence: SharedMap,
-        signalManager: SignalManager,
+        signalManager: Signaler,
         maxZOrder: SharedCounter,
     },
     dynamicObjectTypes: [SharedMap],
@@ -78,7 +79,7 @@ async function initializeNewContainer(container: IFluidContainer): Promise<void>
  * @returns The loaded container and container services.
  */
 export const loadFluidData = async (): Promise<{
-    container: IFluidContainer;
+    container: any;
     services: AzureContainerServices;
 }> => {
     let container: IFluidContainer;

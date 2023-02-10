@@ -1,5 +1,5 @@
 import { IMember, SharedMap } from 'fluid-framework';
-import { SignalManager, SignalListener } from '@fluid-experimental/data-objects';
+import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { SharedCounter } from '@fluidframework/counter/dist/counter';
 
@@ -168,7 +168,7 @@ async function main() {
     const localShapes = new Shapes(shapeLimit);
 
     // initialize signal manager
-    const signaler = container.initialObjects.signalManager as SignalManager;
+    const signaler = container.initialObjects.signalManager as Signaler;
 
     // initialize the selection object (a custom map) which is used to manage local selection and is passed
     // to the React app for state and events
