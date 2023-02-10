@@ -2,6 +2,7 @@ import { IMember, SharedMap } from 'fluid-framework';
 import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { SharedCounter } from '@fluidframework/counter/dist/counter';
+import { ISharedTree } from '@fluid-internal/tree';
 
 import * as PIXI from 'pixi.js';
 import React from 'react';

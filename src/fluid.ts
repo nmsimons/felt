@@ -15,6 +15,7 @@ import {
 import { ContainerSchema, IFluidContainer, SharedMap } from 'fluid-framework';
 import { Signaler } from '@fluid-experimental/data-objects';
 import { SharedCounter } from '@fluidframework/counter';
+import { SharedTreeFactory } from '@fluid-internal/tree';
 
 import axios from "axios";
 
@@ -56,6 +57,12 @@ export class AzureFunctionTokenProvider implements ITokenProvider {
             },
         });
         return response.data as string;
+    }
+}
+
+export class MySharedTree {
+    public static getFactory(): SharedTreeFactory {
+        return new SharedTreeFactory();
     }
 }
 
@@ -107,6 +114,7 @@ const containerSchema: ContainerSchema = {
         presence: SharedMap,
         signalManager: Signaler,
         maxZOrder: SharedCounter,
+        tree: MySharedTree
     },
     dynamicObjectTypes: [SharedMap],
 };
