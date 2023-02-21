@@ -1,4 +1,5 @@
 import { FeltShape } from '.';
+import { ShapeProxy } from './schema';
 import { Color, Shape } from './util';
 
 export interface FluidDisplayObject {
@@ -31,10 +32,12 @@ export const Pixi2Fluid = (dobj: FeltShape): FluidDisplayObject => {
         alpha: dobj.alpha,
         color: dobj.color,
         z: dobj.zIndex,
-        shape: dobj.shape,
+        shape: dobj.shapeProxy.shape as Shape,
         deleted: dobj.deleted,
     };
 };
+
+
 
 export const Fluid2Pixi = (
     shapeToUpdate: FeltShape,

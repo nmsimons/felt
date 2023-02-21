@@ -2,7 +2,8 @@ import { IMember, SharedMap } from 'fluid-framework';
 import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { SharedCounter } from '@fluidframework/counter/dist/counter';
-import { ISharedTree } from '@fluid-internal/tree';
+import { EditableField, ISharedTree } from "@fluid-internal/tree";
+import { appSchemaData, LocationProxy, ShapeProxy } from "./schema";
 
 import * as PIXI from 'pixi.js';
 import React from 'react';
@@ -188,9 +189,10 @@ async function main() {
     // create PIXI app
     const pixiApp = await createPixiApp();
 
-    // create Fluid map for shapes - contains only the data that needs to be
-    // synched between clients
-    const fluidShapes = container.initialObjects.shapes as SharedMap;
+    // create Fluid tree for shapes
+    const fluidTree = container.initialObjects.tree as ISharedTree;
+    fluidTree.storedSchema.update(appSchemaData);
+    const shapeTree = fluidTree.root as ShapeProxy[] & EditableField;
 
     // create Fluid map for presence
     const fluidPresence = container.initialObjects.presence as SharedMap;
@@ -199,10 +201,10 @@ async function main() {
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
     // brings the shape to the top of the zorder and syncs with Fluid
-    function bringToFront(shape: FeltShape): void {
-        if (shape.zIndex < fluidMaxZIndex.value) {
-            shape.zIndex = getMaxZIndex();
-            shape.fluidSync();
+    function bringToFront(feltShape: FeltShape): void {
+        if (feltShape.zIndex < fluidMaxZIndex.value) {
+            feltShape.zIndex = getMaxZIndex();
+            feltShape.shapeProxy.z = feltShape.zIndex;
         }
     }
 
@@ -224,49 +226,62 @@ async function main() {
         useSignals = !useSignals;
     }
 
+    function addShapeToShapeTree(
+        shape: Shape,
+        color: Color,
+        id: string,
+        x: number,
+        y: number,
+        z: number): void {
+
+        const locationProxy = {
+            x: x,
+            y: y,
+        } as LocationProxy;
+
+        const shapeProxy = {
+            id: id,
+            location: locationProxy,
+            color: color,
+            z: z,
+            shape: shape,
+            deleted: false,
+        } as ShapeProxy;
+
+        shapeTree[shapeTree.length] = shapeProxy;
+    }
+
     // This function needs to be called each time a shape is changed.
     // It's passed in to the CreateShape function which wires it up to the
     // PIXI events for the shape. It is also called when a shape property is changed
     // Note: it shouldn't be called if a shape property is changed because of a change
     // in another client. Only if the change originates locally.
-    function updateFluidData(dobj: FeltShape): void {
+    function updateFluidData(feltShape: FeltShape): void {
         // Store the position in Fluid
-        if (dobj.dragging && useSignals) {
-            const sig = Pixi2Signal(dobj);
+        if (feltShape.dragging && useSignals) {
+            const sig = Pixi2Signal(feltShape);
             signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
-            const fobj = Pixi2Fluid(dobj);
-            fluidShapes.set(dobj.id, fobj);
+            feltShape.shapeProxy.location = {x: feltShape.x, y: feltShape.y} as LocationProxy;
+            console.log(feltShape.shapeProxy.location.x, feltShape.shapeProxy.location.y);
         }
     }
 
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
     function addNewLocalShape(
-        shape: Shape,
-        color: Color,
-        id: string,
-        x: number,
-        y: number,
-        z: number
+        shapeProxy: ShapeProxy
     ): FeltShape {
-        const fs = new FeltShape(
+        const feltShape = new FeltShape(
             pixiApp!,
-            shape,
-            color,
-            size,
-            id,
-            x,
-            y,
-            z,
+            shapeProxy,
             updateFluidData,
             setSelected // function that manages local selection
         );
 
-        localShapes.set(id, fs); // add the new shape to local data
-        pixiApp!.stage.addChild(fs); // add the new shape to the PIXI canvas
-
-        return fs;
+        localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
+        pixiApp!.stage.addChild(feltShape); // add the new shape to the PIXI canvas
+        return feltShape;
     }
 
     // adds a new shape
@@ -278,20 +293,17 @@ async function main() {
         y: number,
         z: number,
         selectShape: boolean = true
-    ): FeltShape {
-        const fs = addNewLocalShape(shape, color, id, x, y, z);
-        fs.fluidSync();
-        if (selectShape) setSelected(fs);
-        return fs;
+    ): void {
+        addShapeToShapeTree(shape, color, id, x, y, z);
     }
 
-    // get the Fluid shapes that already exist
-    fluidShapes.forEach((fdo: FluidDisplayObject, id: string) => {
-        // add the Fluid shapes to the local shape data
-        if (!fdo.deleted) {
-            addNewLocalShape(fdo.shape, fdo.color, fdo.id, fdo.x, fdo.y, fdo.z);
+    //Get all existing shapes
+    for (let i = 0; i < shapeTree.length; i++) {
+        const shapeProxy = shapeTree[i];
+        if (!shapeProxy.deleted) {
+            addNewLocalShape(shapeProxy);
         }
-    });
+    }
 
     // function passed into React UX for creating shapes
     function createShape(shape: Shape, color: Color): void {
@@ -340,7 +352,6 @@ async function main() {
     // to apply remote changes without triggering more syncs
     function changeColor(shape: FeltShape, color: Color): void {
         shape.color = color;
-        shape.fluidSync(); // sync color with Fluid
     }
 
     // A function that iterates over all selected shapes and calls the passed function
@@ -372,15 +383,10 @@ async function main() {
         // Set local flag to deleted
         shape.deleted = true;
 
-        // Sync local shape with Fluid
-        shape.fluidSync();
-
         // Remove shape from fluid presence map
         fluidPresence.delete(shape.id);
 
-        fluidShapes.delete(shape.id);
-
-        deleteLocalShape(shape);
+        //deleteLocalShape(shape);
     }
 
     function deleteLocalShape(shape: FeltShape): void {
@@ -397,33 +403,25 @@ async function main() {
 
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
-    fluidShapes.on('valueChanged', (changed, local, target) => {
-        if (!local) {
-            const remoteShape = target.get(changed.key) as FluidDisplayObject; // get the shape that changed from the shared map
-            if (remoteShape === undefined) return;
-            const localShape = localShapes.get(remoteShape.id); // get the local instance of that shape
-            if (localShape !== undefined) {
-                // check to see if the local shape exists
-                if (remoteShape.deleted) {
-                    deleteLocalShape(localShape);
+    fluidTree.forest.on('afterDelta', (delta) => {
+        for (let i = 0; i < shapeTree.length; i++) {
+            const shapeProxy = shapeTree[i];
+
+            const localShape = localShapes.get(shapeProxy.id);
+
+            if (localShape != undefined) {
+                localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
+                if (shapeProxy.deleted) {
+                    deleteLocalShape(localShapes.get(shapeProxy.id)!)
                 } else {
-                    Fluid2Pixi(localShape, remoteShape); // sync up the properties of the local shape with the remote shape
+
+                    localShape.sync();
                 }
-            } else {
-                if (!remoteShape.deleted) {
-                    addNewLocalShape(
-                        // create the local shape as it didn't exist using the properties of the remote shape
-                        remoteShape.shape,
-                        remoteShape.color,
-                        remoteShape.id,
-                        remoteShape.x,
-                        remoteShape.y,
-                        remoteShape.z
-                    );
-                }
+            } else if (!shapeProxy.deleted) {
+                addNewLocalShape(shapeProxy);
             }
         }
-    });
+    })
 
     // When a shape is selected in a client it is added to a special SharedMap for showing presence - this event fires when that happens
     fluidPresence.on('valueChanged', (changed, local, target) => {
@@ -528,7 +526,6 @@ async function main() {
             }}
             selectionManager={selection}
             localShapes={localShapes}
-            fluidShapes={fluidShapes}
         />,
         document.getElementById('root')
     );
@@ -619,47 +616,33 @@ const addBackgroundShape = (
 // wrapper class for a PIXI shape with a few extra methods and properties
 // for creating and managing shapes
 export class FeltShape extends PIXI.Graphics {
-    id = '';
     dragging = false;
-    deleted = false;
-    private _color: Color = Color.Red;
-    readonly shape: Shape = Shape.Circle;
     readonly size: number = 90;
     private _selectionFrame: PIXI.Graphics | undefined;
     private _presenceFrame: PIXI.Graphics | undefined;
     private _shape: PIXI.Graphics;
-    public fluidSync: () => void;
 
     constructor(
         app: PIXI.Application,
-        shape: Shape,
-        color: Color,
-        size: number,
-        id: string,
-        x: number,
-        y: number,
-        z: number,
+        public shapeProxy: ShapeProxy, // TODO this should be readonly
         updateFluidData: (dobj: FeltShape) => void,
         setSelected: (dobj: FeltShape) => void
     ) {
         super();
 
-        this.fluidSync = () => updateFluidData(this);
-
-        this.id = id;
-        this.shape = shape;
         this.size = size;
         this._shape = new PIXI.Graphics();
         this.addChild(this._shape);
         this._shape.beginFill(0xffffff);
         this.setShape();
         this._shape.endFill();
-        this.color = color;
+        this._shape.tint = Number(this.color);
         this.interactive = true;
         this.buttonMode = true;
-        this.x = x;
-        this.y = y;
-        this.zIndex = z;
+
+        this.x = this.shapeProxy.location.x;
+        this.y = this.shapeProxy.location.y;
+        this.zIndex = this.shapeProxy.z;
 
         const onDragStart = (event: any) => {
             this.dragging = true;
@@ -709,13 +692,32 @@ export class FeltShape extends PIXI.Graphics {
             .on('pointermove', onDragMove);
     }
 
+    get id() {
+        return this.shapeProxy.id;
+    }
+
     set color(color: Color) {
-        this._color = color;
+        this.shapeProxy.color = color;
         this._shape.tint = Number(color);
     }
 
     get color() {
-        return this._color;
+        return this.shapeProxy.color as Color;
+    }
+
+    set deleted(value: boolean) {
+        this.shapeProxy.deleted = value;
+    }
+
+    get deleted() {
+        return this.shapeProxy.deleted;
+    }
+
+    public sync() {
+        this.x = this.shapeProxy.location.x;
+        this.y = this.shapeProxy.location.y;
+        this.zIndex = this.shapeProxy.z;
+        this._shape.tint = Number(this.color);
     }
 
     public showSelection() {
@@ -841,7 +843,7 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     private setShape() {
-        switch (this.shape) {
+        switch (this.shapeProxy.shape as Shape) {
             case Shape.Circle:
                 this._shape.drawCircle(0, 0, this.size / 2);
                 break;

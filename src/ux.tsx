@@ -22,7 +22,6 @@ export function ReactApp(props: {
     signals: () => boolean;
     selectionManager: any;
     localShapes: any;
-    fluidShapes: any;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -69,7 +68,6 @@ export function Toolbar(props: {
     showInfopane: any;
     selectionManager: any;
     localShapes: Shapes;
-    fluidShapes: SharedMap;
 }) {
     const shapeButtonColor = 'black';
 
@@ -260,7 +258,6 @@ export function StatusBar(props: {
     toggleSignals: any;
     signals: () => boolean;
     localShapes: Shapes;
-    fluidShapes: SharedMap;
 }) {
     const [, setChecked] = React.useState(props.signals());
 
@@ -269,13 +266,7 @@ export function StatusBar(props: {
         setChecked(props.signals());
     };
 
-    const [fluidCount, getFluidCount] = React.useState(props.fluidShapes.size);
-
-    React.useEffect(() => {
-        props.fluidShapes.on('valueChanged', () =>
-            getFluidCount(props.fluidShapes.size)
-        );
-    }, []);
+    const [fluidCount, getFluidCount] = React.useState(props.localShapes.size);
 
     return (
         <div className="level mb-0 mt-0">
