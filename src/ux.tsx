@@ -6,7 +6,6 @@ import { mdiCloseThick, mdiEraser } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
-import { SharedMap } from 'fluid-framework';
 import { Shapes, shapeLimit } from './index';
 
 // eslint-disable-next-line react/prop-types
@@ -21,7 +20,7 @@ export function ReactApp(props: {
     toggleSignals: any;
     signals: () => boolean;
     selectionManager: any;
-    localShapes: any;
+    localShapes: Shapes;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -72,14 +71,15 @@ export function Toolbar(props: {
     const shapeButtonColor = 'black';
 
     React.useEffect(() => {
-        props.selectionManager.onChanged = () => {
+        props.selectionManager.onChanged(() => {
             getSelected(props.selectionManager.selected);
-        };
+        });
     }, []);
 
     React.useEffect(() => {
-        props.localShapes.onChanged = () =>
+        props.localShapes.onChanged(() => {
             getMaxReached(props.localShapes.maxReached);
+        });
     }, []);
 
     const [selected, getSelected] = React.useState(props.selectionManager.selected);
@@ -267,6 +267,12 @@ export function StatusBar(props: {
     };
 
     const [fluidCount, getFluidCount] = React.useState(props.localShapes.size);
+
+    React.useEffect(() => {
+        props.localShapes.onChanged(() => {
+            getFluidCount(props.localShapes.size);
+        });
+    }, []);
 
     return (
         <div className="level mb-0 mt-0">

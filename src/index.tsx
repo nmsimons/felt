@@ -11,10 +11,7 @@ import ReactDOM from 'react-dom';
 import { loadFluidData } from './fluid';
 import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
 import {
-    Pixi2Fluid,
-    FluidDisplayObject,
     Signals,
-    Fluid2Pixi,
     Pixi2Signal,
     Signal2Pixi,
     SignalPackage,
@@ -26,7 +23,12 @@ import './styles.scss';
 
 // defines a custom map for storing local shapes that fires an event when the map changes
 export class Shapes extends Map<string, FeltShape> {
-    public onChanged?: () => void;
+    private _cbs: Array<() => void> = [];
+
+    public onChanged(cb: () => void) {
+        this._cbs.push(cb);
+    }
+
     private _max: number;
 
     constructor(recommendedMax: number) {
@@ -40,24 +42,24 @@ export class Shapes extends Map<string, FeltShape> {
 
     public set(key: string, value: FeltShape): this {
         super.set(key, value);
-        if (this.onChanged !== undefined) {
-            this.onChanged();
+        for (const cb of this._cbs) {
+            cb();
         }
         return this;
     }
 
     public delete(key: string): boolean {
         const b = super.delete(key);
-        if (this.onChanged !== undefined) {
-            this.onChanged();
+        for (const cb of this._cbs) {
+            cb();
         }
         return b;
     }
 
     public clear(): void {
         super.clear;
-        if (this.onChanged !== undefined) {
-            this.onChanged();
+        for (const cb of this._cbs) {
+            cb();
         }
     }
 }
