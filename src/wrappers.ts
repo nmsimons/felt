@@ -1,4 +1,4 @@
-import { FeltShape } from '.';
+import { FeltShape } from './shapes';
 
 export interface SignalPackage {
     id: string;

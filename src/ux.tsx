@@ -6,7 +6,7 @@ import { mdiCloseThick, mdiEraser } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
-import { Shapes, shapeLimit } from './index';
+import { Shapes, shapeLimit } from './shapes';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
