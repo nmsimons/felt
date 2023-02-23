@@ -18,8 +18,9 @@ import {
     SignalPackage,
 } from './wrappers';
 import * as UX from './ux';
-import { Shapes, FeltShape, shapeLimit, size } from './shapes';
+import { Shapes, Selection, FeltShape, shapeLimit, size, addShapeToShapeTree } from './shapes';
 import { appSchemaData, LocationProxy, ShapeProxy } from "./schema";
+import { addUserToPresenceArray, removeUserFromPresenceArray, flushPresenceArray, shouldShowPresence } from "./presence"
 
 import { Guid } from 'guid-typescript';
 
@@ -53,55 +54,6 @@ async function main() {
         console.log("DIRTY");
     })
 
-    // Define a custom map for storing selected objects that fires an event when it changes
-    // and syncs with fluid data to show presence in other clients
-    class Selection extends Shapes {
-        constructor(max: number) {
-            super(max);
-        }
-
-        public delete(key: string): boolean {
-            const shape: FeltShape | undefined = this.get(key);
-            const me: AzureMember | undefined = audience.getMyself();
-
-            if (shape !== undefined) {
-                shape.removeSelection();
-                if (me !== undefined) {
-                    removeUserFromPresenceArray({ shapeId: shape.id, userId: me.userId });
-                } else {
-                    console.log('Failed to delete presence!!!');
-                }
-
-            }
-            return super.delete(key);
-        }
-
-        public set(key: string, value: FeltShape): this {
-            value.showSelection();
-            const me: AzureMember | undefined = audience.getMyself();
-
-            if (me !== undefined) {
-                //flushPresenceArray(users); // currently noop
-                addUserToPresenceArray({ shapeId: value.id, userId: me.userId });
-            } else {
-                console.log('Failed to set presence!!!');
-            }
-            return super.set(key, value);
-        }
-
-        public clear(): void {
-            this.forEach(async (value: FeltShape | undefined, key: string) => {
-                this.delete(key);
-            });
-
-            super.clear();
-        }
-
-        public get selected() {
-            return this.size > 0;
-        }
-    }
-
     async function setSelected(feltShape: FeltShape | undefined): Promise<void> {
         //Since we don't currently support multi select, clear the current selection
         selection.clear();
@@ -111,48 +63,6 @@ async function main() {
                 selection.set(feltShape.id, feltShape);
             }
         }
-    }
-
-    function removeUserFromPresenceArray({
-        shapeId,
-        userId,
-    }: {
-        shapeId: string;
-        userId: string;
-    }): void {
-        const users = localShapes.get(shapeId)?.shapeProxy.users;
-        if (users === undefined) { return; }
-        for(let i = 0; i < users.length; i++) {
-            if (users[i] === userId) {
-                users.deleteNodes(i);
-                break;
-            }
-        }
-    }
-
-    function addUserToPresenceArray({
-        shapeId,
-        userId,
-    }: {
-        shapeId: string;
-        userId: string;
-    }): void {
-        const users = localShapes.get(shapeId)?.shapeProxy.users;
-        if (users === undefined) { return; }
-        for(let i = 0; i < users.length; i++) {
-            if (users[i] === userId) {
-                return;
-            }
-        }
-        users[users.length] = userId;
-    }
-
-    // semi optimal tidy of the presence array to remove
-    // stray data from previous sessions. This is currently run
-    // fairly frequently but really only needs to run when a session is
-    // started.
-    function flushPresenceArray(users: string[] & EditableField): void {
-
     }
 
     // create the root element for React
@@ -171,7 +81,7 @@ async function main() {
 
     // initialize the selection object (a custom map) which is used to manage local selection and is passed
     // to the React app for state and events
-    const selection = new Selection(shapeLimit);
+    const selection = new Selection(shapeLimit, audience, addUserToPresenceArray, removeUserFromPresenceArray, localShapes);
 
     // create PIXI app
     const pixiApp = await createPixiApp();
@@ -208,31 +118,6 @@ async function main() {
     // function to toggle the signals flag
     function toggleSignals(): void {
         useSignals = !useSignals;
-    }
-
-    function addShapeToShapeTree(
-        shape: Shape,
-        color: Color,
-        id: string,
-        x: number,
-        y: number,
-        z: number): void {
-
-        const locationProxy = {
-            x: x,
-            y: y,
-        } as LocationProxy;
-
-        const shapeProxy = {
-            id: id,
-            location: locationProxy,
-            color: color,
-            z: z,
-            shape: shape,
-            deleted: false,
-        } as ShapeProxy;
-
-        shapeTree[shapeTree.length] = shapeProxy;
     }
 
     // This function needs to be called each time a local shape is moved.
@@ -276,7 +161,7 @@ async function main() {
         z: number,
         selectShape: boolean = true
     ): void {
-        addShapeToShapeTree(shape, color, id, x, y, z);
+        addShapeToShapeTree(shape, color, id, x, y, z, shapeTree);
     }
 
     //Get all existing shapes
@@ -413,27 +298,14 @@ async function main() {
         }
     }
 
-    function shouldShowPresence(shapeProxy: ShapeProxy, id: string | undefined): boolean {
-        if (shapeProxy.users.length > 0) {
-            for (const user of shapeProxy.users) {
-                if (user !== id) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     // When a user leaves the session, remove all that users presence data from
     // the presence shared map. Note, all clients run this code right now
     audience.on('memberRemoved', (clientId: string, member: IMember) => {
         for (let i = 0; i < shapeTree.length; i++) {
             const shapeProxy = shapeTree[i];
-            removeUserFromPresenceArray({shapeId: shapeProxy.id, userId: member.userId});
+            removeUserFromPresenceArray({shapeId: shapeProxy.id, userId: member.userId, localShapes: localShapes});
         }
     });
-
-
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.

@@ -1,10 +1,38 @@
-import { ShapeProxy } from "./schema";
+import { LocationProxy, ShapeProxy } from "./schema";
 import * as PIXI from 'pixi.js';
 import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
+import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
+import { EditableField } from "@fluid-internal/tree";
 
 // set some constants for shapes
 export const shapeLimit = 100;
 export const size = 60;
+
+export function addShapeToShapeTree(
+    shape: Shape,
+    color: Color,
+    id: string,
+    x: number,
+    y: number,
+    z: number,
+    shapeTree: ShapeProxy[] & EditableField): void {
+
+    const locationProxy = {
+        x: x,
+        y: y,
+    } as LocationProxy;
+
+    const shapeProxy = {
+        id: id,
+        location: locationProxy,
+        color: color,
+        z: z,
+        shape: shape,
+        deleted: false,
+    } as ShapeProxy;
+
+    shapeTree[shapeTree.length] = shapeProxy;
+}
 
 // defines a custom map for storing local shapes that fires an event when the map changes
 export class Shapes extends Map<string, FeltShape> {
@@ -46,6 +74,75 @@ export class Shapes extends Map<string, FeltShape> {
         for (const cb of this._cbs) {
             cb();
         }
+    }
+}
+
+// Define a custom map for storing selected objects that fires an event when it changes
+// and syncs with fluid data to show presence in other clients
+export class Selection extends Shapes {
+    constructor(max: number,
+        private audience: IAzureAudience,
+        private addToPresence: ({
+        shapeId,
+        userId,
+        localShapes
+    }: {
+        shapeId: string;
+        userId: string;
+        localShapes: Shapes;
+    }) => void,
+    private removeFromPresence: ({
+        shapeId,
+        userId,
+        localShapes
+    }: {
+        shapeId: string;
+        userId: string;
+        localShapes: Shapes;
+    }) => void,
+        private localShapes: Shapes) {
+        super(max);
+    }
+
+    public delete(key: string): boolean {
+        const shape: FeltShape | undefined = this.get(key);
+        const me: AzureMember | undefined = this.audience.getMyself();
+
+        if (shape !== undefined) {
+            shape.removeSelection();
+            if (me !== undefined) {
+                this.removeFromPresence({ shapeId: shape.id, userId: me.userId, localShapes: this.localShapes });
+            } else {
+                console.log('Failed to delete presence!!!');
+            }
+
+        }
+        return super.delete(key);
+    }
+
+    public set(key: string, value: FeltShape): this {
+        value.showSelection();
+        const me: AzureMember | undefined = this.audience.getMyself();
+
+        if (me !== undefined) {
+            //flushPresenceArray(users); // currently noop
+            this.addToPresence({ shapeId: value.id, userId: me.userId, localShapes: this.localShapes });
+        } else {
+            console.log('Failed to set presence!!!');
+        }
+        return super.set(key, value);
+    }
+
+    public clear(): void {
+        this.forEach(async (value: FeltShape | undefined, key: string) => {
+            this.delete(key);
+        });
+
+        super.clear();
+    }
+
+    public get selected() {
+        return this.size > 0;
     }
 }
 
