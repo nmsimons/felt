@@ -12,7 +12,7 @@ import {
     generateTestUser,
     InsecureTokenProvider,
 } from '@fluidframework/test-client-utils';
-import { ContainerSchema, IFluidContainer, SharedMap } from 'fluid-framework';
+import { ContainerSchema, IFluidContainer } from 'fluid-framework';
 import { Signaler } from '@fluid-experimental/data-objects';
 import { SharedCounter } from '@fluidframework/counter';
 import { SharedTreeFactory } from '@fluid-internal/tree';
@@ -110,13 +110,10 @@ const client = new AzureClient(clientProps);
 // initial DataObjects we want created when the container is first created.
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        shapes: SharedMap,
-        presence: SharedMap,
         signalManager: Signaler,
         maxZOrder: SharedCounter,
         tree: MySharedTree
     },
-    dynamicObjectTypes: [SharedMap],
 };
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {

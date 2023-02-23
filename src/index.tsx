@@ -1,9 +1,10 @@
-import { IMember, SharedMap } from 'fluid-framework';
+import { IMember } from 'fluid-framework';
 import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { SharedCounter } from '@fluidframework/counter/dist/counter';
-import { EditableField, ISharedTree } from "@fluid-internal/tree";
+import { ISharedTree } from "@fluid-internal/tree";
 import { appSchemaData, LocationProxy, ShapeProxy } from "./schema";
+import { EditableField } from "@fluid-internal/tree/dist/feature-libraries";
 
 import * as PIXI from 'pixi.js';
 import React from 'react';
@@ -109,27 +110,23 @@ async function main() {
 
             if (shape !== undefined) {
                 shape.removeSelection();
-                const users: string[] = getPresenceArray(shape.id);
                 if (me !== undefined) {
-                    removeUserFromPresenceArray({ arr: users, userId: me.userId });
-                    fluidPresence.set(shape.id, users);
-                    if (users.length === 0) fluidPresence.delete(shape.id);
+                    removeUserFromPresenceArray({ shapeId: shape.id, userId: me.userId });
                 } else {
-                    console.log('Failed to set presence!!!');
+                    console.log('Failed to delete presence!!!');
                 }
+
             }
             return super.delete(key);
         }
 
         public set(key: string, value: FeltShape): this {
             value.showSelection();
-            const users: string[] = getPresenceArray(value.id);
             const me: AzureMember | undefined = audience.getMyself();
 
-            if (me != undefined) {
-                flushPresenceArray(users);
-                addUserToPresenceArray({ arr: users, userId: me.userId });
-                fluidPresence.set(value.id, users);
+            if (me !== undefined) {
+                //flushPresenceArray(users); // currently noop
+                addUserToPresenceArray({ shapeId: value.id, userId: me.userId });
             } else {
                 console.log('Failed to set presence!!!');
             }
@@ -149,13 +146,13 @@ async function main() {
         }
     }
 
-    async function setSelected(dobj: FeltShape | undefined): Promise<void> {
+    async function setSelected(feltShape: FeltShape | undefined): Promise<void> {
         //Since we don't currently support multi select, clear the current selection
         selection.clear();
 
-        if (dobj !== undefined && dobj.id !== undefined) {
-            if (!selection.has(dobj.id)) {
-                selection.set(dobj.id, dobj);
+        if (feltShape !== undefined && feltShape.id !== undefined) {
+            if (!selection.has(feltShape.id)) {
+                selection.set(feltShape.id, feltShape);
             }
         }
     }
@@ -178,16 +175,6 @@ async function main() {
     // to the React app for state and events
     const selection = new Selection(shapeLimit);
 
-    // fetches the array of users for a specific shape from the Shared Map used to track presence
-    function getPresenceArray(shapeId: string): string[] {
-        const users: string[] | undefined = fluidPresence.get(shapeId);
-        if (users === undefined) {
-            return [];
-        } else {
-            return users;
-        }
-    }
-
     // create PIXI app
     const pixiApp = await createPixiApp();
 
@@ -195,9 +182,6 @@ async function main() {
     const fluidTree = container.initialObjects.tree as ISharedTree;
     fluidTree.storedSchema.update(appSchemaData);
     const shapeTree = fluidTree.root as ShapeProxy[] & EditableField;
-
-    // create Fluid map for presence
-    const fluidPresence = container.initialObjects.presence as SharedMap;
 
     // create fluid counter for shared max z order
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
@@ -253,19 +237,16 @@ async function main() {
         shapeTree[shapeTree.length] = shapeProxy;
     }
 
-    // This function needs to be called each time a shape is changed.
+    // This function needs to be called each time a local shape is moved.
     // It's passed in to the CreateShape function which wires it up to the
-    // PIXI events for the shape. It is also called when a shape property is changed
-    // Note: it shouldn't be called if a shape property is changed because of a change
-    // in another client. Only if the change originates locally.
-    function updateFluidData(feltShape: FeltShape): void {
+    // PIXI events for the shape.
+    function updateShapeLocation(feltShape: FeltShape): void {
         // Store the position in Fluid
         if (feltShape.dragging && useSignals) {
             const sig = Pixi2Signal(feltShape);
             signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
             feltShape.shapeProxy.location = {x: feltShape.x, y: feltShape.y} as LocationProxy;
-            console.log(feltShape.shapeProxy.location.x, feltShape.shapeProxy.location.y);
         }
     }
 
@@ -277,12 +258,13 @@ async function main() {
         const feltShape = new FeltShape(
             pixiApp!,
             shapeProxy,
-            updateFluidData,
+            updateShapeLocation,
             setSelected // function that manages local selection
         );
 
         localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
         pixiApp!.stage.addChild(feltShape); // add the new shape to the PIXI canvas
+
         return feltShape;
     }
 
@@ -305,6 +287,7 @@ async function main() {
         if (!shapeProxy.deleted) {
             addNewLocalShape(shapeProxy);
         }
+        updateAllShapes();
     }
 
     // function passed into React UX for creating shapes
@@ -384,11 +367,6 @@ async function main() {
     function deleteShape(shape: FeltShape): void {
         // Set local flag to deleted
         shape.deleted = true;
-
-        // Remove shape from fluid presence map
-        fluidPresence.delete(shape.id);
-
-        //deleteLocalShape(shape);
     }
 
     function deleteLocalShape(shape: FeltShape): void {
@@ -406,6 +384,12 @@ async function main() {
     // event handler for detecting remote changes to Fluid data and updating
     // the local data
     fluidTree.forest.on('afterDelta', (delta) => {
+        updateAllShapes();
+    })
+
+    function updateAllShapes() {
+        const me: AzureMember | undefined = audience.getMyself();
+
         for (let i = 0; i < shapeTree.length; i++) {
             const shapeProxy = shapeTree[i];
 
@@ -414,85 +398,82 @@ async function main() {
             if (localShape != undefined) {
                 localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
                 if (shapeProxy.deleted) {
-                    deleteLocalShape(localShapes.get(shapeProxy.id)!)
+                    deleteLocalShape(localShapes.get(shapeProxy.id)!);
                 } else {
-
                     localShape.sync();
+
+                    if (shouldShowPresence(shapeProxy, me?.userId)) {
+                        localShape.showPresence();
+                    } else {
+                        localShape.removePresence();
+                    }
                 }
             } else if (!shapeProxy.deleted) {
                 addNewLocalShape(shapeProxy);
             }
         }
-    })
+    }
 
-    // When a shape is selected in a client it is added to a special SharedMap for showing presence - this event fires when that happens
-    fluidPresence.on('valueChanged', (changed, local, target) => {
-        if (target.has(changed.key)) {
-            const remote = target.get(changed.key).slice();
-            const me: AzureMember | undefined = audience.getMyself();
-
-            if (me !== undefined) {
-                const i: number = remote.indexOf(me.userId);
-                if (i > -1) {
-                    remote.splice(i, 1);
-                }
-            }
-
-            if (localShapes.has(changed.key)) {
-                if (remote.length > 0) {
-                    localShapes.get(changed.key)!.showPresence();
-                } else {
-                    localShapes.get(changed.key)!.removePresence();
+    function shouldShowPresence(shapeProxy: ShapeProxy, id: string | undefined): boolean {
+        if (shapeProxy.users.length > 0) {
+            for (const user of shapeProxy.users) {
+                if (user !== id) {
+                    return true;
                 }
             }
         }
-    });
+        return false;
+    }
 
     // When a user leaves the session, remove all that users presence data from
     // the presence shared map. Note, all clients run this code right now
     audience.on('memberRemoved', (clientId: string, member: IMember) => {
-        fluidPresence.forEach((value: string[], key: string) => {
-            removeUserFromPresenceArray({ arr: value, userId: member.userId });
-            fluidPresence.set(key, value);
-        });
+        for (let i = 0; i < shapeTree.length; i++) {
+            const shapeProxy = shapeTree[i];
+            removeUserFromPresenceArray({shapeId: shapeProxy.id, userId: member.userId});
+        }
     });
 
     function removeUserFromPresenceArray({
-        arr,
+        shapeId,
         userId,
     }: {
-        arr: string[];
+        shapeId: string;
         userId: string;
     }): void {
-        const i = arr.indexOf(userId);
-        if (i > -1) {
-            arr.splice(i, 1);
-            removeUserFromPresenceArray({ arr, userId });
+        const users = localShapes.get(shapeId)?.shapeProxy.users;
+        if (users === undefined) { return; }
+        for(let i = 0; i < users.length; i++) {
+            if (users[i] === userId) {
+                users.deleteNodes(i);
+                break;
+            }
         }
     }
 
     function addUserToPresenceArray({
-        arr,
+        shapeId,
         userId,
     }: {
-        arr: string[];
+        shapeId: string;
         userId: string;
     }): void {
-        if (arr.indexOf(userId) === -1) {
-            arr.push(userId);
+        const users = localShapes.get(shapeId)?.shapeProxy.users;
+        if (users === undefined) { return; }
+        for(let i = 0; i < users.length; i++) {
+            if (users[i] === userId) {
+                return;
+            }
         }
+        users[users.length] = userId;
     }
 
     // semi optimal tidy of the presence array to remove
     // stray data from previous sessions. This is currently run
     // fairly frequently but really only needs to run when a session is
     // started.
-    function flushPresenceArray(arr: string[]): void {
-        arr.forEach((value: string, index: number) => {
-            if (!audience.getMembers().has(value)) {
-                arr.splice(index, 1);
-            }
-        });
+    function flushPresenceArray(users: string[] & EditableField): void {
+
     }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
@@ -627,8 +608,8 @@ export class FeltShape extends PIXI.Graphics {
     constructor(
         app: PIXI.Application,
         public shapeProxy: ShapeProxy, // TODO this should be readonly
-        updateFluidData: (dobj: FeltShape) => void,
-        setSelected: (dobj: FeltShape) => void
+        updateShapeLocation: (feltShape: FeltShape) => void,
+        setSelected: (feltShape: FeltShape) => void
     ) {
         super();
 
@@ -638,30 +619,30 @@ export class FeltShape extends PIXI.Graphics {
         this._shape.beginFill(0xffffff);
         this.setShape();
         this._shape.endFill();
-        this._shape.tint = Number(this.color);
         this.interactive = true;
         this.buttonMode = true;
 
+        this._shape.tint = Number(this.color);
         this.x = this.shapeProxy.location.x;
         this.y = this.shapeProxy.location.y;
         this.zIndex = this.shapeProxy.z;
 
         const onDragStart = (event: any) => {
             this.dragging = true;
-            updateFluidData(this); // syncs local changes with Fluid data
+            updateShapeLocation(this); // syncs local changes with Fluid data
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
                 this.dragging = false;
-                updateFluidData(this); // syncs local changes with Fluid data
+                updateShapeLocation(this); // syncs local changes with Fluid data
             }
         };
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
                 updatePosition(event.data.global.x, event.data.global.y);
-                updateFluidData(this); // syncs local changes with Fluid data
+                updateShapeLocation(this); // syncs local changes with Fluid data
             }
         };
 
@@ -700,7 +681,6 @@ export class FeltShape extends PIXI.Graphics {
 
     set color(color: Color) {
         this.shapeProxy.color = color;
-        this._shape.tint = Number(color);
     }
 
     get color() {

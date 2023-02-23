@@ -6,7 +6,7 @@ import {
 	ValueSchema,
 } from "@fluid-internal/tree";
 import { fieldSchema } from "@fluid-internal/tree/dist/core";
-import { FieldKinds, namedTreeSchema } from "@fluid-internal/tree/dist/feature-libraries";
+import { EditableField, FieldKinds, namedTreeSchema } from "@fluid-internal/tree/dist/feature-libraries";
 
 export const stringSchema = namedTreeSchema({
 	name: brand("String"),
@@ -40,6 +40,7 @@ export const shapeSchema = namedTreeSchema({
         z: fieldSchema(FieldKinds.value, [numberSchema.name]),
         shape: fieldSchema(FieldKinds.value, [stringSchema.name]),
         deleted: fieldSchema(FieldKinds.value, [booleanSchema.name]),
+        users: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
 	},
 });
 
@@ -55,6 +56,7 @@ export type ShapeProxy = EditableTree & {
     z: number,
     shape: string,
     deleted: boolean,
+    users: string[] & EditableField,
 };
 
 export const rootAppStateSchema = fieldSchema(FieldKinds.sequence, [shapeSchema.name]);
