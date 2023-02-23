@@ -6,7 +6,9 @@ import { mdiCloseThick, mdiEraser } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
-import { Shapes, shapeLimit } from './shapes';
+import { Shapes } from './shapes';
+import { ShapeProxy } from './schema';
+import { EditableField } from '@fluid-internal/tree';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
@@ -21,6 +23,7 @@ export function ReactApp(props: {
     signals: () => boolean;
     selectionManager: any;
     localShapes: Shapes;
+    shapeTree: ShapeProxy[] & EditableField;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -258,6 +261,7 @@ export function StatusBar(props: {
     toggleSignals: any;
     signals: () => boolean;
     localShapes: Shapes;
+    shapeTree: ShapeProxy[] & EditableField;
 }) {
     const [, setChecked] = React.useState(props.signals());
 
@@ -266,11 +270,11 @@ export function StatusBar(props: {
         setChecked(props.signals());
     };
 
-    const [fluidCount, getFluidCount] = React.useState(props.localShapes.size);
+    const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
 
     React.useEffect(() => {
         props.localShapes.onChanged(() => {
-            getFluidCount(props.localShapes.size);
+            getFluidCount(props.shapeTree.length);
         });
     }, []);
 

@@ -113,6 +113,48 @@ async function main() {
         }
     }
 
+    function removeUserFromPresenceArray({
+        shapeId,
+        userId,
+    }: {
+        shapeId: string;
+        userId: string;
+    }): void {
+        const users = localShapes.get(shapeId)?.shapeProxy.users;
+        if (users === undefined) { return; }
+        for(let i = 0; i < users.length; i++) {
+            if (users[i] === userId) {
+                users.deleteNodes(i);
+                break;
+            }
+        }
+    }
+
+    function addUserToPresenceArray({
+        shapeId,
+        userId,
+    }: {
+        shapeId: string;
+        userId: string;
+    }): void {
+        const users = localShapes.get(shapeId)?.shapeProxy.users;
+        if (users === undefined) { return; }
+        for(let i = 0; i < users.length; i++) {
+            if (users[i] === userId) {
+                return;
+            }
+        }
+        users[users.length] = userId;
+    }
+
+    // semi optimal tidy of the presence array to remove
+    // stray data from previous sessions. This is currently run
+    // fairly frequently but really only needs to run when a session is
+    // started.
+    function flushPresenceArray(users: string[] & EditableField): void {
+
+    }
+
     // create the root element for React
     const root = document.createElement('div');
     root.id = 'root';
@@ -391,47 +433,7 @@ async function main() {
         }
     });
 
-    function removeUserFromPresenceArray({
-        shapeId,
-        userId,
-    }: {
-        shapeId: string;
-        userId: string;
-    }): void {
-        const users = localShapes.get(shapeId)?.shapeProxy.users;
-        if (users === undefined) { return; }
-        for(let i = 0; i < users.length; i++) {
-            if (users[i] === userId) {
-                users.deleteNodes(i);
-                break;
-            }
-        }
-    }
 
-    function addUserToPresenceArray({
-        shapeId,
-        userId,
-    }: {
-        shapeId: string;
-        userId: string;
-    }): void {
-        const users = localShapes.get(shapeId)?.shapeProxy.users;
-        if (users === undefined) { return; }
-        for(let i = 0; i < users.length; i++) {
-            if (users[i] === userId) {
-                return;
-            }
-        }
-        users[users.length] = userId;
-    }
-
-    // semi optimal tidy of the presence array to remove
-    // stray data from previous sessions. This is currently run
-    // fairly frequently but really only needs to run when a session is
-    // started.
-    function flushPresenceArray(users: string[] & EditableField): void {
-
-    }
 
     // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
     // handle the signal we send and update the local state accordingly.
@@ -466,6 +468,7 @@ async function main() {
             }}
             selectionManager={selection}
             localShapes={localShapes}
+            shapeTree={shapeTree}
         />,
         document.getElementById('root')
     );
