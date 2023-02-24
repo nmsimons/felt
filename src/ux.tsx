@@ -24,6 +24,7 @@ export function ReactApp(props: {
     selectionManager: any;
     localShapes: Shapes;
     shapeTree: ShapeProxy[] & EditableField;
+    stage: PIXI.Container;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -262,6 +263,7 @@ export function StatusBar(props: {
     signals: () => boolean;
     localShapes: Shapes;
     shapeTree: ShapeProxy[] & EditableField;
+    stage: PIXI.Container;
 }) {
     const [, setChecked] = React.useState(props.signals());
 
@@ -272,11 +274,13 @@ export function StatusBar(props: {
 
     const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
     const [localCount, getLocalCount] = React.useState(props.localShapes.size);
+    const [stageCount, getStageCount] = React.useState(props.stage.children.length - 2);
 
     React.useEffect(() => {
         props.localShapes.onChanged(() => {
             getFluidCount(props.shapeTree.length);
             getLocalCount(props.localShapes.size);
+            getStageCount(props.stage.children.length - 2);
         });
     }, []);
 
@@ -301,7 +305,7 @@ export function StatusBar(props: {
             </div>
             <div className="level-right">
                 <div className="level-item mb-2 mt-0">
-                    <p>Shapes: {localCount} | {fluidCount}</p>
+                    <p>Shapes: {stageCount} | {localCount} | {fluidCount}</p>
                 </div>
                 <div className="level-item mb-2 mt-0">
                     <Audience audience={props.audience} />

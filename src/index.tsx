@@ -98,7 +98,7 @@ async function main() {
     function bringToFront(feltShape: FeltShape): void {
         if (feltShape.zIndex < fluidMaxZIndex.value) {
             feltShape.zIndex = getMaxZIndex();
-            feltShape.shapeProxy.z = feltShape.zIndex;
+            feltShape.z = feltShape.zIndex;
         }
     }
 
@@ -129,7 +129,7 @@ async function main() {
             const sig = Pixi2Signal(feltShape);
             signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
-            feltShape.shapeProxy.location = {x: feltShape.x, y: feltShape.y} as LocationProxy;
+            feltShape.location = {x: feltShape.x, y: feltShape.y};
         }
     }
 
@@ -334,6 +334,7 @@ async function main() {
             selectionManager={selection}
             localShapes={localShapes}
             shapeTree={shapeTree}
+            stage={pixiApp.stage}
         />,
         document.getElementById('root')
     );

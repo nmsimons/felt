@@ -173,9 +173,9 @@ export class FeltShape extends PIXI.Graphics {
         this.buttonMode = true;
 
         this._shape.tint = Number(this.color);
-        this.x = this.shapeProxy.location.x;
-        this.y = this.shapeProxy.location.y;
-        this.zIndex = this.shapeProxy.z;
+        this.x = this.location.x;
+        this.y = this.location.y;
+        this.zIndex = this.z;
 
         const onDragStart = (event: any) => {
             this.dragging = true;
@@ -247,10 +247,26 @@ export class FeltShape extends PIXI.Graphics {
         return this.shapeProxy.deleted;
     }
 
+    set location({x, y}: {x: number, y: number}) {
+        this.shapeProxy.location = {x: x, y: y} as LocationProxy
+    }
+
+    get location() {
+        return this.shapeProxy.location as {x: number, y:number};
+    }
+
+    set z(value: number) {
+        this.shapeProxy.z = value;
+    }
+
+    get z() {
+        return this.shapeProxy.z;
+    }
+
     public sync() {
-        this.x = this.shapeProxy.location.x;
-        this.y = this.shapeProxy.location.y;
-        this.zIndex = this.shapeProxy.z;
+        this.x = this.location.x;
+        this.y = this.location.y;
+        this.zIndex = this.z;
         this._shape.tint = Number(this.color);
     }
 
