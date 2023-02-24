@@ -223,6 +223,8 @@ export class FeltShape extends PIXI.Graphics {
             .on('pointerdown', onSelect)
             .on('pointerupoutside', onDragEnd)
             .on('pointermove', onDragMove);
+
+        app.stage.addChild(this);
     }
 
     get id() {

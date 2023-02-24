@@ -146,7 +146,6 @@ async function main() {
         );
 
         localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
-        pixiApp!.stage.addChild(feltShape); // add the new shape to the PIXI canvas
 
         return feltShape;
     }
@@ -165,13 +164,7 @@ async function main() {
     }
 
     //Get all existing shapes
-    for (let i = 0; i < shapeTree.length; i++) {
-        const shapeProxy = shapeTree[i];
-        if (!shapeProxy.deleted) {
-            addNewLocalShape(shapeProxy);
-        }
-        updateAllShapes();
-    }
+    updateAllShapes();
 
     // function passed into React UX for creating shapes
     function createShape(shape: Shape, color: Color): void {

@@ -271,10 +271,12 @@ export function StatusBar(props: {
     };
 
     const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
+    const [localCount, getLocalCount] = React.useState(props.localShapes.size);
 
     React.useEffect(() => {
         props.localShapes.onChanged(() => {
             getFluidCount(props.shapeTree.length);
+            getLocalCount(props.localShapes.size);
         });
     }, []);
 
@@ -299,7 +301,7 @@ export function StatusBar(props: {
             </div>
             <div className="level-right">
                 <div className="level-item mb-2 mt-0">
-                    <p>Shapes: {fluidCount}</p>
+                    <p>Shapes: {localCount} | {fluidCount}</p>
                 </div>
                 <div className="level-item mb-2 mt-0">
                     <Audience audience={props.audience} />
