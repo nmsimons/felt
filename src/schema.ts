@@ -4,9 +4,11 @@ import {
 	rootFieldKey,
 	SchemaData,
 	ValueSchema,
+	fieldSchema,
+	EditableField,
+	FieldKinds,
+	namedTreeSchema
 } from "@fluid-internal/tree";
-import { fieldSchema } from "@fluid-internal/tree/dist/core";
-import { EditableField, FieldKinds, namedTreeSchema } from "@fluid-internal/tree/dist/feature-libraries";
 
 export const stringSchema = namedTreeSchema({
 	name: brand("String"),

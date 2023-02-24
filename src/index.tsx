@@ -2,8 +2,7 @@ import { IMember } from 'fluid-framework';
 import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { SharedCounter } from '@fluidframework/counter/dist/counter';
-import { ISharedTree } from "@fluid-internal/tree";
-import { EditableField } from "@fluid-internal/tree/dist/feature-libraries";
+import { ISharedTree, EditableField, parentField } from "@fluid-internal/tree";
 
 import * as PIXI from 'pixi.js';
 import React from 'react';
@@ -170,7 +169,7 @@ async function main() {
     function createShape(shape: Shape, color: Color): void {
         if (localShapes.maxReached) return
 
-        const fs = addNewShape(
+        addNewShape(
             shape,
             color,
             Guid.create().toString(),
@@ -267,7 +266,7 @@ async function main() {
     function updateAllShapes() {
         const me: AzureMember | undefined = audience.getMyself();
 
-        for (let i = 0; i < shapeTree.length; i++) {
+        for (let i = shapeTree.length - 1; i >= 0; i--) {
             const shapeProxy = shapeTree[i];
 
             const localShape = localShapes.get(shapeProxy.id);
