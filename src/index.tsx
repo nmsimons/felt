@@ -54,6 +54,7 @@ async function main() {
         //console.log("DIRTY");
     })
 
+    // Function passed into each FeltShape to help manage selection
     async function setSelected(feltShape: FeltShape | undefined): Promise<void> {
         //Since we don't currently support multi select, clear the current selection
         selection.clear();
@@ -119,19 +120,6 @@ async function main() {
         useSignals = !useSignals;
     }
 
-    // This function needs to be called each time a local shape is moved.
-    // It's passed in to the CreateShape function which wires it up to the
-    // PIXI events for the shape.
-    function updateShapeLocation(feltShape: FeltShape): void {
-        // Store the position in Fluid
-        if (feltShape.dragging && useSignals) {
-            const sig = Pixi2Signal(feltShape);
-            signaler.submitSignal(Signals.ON_DRAG, sig);
-        } else {
-            feltShape.location = {x: feltShape.x, y: feltShape.y};
-        }
-    }
-
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
     function addNewLocalShape(
@@ -140,9 +128,10 @@ async function main() {
         const feltShape = new FeltShape(
             pixiApp!,
             shapeProxy,
-            updateShapeLocation,
             setSelected, // function that manages local selection
-            audience
+            audience,
+            useSignals,
+            signaler
         );
 
         localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
@@ -236,7 +225,7 @@ async function main() {
         localShapes.forEach((value: FeltShape, key: string) => {
             deleteShape(value);
         })
-        shapeTree.deleteNodes(0, shapeTree.length - 1);
+        // shapeTree.deleteNodes(0, shapeTree.length - 1);
     }
 
     function deleteShape(shape: FeltShape): void {
@@ -244,6 +233,7 @@ async function main() {
         shape.deleted = true;
     }
 
+    // Called when a shape is deleted in the Fluid Data
     function deleteLocalShape(shape: FeltShape): void {
         // Remove shape from local map
         localShapes.delete(shape.id);
