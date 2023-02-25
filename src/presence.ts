@@ -1,17 +1,15 @@
 import { EditableField } from "@fluid-internal/tree";
+import { IAzureAudience } from "@fluidframework/azure-client";
 import { ShapeProxy } from "./schema";
-import { Shapes } from "./shapes";
 
 export function removeUserFromPresenceArray({
-    shapeId,
     userId,
-    localShapes
+    shapeProxy,
 }: {
-    shapeId: string;
     userId: string;
-    localShapes: Shapes;
+    shapeProxy: ShapeProxy;
 }): void {
-    const users = localShapes.get(shapeId)?.shapeProxy.users;
+    const users = shapeProxy.users;
     if (users === undefined) { return; }
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
@@ -22,15 +20,13 @@ export function removeUserFromPresenceArray({
 }
 
 export function addUserToPresenceArray({
-    shapeId,
     userId,
-    localShapes
+    shapeProxy,
 }: {
-    shapeId: string;
     userId: string;
-    localShapes: Shapes;
+    shapeProxy: ShapeProxy;
 }): void {
-    const users = localShapes.get(shapeId)?.shapeProxy.users;
+    const users = shapeProxy.users;
     if (users === undefined) { return; }
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
@@ -48,10 +44,23 @@ export function flushPresenceArray(users: string[] & EditableField): void {
 
 }
 
-export function shouldShowPresence(shapeProxy: ShapeProxy, id: string | undefined): boolean {
+export function shouldShowPresence(shapeProxy: ShapeProxy, audience: IAzureAudience): boolean {
+    const id = audience.getMyself()?.userId;
     if (shapeProxy.users.length > 0) {
         for (const user of shapeProxy.users) {
             if (user !== id) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+export function currentUserIsInPresenceArray(shapeProxy: ShapeProxy, audience: IAzureAudience): boolean {
+    const id = audience.getMyself()?.userId;
+    if (shapeProxy.users.length > 0) {
+        for (const user of shapeProxy.users) {
+            if (user === id) {
                 return true;
             }
         }

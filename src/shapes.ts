@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { EditableField } from "@fluid-internal/tree";
+import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, currentUserIsInPresenceArray } from "./presence";
 
 // set some constants for shapes
 export const shapeLimit = 100;
@@ -80,56 +81,20 @@ export class Shapes extends Map<string, FeltShape> {
 // Define a custom map for storing selected objects that fires an event when it changes
 // and syncs with fluid data to show presence in other clients
 export class Selection extends Shapes {
-    constructor(max: number,
-        private audience: IAzureAudience,
-        private addToPresence: ({
-        shapeId,
-        userId,
-        localShapes
-    }: {
-        shapeId: string;
-        userId: string;
-        localShapes: Shapes;
-    }) => void,
-    private removeFromPresence: ({
-        shapeId,
-        userId,
-        localShapes
-    }: {
-        shapeId: string;
-        userId: string;
-        localShapes: Shapes;
-    }) => void,
-        private localShapes: Shapes) {
+    constructor(max: number) {
         super(max);
     }
 
     public delete(key: string): boolean {
         const shape: FeltShape | undefined = this.get(key);
-        const me: AzureMember | undefined = this.audience.getMyself();
-
         if (shape !== undefined) {
-            shape.removeSelection();
-            if (me !== undefined) {
-                this.removeFromPresence({ shapeId: shape.id, userId: me.userId, localShapes: this.localShapes });
-            } else {
-                console.log('Failed to delete presence!!!');
-            }
-
+            shape.selected = false;
         }
         return super.delete(key);
     }
 
     public set(key: string, value: FeltShape): this {
-        value.showSelection();
-        const me: AzureMember | undefined = this.audience.getMyself();
-
-        if (me !== undefined) {
-            //flushPresenceArray(users); // currently noop
-            this.addToPresence({ shapeId: value.id, userId: me.userId, localShapes: this.localShapes });
-        } else {
-            console.log('Failed to set presence!!!');
-        }
+        value.selected = true;
         return super.set(key, value);
     }
 
@@ -137,7 +102,6 @@ export class Selection extends Shapes {
         this.forEach(async (value: FeltShape | undefined, key: string) => {
             this.delete(key);
         });
-
         super.clear();
     }
 
@@ -159,7 +123,8 @@ export class FeltShape extends PIXI.Graphics {
         app: PIXI.Application,
         public shapeProxy: ShapeProxy, // TODO this should be readonly
         updateShapeLocation: (feltShape: FeltShape) => void,
-        setSelected: (feltShape: FeltShape) => void
+        setSelected: (feltShape: FeltShape) => void,
+        readonly audience: IAzureAudience
     ) {
         super();
 
@@ -268,9 +233,43 @@ export class FeltShape extends PIXI.Graphics {
         this.y = this.location.y;
         this.zIndex = this.z;
         this._shape.tint = Number(this.color);
+
+        if (shouldShowPresence(this.shapeProxy, this.audience)) {
+            this.showPresence();
+        } else {
+            this.removePresence();
+        }
+
+        this.selected ? this.showSelection() : this.removeSelection();
     }
 
-    public showSelection() {
+    private unselect() {
+        const me: AzureMember | undefined = this.audience?.getMyself();
+        if (me !== undefined) {
+            removeUserFromPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
+        } else {
+            console.log('Failed to delete presence!!!');
+        }
+    }
+
+    private select() {
+        const me: AzureMember | undefined = this.audience.getMyself();
+        if (me !== undefined) {
+            addUserToPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
+        } else {
+            console.log('Failed to set presence!!!');
+        }
+    }
+
+    set selected(value: boolean) {
+        value ? this.select() : this.unselect();
+    }
+
+    get selected() {
+        return currentUserIsInPresenceArray(this.shapeProxy, this.audience);
+    }
+
+    private showSelection() {
         if (!this._selectionFrame) {
             this._selectionFrame = new PIXI.Graphics();
             this.addChild(this._selectionFrame);
@@ -300,11 +299,11 @@ export class FeltShape extends PIXI.Graphics {
         );
     }
 
-    public removeSelection() {
+    private removeSelection() {
         this._selectionFrame?.clear();
     }
 
-    public showPresence() {
+    private showPresence() {
         if (!this._presenceFrame) {
             this._presenceFrame = new PIXI.Graphics();
             this.addChild(this._presenceFrame);
@@ -334,7 +333,7 @@ export class FeltShape extends PIXI.Graphics {
         );
     }
 
-    public removePresence() {
+    private removePresence() {
         this._presenceFrame?.clear();
     }
 

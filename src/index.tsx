@@ -37,6 +37,7 @@ async function main() {
 
     container.on("connected", () => {
         console.log("CONNECTED after " + (performance.now() - disconnect) + " milliseconds.");
+        updateAllShapes();
     })
 
     container.on("disconnected", () => {
@@ -45,12 +46,12 @@ async function main() {
     })
 
     container.on("saved", () => {
-        console.log("SAVED after " + (performance.now() - dirty) + " milliseconds.");
+        //console.log("SAVED after " + (performance.now() - dirty) + " milliseconds.");
     })
 
     container.on("dirty", () => {
         dirty = performance.now();
-        console.log("DIRTY");
+        //console.log("DIRTY");
     })
 
     async function setSelected(feltShape: FeltShape | undefined): Promise<void> {
@@ -80,7 +81,7 @@ async function main() {
 
     // initialize the selection object (a custom map) which is used to manage local selection and is passed
     // to the React app for state and events
-    const selection = new Selection(shapeLimit, audience, addUserToPresenceArray, removeUserFromPresenceArray, localShapes);
+    const selection = new Selection(shapeLimit);
 
     // create PIXI app
     const pixiApp = await createPixiApp();
@@ -93,11 +94,10 @@ async function main() {
     // create fluid counter for shared max z order
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
-    // brings the shape to the top of the zorder and syncs with Fluid
+    // brings the shape to the top of the zorder
     function bringToFront(feltShape: FeltShape): void {
-        if (feltShape.zIndex < fluidMaxZIndex.value) {
-            feltShape.zIndex = getMaxZIndex();
-            feltShape.z = feltShape.zIndex;
+        if (feltShape.z < fluidMaxZIndex.value) {
+            feltShape.z = getMaxZIndex();
         }
     }
 
@@ -141,7 +141,8 @@ async function main() {
             pixiApp!,
             shapeProxy,
             updateShapeLocation,
-            setSelected // function that manages local selection
+            setSelected, // function that manages local selection
+            audience
         );
 
         localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
@@ -208,8 +209,6 @@ async function main() {
     }
 
     // Changes the color of a shape and syncs with the Fluid data
-    // Note, the sync happens outside of the local object to allow clients
-    // to apply remote changes without triggering more syncs
     function changeColor(shape: FeltShape, color: Color): void {
         shape.color = color;
     }
@@ -241,7 +240,7 @@ async function main() {
     }
 
     function deleteShape(shape: FeltShape): void {
-        // Set local flag to deleted
+        // Set flag to deleted
         shape.deleted = true;
     }
 
@@ -264,8 +263,6 @@ async function main() {
     })
 
     function updateAllShapes() {
-        const me: AzureMember | undefined = audience.getMyself();
-
         for (let i = shapeTree.length - 1; i >= 0; i--) {
             const shapeProxy = shapeTree[i];
 
@@ -277,12 +274,6 @@ async function main() {
                     deleteLocalShape(localShapes.get(shapeProxy.id)!);
                 } else {
                     localShape.sync();
-
-                    if (shouldShowPresence(shapeProxy, me?.userId)) {
-                        localShape.showPresence();
-                    } else {
-                        localShape.removePresence();
-                    }
                 }
             } else if (!shapeProxy.deleted) {
                 addNewLocalShape(shapeProxy);
@@ -295,7 +286,7 @@ async function main() {
     audience.on('memberRemoved', (clientId: string, member: IMember) => {
         for (let i = 0; i < shapeTree.length; i++) {
             const shapeProxy = shapeTree[i];
-            removeUserFromPresenceArray({shapeId: shapeProxy.id, userId: member.userId, localShapes: localShapes});
+            removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
         }
     });
 
