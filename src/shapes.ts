@@ -1,6 +1,6 @@
 import { LocationProxy, ShapeProxy } from "./schema";
 import * as PIXI from 'pixi.js';
-import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
+import { Color, Shape } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { EditableField } from "@fluid-internal/tree";
 import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, currentUserIsInPresenceArray } from "./presence";
