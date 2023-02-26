@@ -1,4 +1,4 @@
-import { Signaler } from "@fluid-experimental/data-objects";
+import { Signaler, SignalListener } from "@fluid-experimental/data-objects";
 import { EditableField, ISharedTree } from "@fluid-internal/tree";
 import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
@@ -6,12 +6,16 @@ import { Guid } from "guid-typescript";
 import { appSchemaData, ShapeProxy } from "./schema";
 import { FeltShape, addShapeToShapeTree, size, getMaxZIndex, shapeLimit, bringToFront, Shapes, Selection } from "./shapes";
 import { Color, getNextColor, getNextShape, getRandomInt, Shape } from "./util";
-
+import { removeUserFromPresenceArray } from "./presence";
 import * as PIXI from 'pixi.js';
 import { loadFluidData } from "./fluid";
-import { FluidContainer } from "fluid-framework";
+import { FluidContainer, IMember } from "fluid-framework";
+import { Signal2Pixi, SignalPackage, Signals } from "./wrappers";
 
 export class Application {
+
+    private disconnect: number = 0;
+    private dirty: number = 0;
 
     private constructor (
         public pixiApp: PIXI.Application,
@@ -27,6 +31,59 @@ export class Application {
     ) {
         // make background clickable
         Application.addBackgroundShape(() => selection.clear(), pixiApp);
+
+        container.on("connected", () => {
+            console.log("CONNECTED after " + (performance.now() - this.disconnect) + " milliseconds.");
+        })
+
+        container.on("disconnected", () => {
+            this.disconnect = performance.now();
+            console.log("DISCONNECTED");
+        })
+
+        container.on("saved", () => {
+            //console.log("SAVED after " + (performance.now() - dirty) + " milliseconds.");
+        })
+
+        container.on("dirty", () => {
+            this.dirty = performance.now();
+            //console.log("DIRTY");
+        })
+
+        //Get all existing shapes
+        this.updateAllShapes();
+
+        // event handler for detecting remote changes to Fluid data and updating
+        // the local data
+        fluidTree.forest.on('afterDelta', (delta) => {
+            this.updateAllShapes();
+        })
+
+        // When a user leaves the session, remove all that users presence data from
+        // the presence shared map. Note, all clients run this code right now
+        audience.on('memberRemoved', (clientId: string, member: IMember) => {
+            for (let i = 0; i < shapeTree.length; i++) {
+                const shapeProxy = shapeTree[i];
+                removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
+            }
+        });
+
+        // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
+        // handle the signal we send and update the local state accordingly.
+        const signalHandler: SignalListener = (
+            clientId: string,
+            local: boolean,
+            payload: SignalPackage
+        ) => {
+            if (!local) {
+                const localShape = localShapes.get(payload.id);
+                if (localShape) {
+                    Signal2Pixi(localShape, payload);
+                }
+            }
+        };
+
+        signaler.onSignal(Signals.ON_DRAG, signalHandler);
     }
 
     public static async build(
@@ -273,5 +330,24 @@ export class Application {
 
     public bringSelectedToFront = (): void => {
         this.changeSelectedShapes((shape: FeltShape) => bringToFront(shape, this.maxZ));
+    }
+
+    public updateAllShapes = () => {
+        for (let i = this.shapeTree.length - 1; i >= 0; i--) {
+            const shapeProxy = this.shapeTree[i];
+
+            const localShape = this.localShapes.get(shapeProxy.id);
+
+            if (localShape != undefined) {
+                localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
+                if (shapeProxy.deleted) {
+                    this.deleteLocalShape(this.localShapes.get(shapeProxy.id)!);
+                } else {
+                    localShape.sync();
+                }
+            } else if (!shapeProxy.deleted) {
+                this.addNewLocalShape(shapeProxy);
+            }
+        }
     }
 }
