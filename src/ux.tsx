@@ -9,6 +9,7 @@ import { Color, Shape as S } from './util';
 import { Shapes } from './shapes';
 import { ShapeProxy } from './schema';
 import { EditableField } from '@fluid-internal/tree';
+import { ConnectionState, FluidContainer } from 'fluid-framework';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
@@ -25,6 +26,7 @@ export function ReactApp(props: {
     localShapes: Shapes;
     shapeTree: ShapeProxy[] & EditableField;
     stage: PIXI.Container;
+    fluidContainer: FluidContainer;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -264,6 +266,7 @@ export function StatusBar(props: {
     localShapes: Shapes;
     shapeTree: ShapeProxy[] & EditableField;
     stage: PIXI.Container;
+    fluidContainer: FluidContainer;
 }) {
     const [, setChecked] = React.useState(props.signals());
 
@@ -310,8 +313,52 @@ export function StatusBar(props: {
                 <div className="level-item mb-2 mt-0">
                     <Audience audience={props.audience} />
                 </div>
+                <div className="level-item mb-2 mt-0">
+                    <ConnectionStatus fluidContainer={props.fluidContainer} />
+                </div>
             </div>
         </div>
+    );
+}
+
+export function ConnectionStatus(props: { fluidContainer: FluidContainer}) {
+
+    const [connectionState, getConnectionState] = React.useState(props.fluidContainer.connectionState);
+
+    React.useEffect(() => {
+        props.fluidContainer.on("connected", () => {
+           getConnectionState(props.fluidContainer.connectionState)
+        });
+    }, [connectionState]);
+
+    React.useEffect(() => {
+        props.fluidContainer.on("disconnected", () => {
+            getConnectionState(props.fluidContainer.connectionState)
+        });
+    }, [connectionState]);
+
+    const convertConnectionStateToString = (connectionState: ConnectionState): string => {
+        switch(connectionState) {
+            case ConnectionState.Connected: {
+                return "Connected";
+            }
+            case ConnectionState.CatchingUp: {
+                return "Catching Up";
+            }
+            case ConnectionState.Disconnected: {
+                return "Disconnected";
+            }
+            case ConnectionState.EstablishingConnection: {
+                return "Establishing";
+            }
+            default: {
+                return "Unknown";
+            }
+        }
+    }
+
+    return (
+        <div>{convertConnectionStateToString(connectionState)}</div>
     );
 }
 
@@ -337,7 +384,7 @@ export function Audience(props: { audience: IAzureAudience }): JSX.Element {
         };
     }, [audience, setMembersCallback]);
 
-    return <div>Current co-creators: {members.length - 1}</div>;
+    return <div>Users: {members.length}</div>;
 }
 
 export function Infopane(props: { isOpen: boolean; close: any }): JSX.Element {

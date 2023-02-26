@@ -36,6 +36,7 @@ async function main() {
             localShapes={application.localShapes}
             shapeTree={application.shapeTree}
             stage={application.pixiApp.stage}
+            fluidContainer={application.container}
         />,
         document.getElementById('root')
     );

@@ -9,7 +9,7 @@ import { Color, getNextColor, getNextShape, getRandomInt, Shape } from "./util";
 import { removeUserFromPresenceArray } from "./presence";
 import * as PIXI from 'pixi.js';
 import { loadFluidData } from "./fluid";
-import { FluidContainer, IMember } from "fluid-framework";
+import { ConnectionState, FluidContainer, IMember } from "fluid-framework";
 import { Signal2Pixi, SignalPackage, Signals } from "./wrappers";
 
 export class Application {
@@ -203,6 +203,10 @@ export class Application {
 
         bg.on('pointerup', manageSelection);
     };
+
+    public get fluidConnectionState(): ConnectionState {
+        return this.container.connectionState;
+    }
 
     // function to toggle the signals flag
     public toggleSignals = (): void => {
