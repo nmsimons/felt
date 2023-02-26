@@ -140,7 +140,7 @@ export class FeltShape extends PIXI.Graphics {
         public shapeProxy: ShapeProxy, // TODO this should be readonly
         setSelected: (feltShape: FeltShape) => void,
         readonly audience: IAzureAudience,
-        public useSignals: boolean,
+        public useSignals: () => boolean,
         readonly signaler: Signaler
     ) {
         super();
@@ -247,7 +247,7 @@ export class FeltShape extends PIXI.Graphics {
 
     private updateFluidLocation() {
         // Store the position in Fluid
-        if (this.dragging && this.useSignals) {
+        if (this.dragging && this.useSignals()) {
             const sig = Pixi2Signal(this);
             this.signaler.submitSignal(Signals.ON_DRAG, sig);
         } else {
