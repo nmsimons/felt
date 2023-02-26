@@ -1,5 +1,5 @@
 import { Signaler, SignalListener } from "@fluid-experimental/data-objects";
-import { EditableField, ISharedTree } from "@fluid-internal/tree";
+import { EditableField, ISharedTree, parentField } from "@fluid-internal/tree";
 import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
 import { Guid } from "guid-typescript";
@@ -317,6 +317,8 @@ export class Application {
     private deleteShape = (shape: FeltShape): void => {
         // Set flag to deleted
         shape.deleted = true;
+
+        // It would be great if I could delete the shape now
     }
 
     // Called when a shape is deleted in the Fluid Data

@@ -25,7 +25,6 @@ export function ReactApp(props: {
     selectionManager: any;
     localShapes: Shapes;
     shapeTree: ShapeProxy[] & EditableField;
-    stage: PIXI.Container;
     fluidContainer: FluidContainer;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -265,7 +264,6 @@ export function StatusBar(props: {
     signals: () => boolean;
     localShapes: Shapes;
     shapeTree: ShapeProxy[] & EditableField;
-    stage: PIXI.Container;
     fluidContainer: FluidContainer;
 }) {
     const [, setChecked] = React.useState(props.signals());
@@ -274,18 +272,6 @@ export function StatusBar(props: {
         props.toggleSignals();
         setChecked(props.signals());
     };
-
-    const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
-    const [localCount, getLocalCount] = React.useState(props.localShapes.size);
-    const [stageCount, getStageCount] = React.useState(props.stage.children.length - 2);
-
-    React.useEffect(() => {
-        props.localShapes.onChanged(() => {
-            getFluidCount(props.shapeTree.length);
-            getLocalCount(props.localShapes.size);
-            getStageCount(props.stage.children.length - 2);
-        });
-    }, []);
 
     return (
         <div className="level mb-0 mt-0">
@@ -308,17 +294,37 @@ export function StatusBar(props: {
             </div>
             <div className="level-right">
                 <div className="level-item mb-2 mt-0">
-                    <p>Shapes: {stageCount} | {localCount} | {fluidCount}</p>
+                    <ShapeCount {...props} />
                 </div>
                 <div className="level-item mb-2 mt-0">
-                    <Audience audience={props.audience} />
+                    <Audience {...props} />
                 </div>
                 <div className="level-item mb-2 mt-0">
-                    <ConnectionStatus fluidContainer={props.fluidContainer} />
+                    <ConnectionStatus {...props} />
                 </div>
             </div>
         </div>
     );
+}
+
+export function ShapeCount(props: {
+    localShapes: Shapes;
+    shapeTree: ShapeProxy[] & EditableField;
+}) {
+
+    const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
+    const [localCount, getLocalCount] = React.useState(props.localShapes.size);
+
+    React.useEffect(() => {
+        props.localShapes.onChanged(() => {
+            getLocalCount(props.localShapes.size);
+            getFluidCount(props.shapeTree.length);
+        });
+    }, [localCount]);
+
+    return (
+        <div>Shapes: {localCount} | {fluidCount}</div>
+    )
 }
 
 export function ConnectionStatus(props: { fluidContainer: FluidContainer}) {
@@ -370,7 +376,6 @@ export function Audience(props: { audience: IAzureAudience }): JSX.Element {
         Array.from(audience.getMembers().values())
     );
 
-    const myself = audience.getMyself();
     const setMembersCallback = React.useCallback(
         () => setMembers(Array.from(audience.getMembers().values())),
         [setMembers, audience]
