@@ -4,10 +4,26 @@ import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { EditableField } from "@fluid-internal/tree";
 import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, currentUserIsInPresenceArray } from "./presence";
+import { Pixi2Signal, Signals } from "./wrappers";
+import { Signaler } from "@fluid-experimental/data-objects";
+import { SharedCounter } from "@fluidframework/counter";
 
 // set some constants for shapes
 export const shapeLimit = 100;
 export const size = 60;
+
+// brings the shape to the top of the zorder
+export function bringToFront(feltShape: FeltShape, maxZ: SharedCounter): void {
+    if (feltShape.z < maxZ.value) {
+        feltShape.z = getMaxZIndex(maxZ);
+    }
+}
+
+// increments the zorder by one and returns the value
+export function getMaxZIndex(maxZ: SharedCounter): number {
+    maxZ.increment(1);
+    return maxZ.value;
+}
 
 export function addShapeToShapeTree(
     shape: Shape,
@@ -122,9 +138,10 @@ export class FeltShape extends PIXI.Graphics {
     constructor(
         app: PIXI.Application,
         public shapeProxy: ShapeProxy, // TODO this should be readonly
-        updateShapeLocation: (feltShape: FeltShape) => void,
         setSelected: (feltShape: FeltShape) => void,
-        readonly audience: IAzureAudience
+        readonly audience: IAzureAudience,
+        public useSignals: boolean,
+        readonly signaler: Signaler
     ) {
         super();
 
@@ -144,20 +161,20 @@ export class FeltShape extends PIXI.Graphics {
 
         const onDragStart = (event: any) => {
             this.dragging = true;
-            updateShapeLocation(this); // syncs local changes with Fluid data
+            this.updateFluidLocation(); // syncs local changes with Fluid data
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
                 this.dragging = false;
-                updateShapeLocation(this); // syncs local changes with Fluid data
+                this.updateFluidLocation(); // syncs local changes with Fluid data
             }
         };
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
                 updatePosition(event.data.global.x, event.data.global.y);
-                updateShapeLocation(this); // syncs local changes with Fluid data
+                this.updateFluidLocation(); // syncs local changes with Fluid data
             }
         };
 
@@ -226,6 +243,16 @@ export class FeltShape extends PIXI.Graphics {
 
     get z() {
         return this.shapeProxy.z;
+    }
+
+    private updateFluidLocation() {
+        // Store the position in Fluid
+        if (this.dragging && this.useSignals) {
+            const sig = Pixi2Signal(this);
+            this.signaler.submitSignal(Signals.ON_DRAG, sig);
+        } else {
+            this.location = {x: this.x, y: this.y};
+        }
     }
 
     public sync() {

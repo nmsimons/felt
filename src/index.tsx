@@ -1,6 +1,5 @@
 import { IMember } from 'fluid-framework';
 import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
-import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { SharedCounter } from '@fluidframework/counter/dist/counter';
 import { ISharedTree, EditableField, parentField } from "@fluid-internal/tree";
 
@@ -12,14 +11,13 @@ import { loadFluidData } from './fluid';
 import { Color, getNextColor, getNextShape, Shape, getRandomInt } from './util';
 import {
     Signals,
-    Pixi2Signal,
     Signal2Pixi,
     SignalPackage,
 } from './wrappers';
 import * as UX from './ux';
-import { Shapes, Selection, FeltShape, shapeLimit, size, addShapeToShapeTree } from './shapes';
-import { appSchemaData, LocationProxy, ShapeProxy } from "./schema";
-import { addUserToPresenceArray, removeUserFromPresenceArray, flushPresenceArray, shouldShowPresence } from "./presence"
+import { Shapes, Selection, FeltShape, shapeLimit, size, addShapeToShapeTree, bringToFront, getMaxZIndex } from './shapes';
+import { appSchemaData, ShapeProxy } from "./schema";
+import { removeUserFromPresenceArray } from "./presence"
 
 import { Guid } from 'guid-typescript';
 
@@ -55,15 +53,10 @@ async function main() {
     })
 
     // Function passed into each FeltShape to help manage selection
-    async function setSelected(feltShape: FeltShape | undefined): Promise<void> {
+    async function setSelected(feltShape: FeltShape): Promise<void> {
         //Since we don't currently support multi select, clear the current selection
         selection.clear();
-
-        if (feltShape !== undefined && feltShape.id !== undefined) {
-            if (!selection.has(feltShape.id)) {
-                selection.set(feltShape.id, feltShape);
-            }
-        }
+        selection.set(feltShape.id, feltShape);
     }
 
     // create the root element for React
@@ -95,21 +88,8 @@ async function main() {
     // create fluid counter for shared max z order
     const fluidMaxZIndex = container.initialObjects.maxZOrder as SharedCounter;
 
-    // brings the shape to the top of the zorder
-    function bringToFront(feltShape: FeltShape): void {
-        if (feltShape.z < fluidMaxZIndex.value) {
-            feltShape.z = getMaxZIndex();
-        }
-    }
-
-    // increments the zorder by one and returns the value
-    function getMaxZIndex(): number {
-        fluidMaxZIndex.increment(1);
-        return fluidMaxZIndex.value;
-    }
-
     function bringSelectedToFront(): void {
-        changeSelectedShapes((shape: FeltShape) => bringToFront(shape));
+        changeSelectedShapes((shape: FeltShape) => bringToFront(shape, fluidMaxZIndex));
     }
 
     // flag to allow the app to switch between using ops and signals or just ops.
@@ -119,6 +99,9 @@ async function main() {
     function toggleSignals(): void {
         useSignals = !useSignals;
     }
+
+    //Get all existing shapes
+    updateAllShapes();
 
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
@@ -152,9 +135,6 @@ async function main() {
         addShapeToShapeTree(shape, color, id, x, y, z, shapeTree);
     }
 
-    //Get all existing shapes
-    updateAllShapes();
-
     // function passed into React UX for creating shapes
     function createShape(shape: Shape, color: Color): void {
         if (localShapes.maxReached) return
@@ -165,7 +145,7 @@ async function main() {
             Guid.create().toString(),
             size,
             size,
-            getMaxZIndex()
+            getMaxZIndex(fluidMaxZIndex)
         );
     }
 
@@ -185,7 +165,7 @@ async function main() {
                     Guid.create().toString(),
                     getRandomInt(size, pixiApp.screen.width - size),
                     getRandomInt(size, pixiApp.screen.height - size),
-                    getMaxZIndex(),
+                    getMaxZIndex(fluidMaxZIndex),
                     false
                 );
             }
@@ -335,7 +315,7 @@ async function main() {
         pixiApp.stage.addChild(scaledContainer);
 
         // make background clickable
-        addBackgroundShape(setSelected, pixiApp);
+        addBackgroundShape(() => selection.clear(), pixiApp);
         return pixiApp;
     }
 }
