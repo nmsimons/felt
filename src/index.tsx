@@ -122,30 +122,18 @@ async function main() {
         return feltShape;
     }
 
-    // adds a new shape
-    function addNewShape(
-        shape: Shape,
-        color: Color,
-        id: string,
-        x: number,
-        y: number,
-        z: number,
-        selectShape: boolean = true
-    ): void {
-        addShapeToShapeTree(shape, color, id, x, y, z, shapeTree);
-    }
-
     // function passed into React UX for creating shapes
     function createShape(shape: Shape, color: Color): void {
         if (localShapes.maxReached) return
 
-        addNewShape(
+        addShapeToShapeTree(
             shape,
             color,
             Guid.create().toString(),
             size,
             size,
-            getMaxZIndex(fluidMaxZIndex)
+            getMaxZIndex(fluidMaxZIndex),
+            shapeTree
         );
     }
 
@@ -159,14 +147,14 @@ async function main() {
             color = getNextColor(color);
 
             if (localShapes.size < shapeLimit) {
-                const fs = addNewShape(
+                addShapeToShapeTree(
                     shape,
                     color,
                     Guid.create().toString(),
                     getRandomInt(size, pixiApp.screen.width - size),
                     getRandomInt(size, pixiApp.screen.height - size),
                     getMaxZIndex(fluidMaxZIndex),
-                    false
+                    shapeTree
                 );
             }
         }
