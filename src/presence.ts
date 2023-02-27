@@ -10,7 +10,7 @@ export function removeUserFromPresenceArray({
     shapeProxy: ShapeProxy;
 }): void {
     const users = shapeProxy.users;
-    if (users === undefined) { return; }
+    if (users === undefined) { return }
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
             users.deleteNodes(i);
@@ -27,9 +27,9 @@ export function addUserToPresenceArray({
     shapeProxy: ShapeProxy;
 }): void {
     const users = shapeProxy.users;
-    if (users === undefined) { return; }
-    for(let i = 0; i < users.length; i++) {
-        if (users[i] === userId) {
+    if (users === undefined) { return }
+    for(const user of users) {
+        if (user === userId) {
             return;
         }
     }
