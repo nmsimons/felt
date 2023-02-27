@@ -12,7 +12,7 @@ export function removeUserFromPresenceArray({
     const users = shapeProxy.users;
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
-            users.deleteNodes(i);
+            users.deleteNodes(i, 1);
             break;
         }
     }

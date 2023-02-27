@@ -45,7 +45,6 @@ export function addShapeToShapeTree(
         color: color,
         z: z,
         shape: shape,
-        deleted: false,
     } as ShapeProxy;
 
     shapeTree[shapeTree.length] = shapeProxy;
@@ -104,13 +103,17 @@ export class Selection extends Shapes {
     public delete(key: string): boolean {
         const shape: FeltShape | undefined = this.get(key);
         if (shape !== undefined) {
-            shape.selected = false;
+            shape.unselect();
         }
         return super.delete(key);
     }
 
+    public localDelete(key: string) {
+        return super.delete(key);
+    }
+
     public set(key: string, value: FeltShape): this {
-        value.selected = true;
+        value.select();
         return super.set(key, value);
     }
 
@@ -134,6 +137,7 @@ export class FeltShape extends PIXI.Graphics {
     private _selectionFrame: PIXI.Graphics | undefined;
     private _presenceFrame: PIXI.Graphics | undefined;
     private _shape: PIXI.Graphics;
+    private _id: string;
 
     constructor(
         app: PIXI.Application,
@@ -153,6 +157,7 @@ export class FeltShape extends PIXI.Graphics {
         this._shape.endFill();
         this.interactive = true;
         this.buttonMode = true;
+        this._id = shapeProxy.id;
 
         this._shape.tint = Number(this.color);
         this.x = this.location.x;
@@ -210,7 +215,7 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     get id() {
-        return this.shapeProxy.id;
+        return this._id;
     }
 
     set color(color: Color) {
@@ -219,14 +224,6 @@ export class FeltShape extends PIXI.Graphics {
 
     get color() {
         return this.shapeProxy.color as Color;
-    }
-
-    set deleted(value: boolean) {
-        this.shapeProxy.deleted = value;
-    }
-
-    get deleted() {
-        return this.shapeProxy.deleted;
     }
 
     set location({x, y}: {x: number, y: number}) {
@@ -270,7 +267,7 @@ export class FeltShape extends PIXI.Graphics {
         this.selected ? this.showSelection() : this.removeSelection();
     }
 
-    private unselect() {
+    public unselect() {
         const me: AzureMember | undefined = this.audience?.getMyself();
         if (me !== undefined) {
             removeUserFromPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
@@ -279,17 +276,13 @@ export class FeltShape extends PIXI.Graphics {
         }
     }
 
-    private select() {
+    public select() {
         const me: AzureMember | undefined = this.audience.getMyself();
         if (me !== undefined) {
             addUserToPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
         } else {
             console.log('Failed to set presence!!!');
         }
-    }
-
-    set selected(value: boolean) {
-        value ? this.select() : this.unselect();
     }
 
     get selected() {

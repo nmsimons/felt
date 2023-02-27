@@ -41,7 +41,6 @@ export const shapeSchema = namedTreeSchema({
         color: fieldSchema(FieldKinds.value, [stringSchema.name]),
         z: fieldSchema(FieldKinds.value, [numberSchema.name]),
         shape: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        deleted: fieldSchema(FieldKinds.value, [booleanSchema.name]),
         users: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
 	},
 });
@@ -57,7 +56,6 @@ export type ShapeProxy = EditableTree & {
     color: string,
     z: number,
     shape: string,
-    deleted: boolean,
     users: string[] & EditableField,
 };
 

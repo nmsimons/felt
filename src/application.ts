@@ -314,10 +314,8 @@ export class Application {
     }
 
     private deleteShape = (shape: FeltShape): void => {
-        // Set flag to deleted
-        shape.deleted = true;
-
-        // It would be great if I could delete the shape now
+        const i = shape.shapeProxy[parentField].index;
+        this.shapeTree.deleteNodes(i, 1);
     }
 
     // Called when a shape is deleted in the Fluid Data
@@ -326,7 +324,7 @@ export class Application {
         this.localShapes.delete(shape.id);
 
         // Remove the shape from the canvas
-        this.selection.delete(shape.id);
+        this.selection.localDelete(shape.id);
 
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
         // deleted, and is garbage). TODO: Garbage collection
@@ -338,20 +336,27 @@ export class Application {
     }
 
     public updateAllShapes = () => {
+
+        const seenIds = new Set<string>();
+
         for (const shapeProxy of this.shapeTree) {
+
+            seenIds.add(shapeProxy.id);
 
             const localShape = this.localShapes.get(shapeProxy.id);
 
             if (localShape != undefined) {
                 localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
-                if (shapeProxy.deleted) {
-                    this.deleteLocalShape(this.localShapes.get(shapeProxy.id)!);
-                } else {
-                    localShape.sync();
-                }
-            } else if (!shapeProxy.deleted) {
+                localShape.sync();
+            } else {
                 this.addNewLocalShape(shapeProxy);
             }
         }
+
+        this.localShapes.forEach((shape: FeltShape) => {
+            if (!seenIds.has(shape.id)) {
+                this.deleteLocalShape(this.localShapes.get(shape.id)!);
+            }
+        })
     }
 }
