@@ -62,7 +62,7 @@ export class Application {
         // When a user leaves the session, remove all that users presence data from
         // the presence shared map. Note, all clients run this code right now
         audience.on('memberRemoved', (clientId: string, member: IMember) => {
-            for (let shapeProxy of shapeTree) {
+            for (const shapeProxy of shapeTree) {
                 removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
             }
         });
@@ -338,7 +338,7 @@ export class Application {
     }
 
     public updateAllShapes = () => {
-        for (let shapeProxy of this.shapeTree) {
+        for (const shapeProxy of this.shapeTree) {
 
             const localShape = this.localShapes.get(shapeProxy.id);
 

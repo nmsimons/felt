@@ -10,7 +10,6 @@ export function removeUserFromPresenceArray({
     shapeProxy: ShapeProxy;
 }): void {
     const users = shapeProxy.users;
-    if (users === undefined) { return }
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
             users.deleteNodes(i);
@@ -27,7 +26,6 @@ export function addUserToPresenceArray({
     shapeProxy: ShapeProxy;
 }): void {
     const users = shapeProxy.users;
-    if (users === undefined) { return }
     for(const user of users) {
         if (user === userId) {
             return;
@@ -46,11 +44,9 @@ export function flushPresenceArray(users: string[] & EditableField): void {
 
 export function shouldShowPresence(shapeProxy: ShapeProxy, audience: IAzureAudience): boolean {
     const id = audience.getMyself()?.userId;
-    if (shapeProxy.users.length > 0) {
-        for (const user of shapeProxy.users) {
-            if (user !== id) {
-                return true;
-            }
+    for (const user of shapeProxy.users) {
+        if (user !== id) {
+            return true;
         }
     }
     return false;
@@ -58,11 +54,9 @@ export function shouldShowPresence(shapeProxy: ShapeProxy, audience: IAzureAudie
 
 export function currentUserIsInPresenceArray(shapeProxy: ShapeProxy, audience: IAzureAudience): boolean {
     const id = audience.getMyself()?.userId;
-    if (shapeProxy.users.length > 0) {
-        for (const user of shapeProxy.users) {
-            if (user === id) {
-                return true;
-            }
+    for (const user of shapeProxy.users) {
+        if (user === id) {
+            return true;
         }
     }
     return false;
