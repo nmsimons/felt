@@ -339,25 +339,26 @@ export class Application {
 
             seenIds.add(shapeProxy.id);
 
-            const localShape = this.localShapes.get(shapeProxy.id);
+            let localShape = this.localShapes.get(shapeProxy.id);
 
             if (localShape != undefined) {
                 localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
                 localShape.sync();
             } else {
-                this.addNewLocalShape(shapeProxy);
+                localShape = this.addNewLocalShape(shapeProxy);
+            }
+
+            // Update local selection (MUST NOT TOUCH FLUID DATA)
+            if (localShape.selected) {
+                this.selection.set(localShape.id, localShape);
+            } else {
+                this.selection.delete(localShape.id);
             }
         }
 
         this.localShapes.forEach((shape: FeltShape) => {
             if (!seenIds.has(shape.id)) {
                 this.deleteLocalShape(this.localShapes.get(shape.id)!);
-            } else {
-                if (shape.selected) {
-                    this.selection.set(shape.id, shape);
-                } else {
-                    this.selection.delete(shape.id);
-                }
             }
         })
     }
