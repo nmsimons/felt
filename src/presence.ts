@@ -34,30 +34,26 @@ export function addUserToPresenceArray({
     users[users.length] = userId;
 }
 
-// semi optimal tidy of the presence array to remove
-// stray data from previous sessions. This is currently run
-// fairly frequently but really only needs to run when a session is
-// started.
-export function flushPresenceArray(users: string[] & EditableField): void {
-
-}
-
-export function shouldShowPresence(shapeProxy: ShapeProxy, audience: IAzureAudience): boolean {
-    const id = audience.getMyself()?.userId;
+export function shouldShowPresence(shapeProxy: ShapeProxy, userId: string): boolean {
     for (const user of shapeProxy.users) {
-        if (user !== id) {
+        if (user !== userId) {
             return true;
         }
     }
     return false;
 }
 
-export function currentUserIsInPresenceArray(shapeProxy: ShapeProxy, audience: IAzureAudience): boolean {
-    const id = audience.getMyself()?.userId;
+export function userIsInPresenceArray(shapeProxy: ShapeProxy, userId: string): boolean {
     for (const user of shapeProxy.users) {
-        if (user === id) {
+        if (user === userId) {
             return true;
         }
     }
     return false;
+}
+
+export function clearPresence(userId: string, shapeTree: ShapeProxy[] & EditableField) {
+    for (const shapeProxy of shapeTree) {
+        removeUserFromPresenceArray({userId, shapeProxy});
+    }
 }

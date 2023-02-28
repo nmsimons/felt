@@ -70,14 +70,14 @@ export function Toolbar(props: {
     bringToFront: any;
     audience: IAzureAudience;
     showInfopane: any;
-    selectionManager: any;
+    selectionManager: Shapes;
     localShapes: Shapes;
 }) {
     const shapeButtonColor = 'black';
 
     React.useEffect(() => {
         props.selectionManager.onChanged(() => {
-            getSelected(props.selectionManager.selected);
+            getSelected(props.selectionManager.size);
         });
     }, []);
 
@@ -87,7 +87,7 @@ export function Toolbar(props: {
         });
     }, []);
 
-    const [selected, getSelected] = React.useState(props.selectionManager.selected);
+    const [selected, getSelected] = React.useState(props.selectionManager.size);
 
     const [maxReached, getMaxReached] = React.useState(props.localShapes.maxReached);
 

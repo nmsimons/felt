@@ -3,7 +3,7 @@ import * as PIXI from 'pixi.js';
 import { Color, Shape } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
 import { EditableField } from "@fluid-internal/tree";
-import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, currentUserIsInPresenceArray } from "./presence";
+import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, userIsInPresenceArray, clearPresence } from "./presence";
 import { Pixi2Signal, Signals } from "./wrappers";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { SharedCounter } from "@fluidframework/counter";
@@ -93,42 +93,6 @@ export class Shapes extends Map<string, FeltShape> {
     }
 }
 
-// Define a custom map for storing selected objects that fires an event when it changes
-// and syncs with fluid data to show presence in other clients
-export class Selection extends Shapes {
-    constructor(max: number) {
-        super(max);
-    }
-
-    public delete(key: string): boolean {
-        const shape: FeltShape | undefined = this.get(key);
-        if (shape !== undefined) {
-            shape.unselect();
-        }
-        return super.delete(key);
-    }
-
-    public localDelete(key: string) {
-        return super.delete(key);
-    }
-
-    public set(key: string, value: FeltShape): this {
-        value.select();
-        return super.set(key, value);
-    }
-
-    public clear(): void {
-        this.forEach(async (value: FeltShape | undefined, key: string) => {
-            this.delete(key);
-        });
-        super.clear();
-    }
-
-    public get selected() {
-        return this.size > 0;
-    }
-}
-
 // wrapper class for a PIXI shape with a few extra methods and properties
 // for creating and managing shapes
 export class FeltShape extends PIXI.Graphics {
@@ -142,7 +106,7 @@ export class FeltShape extends PIXI.Graphics {
     constructor(
         app: PIXI.Application,
         public shapeProxy: ShapeProxy, // TODO this should be readonly
-        setSelected: (feltShape: FeltShape) => void,
+        clearSelected: (userId: string) => void,
         readonly audience: IAzureAudience,
         public useSignals: () => boolean,
         readonly signaler: Signaler
@@ -184,7 +148,11 @@ export class FeltShape extends PIXI.Graphics {
         };
 
         const onSelect = (event: any) => {
-            setSelected(this);
+            const me: AzureMember | undefined = this.audience?.getMyself();
+            if (me !== undefined) {
+                clearSelected(me.userId);
+                this.select();
+            }
         };
 
         // sets local postion and enforces canvas boundary
@@ -258,10 +226,13 @@ export class FeltShape extends PIXI.Graphics {
         this.zIndex = this.z;
         this._shape.tint = Number(this.color);
 
-        if (shouldShowPresence(this.shapeProxy, this.audience)) {
-            this.showPresence();
-        } else {
-            this.removePresence();
+        const me: AzureMember | undefined = this.audience.getMyself();
+        if (me !== undefined) {
+            if (shouldShowPresence(this.shapeProxy, me.userId)) {
+                this.showPresence();
+            } else {
+                this.removePresence();
+            }
         }
 
         this.selected ? this.showSelection() : this.removeSelection();
@@ -286,7 +257,12 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     get selected() {
-        return currentUserIsInPresenceArray(this.shapeProxy, this.audience);
+        const me: AzureMember | undefined = this.audience.getMyself();
+        if (me !== undefined) {
+            return userIsInPresenceArray(this.shapeProxy, me.userId);
+        } else {
+            return false;
+        }
     }
 
     private showSelection() {
@@ -351,10 +327,23 @@ export class FeltShape extends PIXI.Graphics {
             right,
             bottom
         );
+
+        const style = new PIXI.TextStyle({
+            align: "center",
+            fill: "white",
+            fontFamily: "Comic Sans MS",
+            fontSize: 30,
+            textBaseline: "bottom"
+        });
+        const text = new PIXI.Text(this.shapeProxy.users.length.toString(), style)
+        text.x = top + 15;
+        text.y = left + 15;
+        this._presenceFrame.removeChildren()
+        this._presenceFrame.addChild(text);
     }
 
     private removePresence() {
-        this._presenceFrame?.clear();
+        this._presenceFrame?.clear().removeChildren();
     }
 
     private drawFrame(

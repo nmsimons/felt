@@ -4,9 +4,9 @@ import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
 import { Guid } from "guid-typescript";
 import { appSchemaData, ShapeProxy } from "./schema";
-import { FeltShape, addShapeToShapeTree, size, getMaxZIndex, shapeLimit, bringToFront, Shapes, Selection } from "./shapes";
+import { FeltShape, addShapeToShapeTree, size, getMaxZIndex, shapeLimit, bringToFront, Shapes } from "./shapes";
 import { Color, getNextColor, getNextShape, getRandomInt, Shape } from "./util";
-import { removeUserFromPresenceArray } from "./presence";
+import { clearPresence, removeUserFromPresenceArray } from "./presence";
 import * as PIXI from 'pixi.js';
 import { loadFluidData } from "./fluid";
 import { ConnectionState, FluidContainer, IMember } from "fluid-framework";
@@ -19,7 +19,7 @@ export class Application {
 
     private constructor (
         public pixiApp: PIXI.Application,
-        public selection: Selection,
+        public selection: Shapes,
         public audience: IAzureAudience,
         public useSignals: boolean,
         public signaler: Signaler,
@@ -30,7 +30,7 @@ export class Application {
         public fluidTree: ISharedTree
     ) {
         // make background clickable
-        Application.addBackgroundShape(() => selection.clear(), pixiApp);
+        Application.addBackgroundShape(() => clearPresence(audience.getMyself()?.userId!, shapeTree), pixiApp);
 
         container.on("connected", () => {
             console.log("CONNECTED after " + (performance.now() - this.disconnect) + " milliseconds.");
@@ -99,7 +99,7 @@ export class Application {
 
         // initialize the selection object (a custom map) which is used to manage local selection and is passed
         // to the React app for state and events
-        const selection = new Selection(shapeLimit);
+        const selection = new Shapes(shapeLimit);
 
         // create Fluid tree for shapes
         const fluidTree = container.initialObjects.tree as ISharedTree;
@@ -224,11 +224,7 @@ export class Application {
         const feltShape = new FeltShape(
             this.pixiApp,
             shapeProxy,
-            () => {
-                //Since we don't currently support multi select, clear the current selection
-                this.selection.clear();
-                this.selection.set(feltShape.id, feltShape);
-            }, // function that manages local selection
+            (userId: string) => clearPresence(userId, this.shapeTree),
             this.audience,
             this.getUseSignals,
             this.signaler
@@ -324,7 +320,7 @@ export class Application {
         this.localShapes.delete(shape.id);
 
         // Remove the shape from the canvas
-        this.selection.localDelete(shape.id);
+        this.selection.delete(shape.id);
 
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
         // deleted, and is garbage). TODO: Garbage collection
@@ -356,6 +352,12 @@ export class Application {
         this.localShapes.forEach((shape: FeltShape) => {
             if (!seenIds.has(shape.id)) {
                 this.deleteLocalShape(this.localShapes.get(shape.id)!);
+            } else {
+                if (shape.selected) {
+                    this.selection.set(shape.id, shape);
+                } else {
+                    this.selection.delete(shape.id);
+                }
             }
         })
     }
