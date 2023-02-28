@@ -1,4 +1,4 @@
-import { LocationProxy, ShapeProxy } from "./schema";
+import { ShapeProxy } from "./schema";
 import * as PIXI from 'pixi.js';
 import { Color, Shape } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
@@ -34,17 +34,13 @@ export function addShapeToShapeTree(
     z: number,
     shapeTree: ShapeProxy[] & EditableField): void {
 
-    const locationProxy = {
-        x: x,
-        y: y,
-    } as LocationProxy;
-
     const shapeProxy = {
-        id: id,
-        location: locationProxy,
-        color: color,
-        z: z,
-        shape: shape,
+        id,
+        x,
+        y,
+        color,
+        z,
+        shape,
     } as ShapeProxy;
 
     shapeTree[shapeTree.length] = shapeProxy;
@@ -124,26 +120,26 @@ export class FeltShape extends PIXI.Graphics {
         this._id = shapeProxy.id;
 
         this._shape.tint = Number(this.color);
-        this.x = this.location.x;
-        this.y = this.location.y;
+        this.x = this.shapeProxy.x;
+        this.y = this.shapeProxy.y;
         this.zIndex = this.z;
 
         const onDragStart = (event: any) => {
             this.dragging = true;
-            this.updateFluidLocation(); // syncs local changes with Fluid data
+            this.updateFluidLocation(clampXY(event.data.global.x, event.data.global.y)); // syncs local changes with Fluid data
         };
 
         const onDragEnd = (event: any) => {
             if (this.dragging) {
                 this.dragging = false;
-                this.updateFluidLocation(); // syncs local changes with Fluid data
+                this.updateFluidLocation(clampXY(event.data.global.x, event.data.global.y)); // syncs local changes with Fluid data
             }
         };
 
         const onDragMove = (event: any) => {
             if (this.dragging) {
-                updatePosition(event.data.global.x, event.data.global.y);
-                this.updateFluidLocation(); // syncs local changes with Fluid data
+                //updatePosition(event.data.global.x, event.data.global.y);
+                this.updateFluidLocation(clampXY(event.data.global.x, event.data.global.y)); // syncs local changes with Fluid data
             }
         };
 
@@ -155,22 +151,22 @@ export class FeltShape extends PIXI.Graphics {
             }
         };
 
-        // sets local postion and enforces canvas boundary
-        const updatePosition = (x: number, y: number) => {
+        const clampXY = (x: number, y: number): {x: number, y: number} => {
             if (
-                x >= this._shape.width / 2 &&
-                x <= app.screen.width - this._shape.width / 2
+                x < this._shape.width / 2 ||
+                x > app.screen.width - this._shape.width / 2
             ) {
-                this.x = x;
+                x = this.x;
             }
 
             if (
-                y >= this._shape.height / 2 &&
-                y <= app.screen.height - this._shape.height / 2
+                y < this._shape.height / 2 ||
+                y > app.screen.height - this._shape.height / 2
             ) {
-                this.y = y;
+                y = this.y;
             }
-        };
+            return {x, y}
+        }
 
         // intialize event handlers
         this.on('pointerdown', onDragStart)
@@ -194,14 +190,6 @@ export class FeltShape extends PIXI.Graphics {
         return this.shapeProxy.color as Color;
     }
 
-    set location({x, y}: {x: number, y: number}) {
-        this.shapeProxy.location = {x: x, y: y} as LocationProxy
-    }
-
-    get location() {
-        return this.shapeProxy.location as {x: number, y:number};
-    }
-
     set z(value: number) {
         this.shapeProxy.z = value;
     }
@@ -210,19 +198,21 @@ export class FeltShape extends PIXI.Graphics {
         return this.shapeProxy.z;
     }
 
-    private updateFluidLocation() {
+    private updateFluidLocation = (position: {x: number, y: number}) =>  {
         // Store the position in Fluid
         if (this.dragging && this.useSignals()) {
             const sig = Pixi2Signal(this);
             this.signaler.submitSignal(Signals.ON_DRAG, sig);
+            this.x = position.x; this.y = position.y;
         } else {
-            this.location = {x: this.x, y: this.y};
+            this.shapeProxy.x = position.x;
+            this.shapeProxy.y = position.y;
         }
     }
 
     public sync() {
-        this.x = this.location.x;
-        this.y = this.location.y;
+        this.x = this.shapeProxy.x;
+        this.y = this.shapeProxy.y;
         this.zIndex = this.z;
         this._shape.tint = Number(this.color);
 

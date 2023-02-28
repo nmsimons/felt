@@ -25,19 +25,12 @@ export const booleanSchema = namedTreeSchema({
 	value: ValueSchema.Boolean,
 });
 
-export const locationSchema = namedTreeSchema({
-    name: brand("location"),
-	localFields: {
-        x: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		y: fieldSchema(FieldKinds.value, [numberSchema.name]),
-	},
-})
-
 export const shapeSchema = namedTreeSchema({
 	name: brand("shape"),
 	localFields: {
         id: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        location: fieldSchema(FieldKinds.value, [locationSchema.name]),
+        x: fieldSchema(FieldKinds.value, [numberSchema.name]),
+        y: fieldSchema(FieldKinds.value, [numberSchema.name]),
         color: fieldSchema(FieldKinds.value, [stringSchema.name]),
         z: fieldSchema(FieldKinds.value, [numberSchema.name]),
         shape: fieldSchema(FieldKinds.value, [stringSchema.name]),
@@ -45,14 +38,10 @@ export const shapeSchema = namedTreeSchema({
 	},
 });
 
-export type LocationProxy = EditableTree & {
-    x: number,
-    y: number,
-}
-
 export type ShapeProxy = EditableTree & {
 	id: string,
-    location: LocationProxy,
+    x: number,
+    y: number,
     color: string,
     z: number,
     shape: string,
@@ -67,7 +56,6 @@ export const appSchemaData: SchemaData = {
         [booleanSchema.name, booleanSchema],
 		[numberSchema.name, numberSchema],
 		[shapeSchema.name, shapeSchema],
-        [locationSchema.name, locationSchema],
 	]),
 	globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
 };
