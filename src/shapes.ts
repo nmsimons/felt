@@ -1,8 +1,8 @@
-import { ShapeProxy } from "./schema";
+import { PositionProxy, ShapeProxy } from "./schema";
 import * as PIXI from 'pixi.js';
 import { Color, Shape } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
-import { EditableField } from "@fluid-internal/tree";
+import { EditableField, EditableTree } from "@fluid-internal/tree";
 import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, userIsInPresenceArray, clearPresence } from "./presence";
 import { Pixi2Signal, Signals } from "./wrappers";
 import { Signaler } from "@fluid-experimental/data-objects";
@@ -34,10 +34,14 @@ export function addShapeToShapeTree(
     z: number,
     shapeTree: ShapeProxy[] & EditableField): void {
 
-    const shapeProxy = {
-        id,
+    const position = {
         x,
         y,
+    } as PositionProxy;
+
+    const shapeProxy = {
+        id,
+        position,
         color,
         z,
         shape,
@@ -120,8 +124,8 @@ export class FeltShape extends PIXI.Graphics {
         this._id = shapeProxy.id;
 
         this._shape.tint = Number(this.color);
-        this.x = this.shapeProxy.x;
-        this.y = this.shapeProxy.y;
+        this.x = this.shapeProxy.position.x;
+        this.y = this.shapeProxy.position.y;
         this.zIndex = this.z;
 
         const onDragStart = (event: any) => {
@@ -205,14 +209,13 @@ export class FeltShape extends PIXI.Graphics {
             this.signaler.submitSignal(Signals.ON_DRAG, sig);
             this.x = position.x; this.y = position.y;
         } else {
-            this.shapeProxy.x = position.x;
-            this.shapeProxy.y = position.y;
+            this.shapeProxy.position = position as PositionProxy;
         }
     }
 
     public sync() {
-        this.x = this.shapeProxy.x;
-        this.y = this.shapeProxy.y;
+        this.x = this.shapeProxy.position.x;
+        this.y = this.shapeProxy.position.y;
         this.zIndex = this.z;
         this._shape.tint = Number(this.color);
 

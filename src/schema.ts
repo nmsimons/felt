@@ -25,11 +25,19 @@ export const booleanSchema = namedTreeSchema({
 	value: ValueSchema.Boolean,
 });
 
+export const positionSchema = namedTreeSchema({
+	name: brand("position"),
+	localFields: {
+		x: fieldSchema(FieldKinds.value, [numberSchema.name]),
+        y: fieldSchema(FieldKinds.value, [numberSchema.name]),
+	}
+})
+
 export const shapeSchema = namedTreeSchema({
 	name: brand("shape"),
 	localFields: {
         id: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        x: fieldSchema(FieldKinds.value, [numberSchema.name]),
+        position: fieldSchema(FieldKinds.value, [positionSchema.name]),
         y: fieldSchema(FieldKinds.value, [numberSchema.name]),
         color: fieldSchema(FieldKinds.value, [stringSchema.name]),
         z: fieldSchema(FieldKinds.value, [numberSchema.name]),
@@ -38,9 +46,14 @@ export const shapeSchema = namedTreeSchema({
 	},
 });
 
+export type PositionProxy = EditableTree & {
+	x: number,
+    y: number,
+}
+
 export type ShapeProxy = EditableTree & {
 	id: string,
-    x: number,
+    position: PositionProxy,
     y: number,
     color: string,
     z: number,
@@ -56,6 +69,7 @@ export const appSchemaData: SchemaData = {
         [booleanSchema.name, booleanSchema],
 		[numberSchema.name, numberSchema],
 		[shapeSchema.name, shapeSchema],
+		[positionSchema.name, positionSchema]
 	]),
 	globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
 };
