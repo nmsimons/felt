@@ -138,7 +138,7 @@ export class FeltShape extends PIXI.Graphics {
                 this.dragging = false;
 
                 const pos = (x: number, y: number) => {return {x, y}};
-                this.updateFluidLocation(pos(this.x, this.y)); // syncs local changes with Fluid data
+                this.updateFluidLocation(pos(this.x, this.y)); // syncs local changes with Fluid data - note that this call uses the current position to fix a big where the shape shifts on selection
             }
         };
 
