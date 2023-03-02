@@ -62,8 +62,9 @@ export class Application {
         // When a user leaves the session, remove all that users presence data from
         // the presence shared map. Note, all clients run this code right now
         audience.on('memberRemoved', (clientId: string, member: IMember) => {
+            console.log(member.userId, "JUST LEFT");
             for (const shapeProxy of shapeTree) {
-                removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
+                //removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
             }
         });
 

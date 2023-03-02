@@ -149,10 +149,10 @@ export class FeltShape extends PIXI.Graphics {
 
         const onSelect = (event: any) => {
             const me: AzureMember | undefined = this.audience?.getMyself();
-            if (me !== undefined) {
-                clearSelected(me.userId);
-                this.select();
-            }
+            if (me === undefined) { console.log("NO SELECT"); return };
+            if ( userIsInPresenceArray(this.shapeProxy, me.userId) ) { return }
+            clearSelected(me.userId);
+            this.select();
         };
 
         const clampXY = (x: number, y: number): {x: number, y: number} => {
