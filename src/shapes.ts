@@ -86,7 +86,7 @@ export class Shapes extends Map<string, FeltShape> {
     }
 
     public clear(): void {
-        super.clear;
+        super.clear();
         for (const cb of this._cbs) {
             cb();
         }
@@ -106,7 +106,8 @@ export class FeltShape extends PIXI.Graphics {
     constructor(
         app: PIXI.Application,
         public shapeProxy: ShapeProxy, // TODO this should be readonly
-        clearSelected: (userId: string) => void,
+        private clearPresence: (userId: string) => void,
+        private addToSelected: (shape: FeltShape) => void,
         readonly audience: IAzureAudience,
         public useSignals: () => boolean,
         readonly signaler: Signaler
@@ -148,10 +149,6 @@ export class FeltShape extends PIXI.Graphics {
         };
 
         const onSelect = (event: any) => {
-            const me: AzureMember | undefined = this.audience?.getMyself();
-            if (me === undefined) { console.log("NO SELECT"); return };
-            if ( userIsInPresenceArray(this.shapeProxy, me.userId) ) { return }
-            clearSelected(me.userId);
             this.select();
         };
 
@@ -227,12 +224,12 @@ export class FeltShape extends PIXI.Graphics {
                 this.removePresence();
             }
         }
-
-        this.selected ? this.showSelection() : this.removeSelection();
     }
 
     public unselect() {
-        const me: AzureMember | undefined = this.audience?.getMyself();
+        this.removeSelection(); // removes the UI
+
+        const me: AzureMember | undefined = this.audience.getMyself();
         if (me !== undefined) {
             removeUserFromPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
         } else {
@@ -241,20 +238,19 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     public select() {
+
+        this.addToSelected(this); // this updates the local selection - even if presence isn't set, this is useful
+        this.showSelection(); // this just shows the UI
+
         const me: AzureMember | undefined = this.audience.getMyself();
+        if (me === undefined) { return }; // it must be very early or something is broken
+        if ( userIsInPresenceArray(this.shapeProxy, me.userId) ) { return } // this is already in the presence array so no need to add it again
+
+        this.clearPresence(me.userId);
         if (me !== undefined) {
             addUserToPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
         } else {
             console.log('Failed to set presence!!!');
-        }
-    }
-
-    get selected() {
-        const me: AzureMember | undefined = this.audience.getMyself();
-        if (me !== undefined) {
-            return userIsInPresenceArray(this.shapeProxy, me.userId);
-        } else {
-            return false;
         }
     }
 

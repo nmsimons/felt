@@ -30,7 +30,10 @@ export class Application {
         public fluidTree: ISharedTree
     ) {
         // make background clickable
-        Application.addBackgroundShape(() => clearPresence(audience.getMyself()?.userId!, shapeTree), pixiApp);
+        Application.addBackgroundShape(() => {
+            this.clearSelection();
+            clearPresence(audience.getMyself()?.userId!, shapeTree);
+        }, pixiApp);
 
         container.on("connected", () => {
             console.log("CONNECTED after " + (performance.now() - this.disconnect) + " milliseconds.");
@@ -64,7 +67,7 @@ export class Application {
         audience.on('memberRemoved', (clientId: string, member: IMember) => {
             console.log(member.userId, "JUST LEFT");
             for (const shapeProxy of shapeTree) {
-                //removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
+                removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
             }
         });
 
@@ -190,7 +193,7 @@ export class Application {
     };
 
     private static addBackgroundShape = (
-        manageSelection: (dobj: undefined) => void,
+        clearSelectionAndPresence: (dobj: undefined) => void,
         app: PIXI.Application
     ) => {
         var bg: PIXI.Graphics = new PIXI.Graphics();
@@ -201,7 +204,7 @@ export class Application {
 
         app.stage.addChild(bg);
 
-        bg.on('pointerup', manageSelection);
+        bg.on('pointerup', clearSelectionAndPresence);
     };
 
     public get fluidConnectionState(): ConnectionState {
@@ -225,7 +228,13 @@ export class Application {
         const feltShape = new FeltShape(
             this.pixiApp,
             shapeProxy,
-            (userId: string) => clearPresence(userId, this.shapeTree),
+            (userId: string) => {
+                clearPresence(userId, this.shapeTree);
+            },
+            (shape: FeltShape) => {
+                this.clearSelection();
+                this.selection.set(shape.id, shape);
+            },
             this.audience,
             this.getUseSignals,
             this.signaler
@@ -332,6 +341,13 @@ export class Application {
         this.changeSelectedShapes((shape: FeltShape) => bringToFront(shape, this.maxZ));
     }
 
+    public clearSelection = (): void => {
+        this.selection.forEach((value: FeltShape) => {
+            value.unselect();
+        })
+        this.selection.clear();
+    }
+
     public updateAllShapes = () => {
 
         const seenIds = new Set<string>();
@@ -347,13 +363,6 @@ export class Application {
                 localShape.sync();
             } else {
                 localShape = this.addNewLocalShape(shapeProxy);
-            }
-
-            // Update local selection (MUST NOT TOUCH FLUID DATA)
-            if (localShape.selected) {
-                this.selection.set(localShape.id, localShape);
-            } else {
-                this.selection.delete(localShape.id);
             }
         }
 
