@@ -107,7 +107,6 @@ const containerSchema: ContainerSchema = {
         maxZOrder: SharedCounter,
         sharedDirectory: SharedDirectory,
     },
-    dynamicObjectTypes: [SharedMap, SharedDirectory],
 };
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
