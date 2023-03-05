@@ -227,9 +227,6 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     public sync(key: string) {
-
-        console.log(key);
-
         switch (key) {
             case ("position"): {
                 this.x = this.shapeDirectory.get("position").x;
