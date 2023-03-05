@@ -1,62 +1,37 @@
-import { EditableField } from "@fluid-internal/tree";
-import { IAzureAudience } from "@fluidframework/azure-client";
-import { ShapeProxy } from "./schema";
+import { IDirectory } from "fluid-framework";
 
-export function removeUserFromPresenceArray({
-    userId,
-    shapeProxy,
-}: {
-    userId: string;
-    shapeProxy: ShapeProxy;
-}): void {
-    const users = shapeProxy.users;
-    for(let i = 0; i < users.length; i++) {
-        if (users[i] === userId) {
-            users.deleteNodes(i, 1);
-            console.log("REMOVED", userId, "FROM", shapeProxy.id)
-            break;
-        }
+export const removeUserFromPresenceArray = (
+    userId: string,
+    shapeDirectory: IDirectory
+    ): void => {
+    const users = shapeDirectory.get("users") as string[];
+    const i = users.indexOf(userId)
+    if( i > -1) {
+        users.splice(i, 1);
     }
+    shapeDirectory.set("users", users);
 }
 
-export function addUserToPresenceArray({
-    userId,
-    shapeProxy,
-}: {
-    userId: string;
-    shapeProxy: ShapeProxy;
-}): void {
-    const users = shapeProxy.users;
-    for(const user of users) {
-        if (user === userId) {
-            console.log(userId, "ALREADY IN", shapeProxy.id)
-            return;
-        }
-    }
-    users[users.length] = userId;
-    console.log("ADDED", userId, "TO", shapeProxy.id)
+export const addUserToPresenceArray = (
+    userId: string,
+    shapeDirectory: IDirectory
+): void => {
+    const users = shapeDirectory.get("users") as string[];
+    if (userIsInPresenceArray(users, userId)) return;
+    users.push(userId);
+    shapeDirectory.set("users", users);
 }
 
-export function shouldShowPresence(shapeProxy: ShapeProxy, userId: string): boolean {
-    for (const user of shapeProxy.users) {
-        if (user !== userId) {
-            return true;
-        }
-    }
-    return false;
+export const shouldShowPresence = (users: string[], userId: string): boolean => {
+    return !userIsInPresenceArray(users, userId) && users.length > 0;
 }
 
-export function userIsInPresenceArray(shapeProxy: ShapeProxy, userId: string): boolean {
-    for (const user of shapeProxy.users) {
-        if (user === userId) {
-            return true;
-        }
-    }
-    return false;
+export const userIsInPresenceArray = (users: string[], userId: string): boolean => {
+    return (users.indexOf(userId) > -1);
 }
 
-export function clearPresence(userId: string, shapeTree: ShapeProxy[] & EditableField) {
-    for (const shapeProxy of shapeTree) {
-        removeUserFromPresenceArray({userId, shapeProxy});
+export const clearPresence = (userId: string, shapeRootDirectory: IDirectory) => {
+    for (const shape of shapeRootDirectory.subdirectories()) {
+        removeUserFromPresenceArray( userId, shape[1] );
     }
 }

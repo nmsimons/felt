@@ -34,7 +34,7 @@ async function main() {
             signals={application.getUseSignals}
             selectionManager={application.selection}
             localShapes={application.localShapes}
-            shapeTree={application.shapeTree}
+            shapeRootDirectory={application.shapeRootDirectory}
             fluidContainer={application.container}
         />,
         document.getElementById('root')

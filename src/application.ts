@@ -1,15 +1,13 @@
 import { Signaler, SignalListener } from "@fluid-experimental/data-objects";
-import { EditableField, ISharedTree, parentField } from "@fluid-internal/tree";
 import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
 import { Guid } from "guid-typescript";
-import { appSchemaData, ShapeProxy } from "./schema";
-import { FeltShape, addShapeToShapeTree, size, getMaxZIndex, shapeLimit, bringToFront, Shapes } from "./shapes";
+import { FeltShape, getMaxZIndex, shapeLimit, bringToFront, Shapes, addShapeToShapeRootDirectory } from "./shapes";
 import { Color, getNextColor, getNextShape, getRandomInt, Shape } from "./util";
 import { clearPresence, removeUserFromPresenceArray } from "./presence";
 import * as PIXI from 'pixi.js';
 import { loadFluidData } from "./fluid";
-import { ConnectionState, FluidContainer, IMember } from "fluid-framework";
+import { ConnectionState, FluidContainer, IDirectory, IDirectoryValueChanged, IMember, ISharedDirectory, IValueChanged, SharedDirectory } from "fluid-framework";
 import { Signal2Pixi, SignalPackage, Signals } from "./wrappers";
 
 export class Application {
@@ -24,15 +22,15 @@ export class Application {
         public useSignals: boolean,
         public signaler: Signaler,
         public localShapes: Shapes,
-        public shapeTree: ShapeProxy[] & EditableField,
         public maxZ: SharedCounter,
         public container: FluidContainer,
-        public fluidTree: ISharedTree
+        public shapeRootDirectory: IDirectory,
+        public sharedDirectory: SharedDirectory
     ) {
         // make background clickable
         Application.addBackgroundShape(() => {
             this.clearSelection();
-            clearPresence(audience.getMyself()?.userId!, shapeTree);
+            clearPresence(audience.getMyself()?.userId!, shapeRootDirectory);
         }, pixiApp);
 
         container.on("connected", () => {
@@ -53,22 +51,45 @@ export class Application {
             //console.log("DIRTY");
         })
 
-        //Get all existing shapes
-        this.updateAllShapes();
+        const isShapeDirectoryValid = (shapeDirectory: IDirectory): boolean => {
+            if (shapeDirectory.get("properties") == undefined) return false;
+            if (shapeDirectory.get("position") == undefined) return false;
+            if (shapeDirectory.get("z") == undefined) return false;
+            if (shapeDirectory.get("color") == undefined) return false;
+            return true;
+        }
 
-        // event handler for detecting remote changes to Fluid data and updating
-        // the local data
-        fluidTree.forest.on('afterDelta', (delta) => {
-            this.updateAllShapes();
+        //Get all existing shapes
+        for(const shape of shapeRootDirectory.subdirectories()) {
+            if (isShapeDirectoryValid(shape[1])) {
+                this.addNewLocalShape(shape[1]);
+            }
+        }
+
+        shapeRootDirectory.on("subDirectoryCreated", (path: string, local: boolean, target: IDirectory) => {
+            if (isShapeDirectoryValid(target)) {
+                this.addNewLocalShape(target);
+            }
+        })
+
+        shapeRootDirectory.on("subDirectoryDeleted", (path: string, local: boolean, target: IDirectory) => {
+            this.deleteLocalShape(localShapes.get(path));
+        })
+
+        sharedDirectory.on("valueChanged",  (changed: IDirectoryValueChanged, local: boolean, target: SharedDirectory) => {
+            const shapeDirectory = target.getWorkingDirectory(changed.path);
+            if (shapeDirectory == undefined) { return };
+            if (isShapeDirectoryValid(shapeDirectory)) {
+                if (this.addNewLocalShape(shapeDirectory)) return; // added a new shape
+                localShapes.get(shapeDirectory.get("properties").id)?.sync(changed.key); // not new, so sync
+            }
         })
 
         // When a user leaves the session, remove all that users presence data from
         // the presence shared map. Note, all clients run this code right now
         audience.on('memberRemoved', (clientId: string, member: IMember) => {
             console.log(member.userId, "JUST LEFT");
-            for (const shapeProxy of shapeTree) {
-                removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
-            }
+            clearPresence(member.userId, shapeRootDirectory);
         });
 
         // When shapes are dragged, instead of updating the Fluid data, we send a Signal using fluid. This function will
@@ -105,10 +126,9 @@ export class Application {
         // to the React app for state and events
         const selection = new Shapes(shapeLimit);
 
-        // create Fluid tree for shapes
-        const fluidTree = container.initialObjects.tree as ISharedTree;
-        fluidTree.storedSchema.update(appSchemaData);
-        const shapeTree = fluidTree.root as ShapeProxy[] & EditableField;
+        // create Fluid shared sub directory for shapes
+        const sharedDirectory = container.initialObjects.sharedDirectory as SharedDirectory;
+        const shapeRootDirectory = sharedDirectory.createSubDirectory("shapes");
 
         // create fluid counter for shared max z order
         const maxZ = container.initialObjects.maxZOrder as SharedCounter;
@@ -123,10 +143,10 @@ export class Application {
             true,
             signaler,
             localShapes,
-            shapeTree,
             maxZ,
             container,
-            fluidTree
+            shapeRootDirectory,
+            sharedDirectory
         )
     }
 
@@ -222,14 +242,14 @@ export class Application {
 
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
-    public addNewLocalShape = (
-        shapeProxy: ShapeProxy
+    public createLocalShape = (
+        shapeDirectory: IDirectory
     ): FeltShape => {
         const feltShape = new FeltShape(
             this.pixiApp,
-            shapeProxy,
+            shapeDirectory,
             (userId: string) => {
-                clearPresence(userId, this.shapeTree);
+                clearPresence(userId, this.shapeRootDirectory);
             },
             (shape: FeltShape) => {
                 this.clearSelection();
@@ -240,24 +260,33 @@ export class Application {
             this.signaler
         );
 
-        this.localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
-
         return feltShape;
+    }
+
+    public addNewLocalShape = (
+        shapeDirectory: IDirectory
+    ): boolean => {
+
+        if (this.localShapes.has(shapeDirectory.get("properties").id)) return false;
+
+        const feltShape: FeltShape = this.createLocalShape(shapeDirectory);
+        this.localShapes.set(feltShape.id, feltShape); // add the new shape to local data
+        return true;
     }
 
     // function passed into React UX for creating shapes
     public createShape = (shape: Shape, color: Color): void => {
         if (this.localShapes.maxReached) return
 
-        addShapeToShapeTree(
+        const shapeDirectory = addShapeToShapeRootDirectory(
             shape,
             color,
             Guid.create().toString(),
-            size,
-            size,
+            FeltShape.size,
+            FeltShape.size,
             getMaxZIndex(this.maxZ),
-            this.shapeTree
-        );
+            this.sharedDirectory
+        )
     }
 
     // function passed into React UX for creating lots of different shapes at once
@@ -270,14 +299,14 @@ export class Application {
             color = getNextColor(color);
 
             if (this.localShapes.size < shapeLimit) {
-                addShapeToShapeTree(
+                addShapeToShapeRootDirectory(
                     shape,
                     color,
                     Guid.create().toString(),
-                    getRandomInt(size, this.pixiApp.screen.width - size),
-                    getRandomInt(size, this.pixiApp.screen.height - size),
+                    getRandomInt(FeltShape.size, this.pixiApp.screen.width - FeltShape.size),
+                    getRandomInt(FeltShape.size, this.pixiApp.screen.height - FeltShape.size),
                     getMaxZIndex(this.maxZ),
-                    this.shapeTree
+                    this.sharedDirectory
                 );
             }
         }
@@ -316,16 +345,17 @@ export class Application {
         this.localShapes.forEach((value: FeltShape, key: string) => {
             this.deleteShape(value);
         })
-        // shapeTree.deleteNodes(0, shapeTree.length - 1);
     }
 
     private deleteShape = (shape: FeltShape): void => {
-        const i = shape.shapeProxy[parentField].index;
-        this.shapeTree.deleteNodes(i, 1);
+        this.shapeRootDirectory.deleteSubDirectory(shape.id);
     }
 
     // Called when a shape is deleted in the Fluid Data
-    public deleteLocalShape = (shape: FeltShape): void => {
+    public deleteLocalShape = (shape: FeltShape | undefined): void => {
+
+        if (shape === undefined) return;
+
         // Remove shape from local map
         this.localShapes.delete(shape.id);
 
@@ -333,7 +363,7 @@ export class Application {
         this.selection.delete(shape.id);
 
         // Destroy the local shape object (Note: the Fluid object still exists, is marked
-        // deleted, and is garbage). TODO: Garbage collection
+        // deleted, and is garbage).
         shape.destroy();
     }
 
@@ -346,30 +376,5 @@ export class Application {
             value.unselect();
         })
         this.selection.clear();
-    }
-
-    public updateAllShapes = () => {
-
-        const seenIds = new Set<string>();
-
-        for (const shapeProxy of this.shapeTree) {
-
-            seenIds.add(shapeProxy.id);
-
-            let localShape = this.localShapes.get(shapeProxy.id);
-
-            if (localShape != undefined) {
-                localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
-                localShape.sync();
-            } else {
-                localShape = this.addNewLocalShape(shapeProxy);
-            }
-        }
-
-        this.localShapes.forEach((shape: FeltShape) => {
-            if (!seenIds.has(shape.id)) {
-                this.deleteLocalShape(this.localShapes.get(shape.id)!);
-            }
-        })
     }
 }

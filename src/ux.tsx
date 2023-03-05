@@ -7,9 +7,7 @@ import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
 import { Shapes } from './shapes';
-import { ShapeProxy } from './schema';
-import { EditableField } from '@fluid-internal/tree';
-import { ConnectionState, FluidContainer } from 'fluid-framework';
+import { ConnectionState, FluidContainer, IDirectory } from 'fluid-framework';
 
 // eslint-disable-next-line react/prop-types
 export function ReactApp(props: {
@@ -24,8 +22,8 @@ export function ReactApp(props: {
     signals: () => boolean;
     selectionManager: any;
     localShapes: Shapes;
-    shapeTree: ShapeProxy[] & EditableField;
     fluidContainer: FluidContainer;
+    shapeRootDirectory: IDirectory;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
         switch (e.key) {
@@ -263,7 +261,7 @@ export function StatusBar(props: {
     toggleSignals: any;
     signals: () => boolean;
     localShapes: Shapes;
-    shapeTree: ShapeProxy[] & EditableField;
+    shapeRootDirectory: IDirectory;
     fluidContainer: FluidContainer;
 }) {
     const [, setChecked] = React.useState(props.signals());
@@ -309,18 +307,31 @@ export function StatusBar(props: {
 
 export function ShapeCount(props: {
     localShapes: Shapes;
-    shapeTree: ShapeProxy[] & EditableField;
+    shapeRootDirectory: IDirectory;
 }) {
 
-    const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
+    const [fluidCount, getFluidCount] = React.useState(0);
     const [localCount, getLocalCount] = React.useState(props.localShapes.size);
 
     React.useEffect(() => {
         props.localShapes.onChanged(() => {
             getLocalCount(props.localShapes.size);
-            getFluidCount(props.shapeTree.length);
         });
     }, [localCount]);
+
+    React.useEffect(() => {
+        props.shapeRootDirectory.on("subDirectoryCreated", () => {
+            if (props.shapeRootDirectory.countSubDirectory === undefined) return;
+            getFluidCount(props.shapeRootDirectory.countSubDirectory());
+        });
+    }, [fluidCount]);
+
+    React.useEffect(() => {
+        props.shapeRootDirectory.on("subDirectoryDeleted", () => {
+            if (props.shapeRootDirectory.countSubDirectory === undefined) return;
+            getFluidCount(props.shapeRootDirectory.countSubDirectory());
+        });
+    }, [fluidCount]);
 
     return (
         <div>Shapes: {localCount} | {fluidCount}</div>
