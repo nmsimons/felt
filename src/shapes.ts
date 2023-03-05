@@ -10,7 +10,6 @@ import { SharedCounter } from "@fluidframework/counter";
 
 // set some constants for shapes
 export const shapeLimit = 100;
-export const size = 60;
 
 // brings the shape to the top of the zorder
 export function bringToFront(feltShape: FeltShape, maxZ: SharedCounter): void {
@@ -97,14 +96,14 @@ export class Shapes extends Map<string, FeltShape> {
 // for creating and managing shapes
 export class FeltShape extends PIXI.Graphics {
     dragging = false;
-    readonly size: number = 90;
+    static readonly size: number = 60;
     private _selectionFrame: PIXI.Graphics | undefined;
     private _presenceFrame: PIXI.Graphics | undefined;
     private _shape: PIXI.Graphics;
-    private _id: string;
+    public readonly id: string;
 
     constructor(
-        app: PIXI.Application,
+        private app: PIXI.Application,
         public shapeProxy: ShapeProxy, // TODO this should be readonly
         private clearPresence: (userId: string) => void,
         private addToSelected: (shape: FeltShape) => void,
@@ -113,22 +112,32 @@ export class FeltShape extends PIXI.Graphics {
         readonly signaler: Signaler
     ) {
         super();
-
-        this.size = size;
+        this.id = this.shapeProxy.id;
         this._shape = new PIXI.Graphics();
-        this.addChild(this._shape);
+
+        this.initProperties();
+        this.initPixiShape();
+        this.initUserEvents();
+    }
+
+    private initPixiShape = () => {
         this._shape.beginFill(0xffffff);
         this.setShape();
         this._shape.endFill();
         this.interactive = true;
         this.buttonMode = true;
-        this._id = shapeProxy.id;
+        this.addChild(this._shape);
+        this.app.stage.addChild(this);
+    }
 
+    private initProperties = () => {
         this._shape.tint = Number(this.color);
         this.x = this.shapeProxy.position.x;
         this.y = this.shapeProxy.position.y;
         this.zIndex = this.z;
+    }
 
+    private initUserEvents = () => {
         const onDragStart = (event: any) => {
             this.dragging = true;
         };
@@ -155,14 +164,14 @@ export class FeltShape extends PIXI.Graphics {
         const clampXY = (x: number, y: number): {x: number, y: number} => {
             if (
                 x < this._shape.width / 2 ||
-                x > app.screen.width - this._shape.width / 2
+                x > this.app.screen.width - this._shape.width / 2
             ) {
                 x = this.x;
             }
 
             if (
                 y < this._shape.height / 2 ||
-                y > app.screen.height - this._shape.height / 2
+                y > this.app.screen.height - this._shape.height / 2
             ) {
                 y = this.y;
             }
@@ -175,12 +184,6 @@ export class FeltShape extends PIXI.Graphics {
             .on('pointerdown', onSelect)
             .on('pointerupoutside', onDragEnd)
             .on('pointermove', onDragMove);
-
-        app.stage.addChild(this);
-    }
-
-    get id() {
-        return this._id;
     }
 
     set color(color: Color) {
@@ -392,38 +395,38 @@ export class FeltShape extends PIXI.Graphics {
     private setShape() {
         switch (this.shapeProxy.shape as Shape) {
             case Shape.Circle:
-                this._shape.drawCircle(0, 0, this.size / 2);
+                this._shape.drawCircle(0, 0, FeltShape.size / 2);
                 break;
             case Shape.Square:
                 this._shape.drawRect(
-                    -this.size / 2,
-                    -this.size / 2,
-                    this.size,
-                    this.size
+                    -FeltShape.size / 2,
+                    -FeltShape.size / 2,
+                    FeltShape.size,
+                    FeltShape.size
                 );
                 break;
             case Shape.Triangle:
                 // eslint-disable-next-line no-case-declarations
                 const path = [
                     0,
-                    -(this.size / 2),
-                    -(this.size / 2),
-                    this.size / 2,
-                    this.size / 2,
-                    this.size / 2,
+                    -(FeltShape.size / 2),
+                    -(FeltShape.size / 2),
+                    FeltShape.size / 2,
+                    FeltShape.size / 2,
+                    FeltShape.size / 2,
                 ];
                 this._shape.drawPolygon(path);
                 break;
             case Shape.Rectangle:
                 this._shape.drawRect(
-                    (-this.size * 1.5) / 2,
-                    -this.size / 2,
-                    this.size * 1.5,
-                    this.size
+                    (-FeltShape.size * 1.5) / 2,
+                    -FeltShape.size / 2,
+                    FeltShape.size * 1.5,
+                    FeltShape.size
                 );
                 break;
             default:
-                this._shape.drawCircle(0, 0, this.size);
+                this._shape.drawCircle(0, 0, FeltShape.size);
                 break;
         }
     }

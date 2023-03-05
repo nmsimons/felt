@@ -1,5 +1,4 @@
 import { EditableField } from "@fluid-internal/tree";
-import { IAzureAudience } from "@fluidframework/azure-client";
 import { ShapeProxy } from "./schema";
 
 export function removeUserFromPresenceArray({
@@ -13,7 +12,6 @@ export function removeUserFromPresenceArray({
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
             users.deleteNodes(i, 1);
-            console.log("REMOVED", userId, "FROM", shapeProxy.id)
             break;
         }
     }
@@ -29,12 +27,10 @@ export function addUserToPresenceArray({
     const users = shapeProxy.users;
     for(const user of users) {
         if (user === userId) {
-            console.log(userId, "ALREADY IN", shapeProxy.id)
             return;
         }
     }
     users[users.length] = userId;
-    console.log("ADDED", userId, "TO", shapeProxy.id)
 }
 
 export function shouldShowPresence(shapeProxy: ShapeProxy, userId: string): boolean {

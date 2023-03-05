@@ -4,7 +4,7 @@ import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
 import { Guid } from "guid-typescript";
 import { appSchemaData, ShapeProxy } from "./schema";
-import { FeltShape, addShapeToShapeTree, size, getMaxZIndex, shapeLimit, bringToFront, Shapes } from "./shapes";
+import { FeltShape, addShapeToShapeTree, getMaxZIndex, shapeLimit, bringToFront, Shapes } from "./shapes";
 import { Color, getNextColor, getNextShape, getRandomInt, Shape } from "./util";
 import { clearPresence, removeUserFromPresenceArray } from "./presence";
 import * as PIXI from 'pixi.js';
@@ -253,8 +253,8 @@ export class Application {
             shape,
             color,
             Guid.create().toString(),
-            size,
-            size,
+            FeltShape.size,
+            FeltShape.size,
             getMaxZIndex(this.maxZ),
             this.shapeTree
         );
@@ -274,8 +274,8 @@ export class Application {
                     shape,
                     color,
                     Guid.create().toString(),
-                    getRandomInt(size, this.pixiApp.screen.width - size),
-                    getRandomInt(size, this.pixiApp.screen.height - size),
+                    getRandomInt(FeltShape.size, this.pixiApp.screen.width - FeltShape.size),
+                    getRandomInt(FeltShape.size, this.pixiApp.screen.height - FeltShape.size),
                     getMaxZIndex(this.maxZ),
                     this.shapeTree
                 );
@@ -316,7 +316,6 @@ export class Application {
         this.localShapes.forEach((value: FeltShape, key: string) => {
             this.deleteShape(value);
         })
-        // shapeTree.deleteNodes(0, shapeTree.length - 1);
     }
 
     private deleteShape = (shape: FeltShape): void => {
@@ -332,8 +331,7 @@ export class Application {
         // Remove the shape from the canvas
         this.selection.delete(shape.id);
 
-        // Destroy the local shape object (Note: the Fluid object still exists, is marked
-        // deleted, and is garbage). TODO: Garbage collection
+        // Destroy the local shape object
         shape.destroy();
     }
 
@@ -349,15 +347,10 @@ export class Application {
     }
 
     public updateAllShapes = () => {
-
         const seenIds = new Set<string>();
-
         for (const shapeProxy of this.shapeTree) {
-
             seenIds.add(shapeProxy.id);
-
             let localShape = this.localShapes.get(shapeProxy.id);
-
             if (localShape != undefined) {
                 localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
                 localShape.sync();
@@ -366,6 +359,7 @@ export class Application {
             }
         }
 
+        // delete local shapes that no longer exist
         this.localShapes.forEach((shape: FeltShape) => {
             if (!seenIds.has(shape.id)) {
                 this.deleteLocalShape(this.localShapes.get(shape.id)!);
