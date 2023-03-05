@@ -23,7 +23,7 @@ export const addUserToPresenceArray = (
 }
 
 export const shouldShowPresence = (users: string[], userId: string): boolean => {
-    return !userIsInPresenceArray(users, userId) && users.length > 0;
+    return (!userIsInPresenceArray(users, userId) && users.length > 0 || users.length > 1);
 }
 
 export const userIsInPresenceArray = (users: string[], userId: string): boolean => {
