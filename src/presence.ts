@@ -1,4 +1,4 @@
-import { EditableField } from "@fluid-internal/tree";
+import { EditableField } from "@fluid-experimental/tree2";
 import { ShapeProxy } from "./schema";
 
 export function removeUserFromPresenceArray({

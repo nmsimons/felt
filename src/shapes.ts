@@ -2,7 +2,7 @@ import { PositionProxy, ShapeProxy } from "./schema";
 import * as PIXI from 'pixi.js';
 import { Color, Shape } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
-import { EditableField, EditableTree } from "@fluid-internal/tree";
+import { EditableField, EditableTree } from "@fluid-experimental/tree2";
 import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, userIsInPresenceArray, clearPresence } from "./presence";
 import { Pixi2Signal, Signals } from "./wrappers";
 import { Signaler } from "@fluid-experimental/data-objects";
@@ -246,7 +246,7 @@ export class FeltShape extends PIXI.Graphics {
         this.showSelection(); // this just shows the UI
 
         const me: AzureMember | undefined = this.audience.getMyself();
-        if (me === undefined) { return }; // it must be very early or something is broken
+        if (me === undefined) { return } // it must be very early or something is broken
         if ( userIsInPresenceArray(this.shapeProxy, me.userId) ) { return } // this is already in the presence array so no need to add it again
 
         this.clearPresence(me.userId);

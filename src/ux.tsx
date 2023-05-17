@@ -8,7 +8,7 @@ import { mdiInformationOutline } from '@mdi/js';
 import { Color, Shape as S } from './util';
 import { Shapes } from './shapes';
 import { ShapeProxy } from './schema';
-import { EditableField } from '@fluid-internal/tree';
+import { EditableField } from '@fluid-experimental/tree2';
 import { ConnectionState, FluidContainer } from 'fluid-framework';
 
 // eslint-disable-next-line react/prop-types
@@ -31,8 +31,7 @@ export function ReactApp(props: {
         switch (e.key) {
             case 'Delete': {
                 props.deleteShape();
-            }
-            default: {
+                break;
             }
         }
     };
@@ -393,7 +392,7 @@ export function Audience(props: { audience: IAzureAudience }): JSX.Element {
 }
 
 export function Infopane(props: { isOpen: boolean; close: any }): JSX.Element {
-    let isActive: string = '';
+    let isActive = '';
 
     if (props.isOpen) {
         isActive = ' is-active';

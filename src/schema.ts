@@ -8,7 +8,7 @@ import {
 	EditableField,
 	FieldKinds,
 	namedTreeSchema
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 
 export const stringSchema = namedTreeSchema({
 	name: brand("String"),

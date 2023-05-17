@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Signaler, SignalListener } from "@fluid-experimental/data-objects";
-import { EditableField, ISharedTree, parentField } from "@fluid-internal/tree";
+import { EditableField, ISharedTree, parentField } from "@fluid-experimental/tree2";
 import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
 import { Guid } from "guid-typescript";
@@ -14,8 +17,8 @@ import { Signal2Pixi, SignalPackage, Signals } from "./wrappers";
 
 export class Application {
 
-    private disconnect: number = 0;
-    private dirty: number = 0;
+    private disconnect = 0;
+    private dirty = 0;
 
     private constructor (
         public pixiApp: PIXI.Application,
@@ -176,9 +179,9 @@ export class Application {
         return container;
     };
 
-    private static WIDTH: number = 500;
+    private static WIDTH = 500;
 
-    private static HEIGHT: number = 500;
+    private static HEIGHT = 500;
 
     private static actualWidth = (app: PIXI.Application) => {
         const { width, height } = app.screen;
@@ -196,7 +199,7 @@ export class Application {
         clearSelectionAndPresence: (dobj: undefined) => void,
         app: PIXI.Application
     ) => {
-        var bg: PIXI.Graphics = new PIXI.Graphics();
+        const bg: PIXI.Graphics = new PIXI.Graphics();
         bg.beginFill(0x000000);
         bg.drawRect(0, 0, app.screen.width, app.screen.height);
         bg.endFill();
