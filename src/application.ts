@@ -1,26 +1,37 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Signaler, SignalListener } from "@fluid-experimental/data-objects";
-import { AllowedUpdateType, ISharedTree, parentField} from "@fluid-experimental/tree2";
-import { IAzureAudience } from "@fluidframework/azure-client";
-import { SharedCounter } from "@fluidframework/counter";
-import { Guid } from "guid-typescript";
-import { schema, Felt, Shape } from "./schema";
-import { FeltShape, addShapeToShapeTree, getMaxZIndex, shapeLimit, bringToFront, Shapes } from "./shapes";
-import { Color, getNextColor, getNextShape, getRandomInt, ShapeType} from "./util";
-import { clearPresence, removeUserFromPresenceArray } from "./presence";
+import { Signaler, SignalListener } from '@fluid-experimental/data-objects';
+import {
+    AllowedUpdateType,
+    ISharedTree,
+    parentField,
+} from '@fluid-experimental/tree2';
+import { IAzureAudience } from '@fluidframework/azure-client';
+import { SharedCounter } from '@fluidframework/counter';
+import { Guid } from 'guid-typescript';
+import { schema, Felt, Shape } from './schema';
+import {
+    FeltShape,
+    addShapeToShapeTree,
+    getMaxZIndex,
+    shapeLimit,
+    bringToFront,
+    Shapes,
+} from './shapes';
+import { Color, getNextColor, getNextShape, getRandomInt, ShapeType } from './util';
+import { clearPresence, removeUserFromPresenceArray } from './presence';
 import * as PIXI from 'pixi.js';
-import { loadFluidData } from "./fluid";
-import { ConnectionState, FluidContainer, IMember } from "fluid-framework";
-import { Signal2Pixi, SignalPackage, Signals } from "./wrappers";
+import { loadFluidData } from './fluid';
+import { ConnectionState, FluidContainer, IMember } from 'fluid-framework';
+import { Signal2Pixi, SignalPackage, Signals } from './wrappers';
+import { resolve } from 'path';
 
 export class Application {
-
     private disconnect = 0;
     private dirty = 0;
 
-    private constructor (
+    private constructor(
         public pixiApp: PIXI.Application,
         public selection: Shapes,
         public audience: IAzureAudience,
@@ -38,39 +49,43 @@ export class Application {
             clearPresence(audience.getMyself()?.userId!, shapeTree);
         }, pixiApp);
 
-        container.on("connected", () => {
-            console.log("CONNECTED after " + (performance.now() - this.disconnect) + " milliseconds.");
-        })
+        container.on('connected', () => {
+            console.log(
+                'CONNECTED after ' +
+                    (performance.now() - this.disconnect) +
+                    ' milliseconds.'
+            );
+        });
 
-        container.on("disconnected", () => {
+        container.on('disconnected', () => {
             this.disconnect = performance.now();
-            console.log("DISCONNECTED");
-        })
+            console.log('DISCONNECTED');
+        });
 
-        container.on("saved", () => {
+        container.on('saved', () => {
             //console.log("SAVED after " + (performance.now() - dirty) + " milliseconds.");
-        })
+        });
 
-        container.on("dirty", () => {
+        container.on('dirty', () => {
             this.dirty = performance.now();
             //console.log("DIRTY");
-        })
+        });
 
         //Get all existing shapes
         this.updateAllShapes();
 
         // event handler for detecting remote changes to Fluid data and updating
         // the local data
-        fluidTree.events.on("afterBatch", () => {
+        fluidTree.events.on('afterBatch', () => {
             this.updateAllShapes();
-        })
+        });
 
         // When a user leaves the session, remove all that users presence data from
         // the presence shared map. Note, all clients run this code right now
         audience.on('memberRemoved', (clientId: string, member: IMember) => {
-            console.log(member.userId, "JUST LEFT");
+            console.log(member.userId, 'JUST LEFT');
             for (const shape of shapeTree.shapes) {
-                removeUserFromPresenceArray({userId: member.userId, shape});
+                removeUserFromPresenceArray({ userId: member.userId, shape });
             }
         });
 
@@ -92,8 +107,7 @@ export class Application {
         signaler.onSignal(Signals.ON_DRAG, signalHandler);
     }
 
-    public static async build(
-    ): Promise<Application> {
+    public static async build(): Promise<Application> {
         // Initialize Fluid
         const { container, services } = await loadFluidData();
         const audience = services.audience;
@@ -110,11 +124,15 @@ export class Application {
 
         // create Fluid tree for shapes
 
-        const schemaPolicy = {allowedSchemaModifications: AllowedUpdateType.None,
-            initialTree: {shapes: []},
-            schema: schema}
+        const schemaPolicy = {
+            allowedSchemaModifications: AllowedUpdateType.None,
+            initialTree: { shapes: [] },
+            schema: schema,
+        };
 
         const fluidTree = container.initialObjects.tree as ISharedTree;
+        // TODO: find a way to either await trailing ops or support better merge resolution for schematize operations
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), 1000));
         const treeView = fluidTree.schematize(schemaPolicy);
         const shapeTree = treeView.root as unknown as Felt;
 
@@ -135,7 +153,7 @@ export class Application {
             maxZ,
             container,
             fluidTree
-        )
+        );
     }
 
     private static async createPixiApp() {
@@ -222,17 +240,15 @@ export class Application {
     // function to toggle the signals flag
     public toggleSignals = (): void => {
         this.useSignals = !this.useSignals;
-    }
+    };
 
     public getUseSignals = (): boolean => {
         return this.useSignals;
-    }
+    };
 
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
-    public addNewLocalShape = (
-        shape: Shape
-    ): FeltShape => {
+    public addNewLocalShape = (shape: Shape): FeltShape => {
         const feltShape = new FeltShape(
             this.pixiApp,
             shape,
@@ -251,11 +267,11 @@ export class Application {
         this.localShapes.set(shape.id, feltShape); // add the new shape to local data
 
         return feltShape;
-    }
+    };
 
     // function passed into React UX for creating shapes
     public createShape = (shapeType: ShapeType, color: Color): void => {
-        if (this.localShapes.maxReached) return
+        if (this.localShapes.maxReached) return;
 
         addShapeToShapeTree(
             shapeType,
@@ -266,7 +282,7 @@ export class Application {
             getMaxZIndex(this.maxZ),
             this.shapeTree
         );
-    }
+    };
 
     // function passed into React UX for creating lots of different shapes at once
     public createLotsOfShapes = (amount: number): void => {
@@ -282,24 +298,32 @@ export class Application {
                     shapeType,
                     color,
                     Guid.create().toString(),
-                    getRandomInt(FeltShape.size, this.pixiApp.screen.width - FeltShape.size),
-                    getRandomInt(FeltShape.size, this.pixiApp.screen.height - FeltShape.size),
+                    getRandomInt(
+                        FeltShape.size,
+                        this.pixiApp.screen.width - FeltShape.size
+                    ),
+                    getRandomInt(
+                        FeltShape.size,
+                        this.pixiApp.screen.height - FeltShape.size
+                    ),
                     getMaxZIndex(this.maxZ),
                     this.shapeTree
                 );
             }
         }
-    }
+    };
 
     // Function passed to React to change the color of selected shapes
     public changeColorofSelected = (color: Color): void => {
-        this.changeSelectedShapes((shape: FeltShape) => this.changeColor(shape, color));
-    }
+        this.changeSelectedShapes((shape: FeltShape) =>
+            this.changeColor(shape, color)
+        );
+    };
 
     // Changes the color of a shape and syncs with the Fluid data
     public changeColor = (shape: FeltShape, color: Color): void => {
         shape.color = color;
-    }
+    };
 
     // A function that iterates over all selected shapes and calls the passed function
     // for each shape
@@ -313,23 +337,23 @@ export class Application {
                 }
             });
         }
-    }
+    };
 
     // Function passed to React to delete selected shapes
     public deleteSelectedShapes = (): void => {
         this.changeSelectedShapes((shape: FeltShape) => this.deleteShape(shape));
-    }
+    };
 
     public deleteAllShapes = (): void => {
         this.localShapes.forEach((value: FeltShape, key: string) => {
             this.deleteShape(value);
-        })
-    }
+        });
+    };
 
     private deleteShape = (shape: FeltShape): void => {
         const i = shape.shape[parentField].index;
         //this.shapeTree[de]   [deleteNodes](i, 1);
-    }
+    };
 
     // Called when a shape is deleted in the Fluid Data
     public deleteLocalShape = (shape: FeltShape): void => {
@@ -341,20 +365,26 @@ export class Application {
 
         // Destroy the local shape object
         shape.destroy();
-    }
+    };
 
     public bringSelectedToFront = (): void => {
-        this.changeSelectedShapes((shape: FeltShape) => bringToFront(shape, this.maxZ));
-    }
+        this.changeSelectedShapes((shape: FeltShape) =>
+            bringToFront(shape, this.maxZ)
+        );
+    };
 
     public clearSelection = (): void => {
         this.selection.forEach((value: FeltShape) => {
             value.unselect();
-        })
+        });
         this.selection.clear();
-    }
+    };
 
     public updateAllShapes = () => {
+        console.log('UPDATING ALL SHAPES: ');
+        console.log(
+            Array.from((this.fluidTree.forest as any).roots.fields.values())[0]
+        );
         const seenIds = new Set<string>();
         for (const shape of this.shapeTree.shapes) {
             seenIds.add(shape.id);
@@ -372,6 +402,6 @@ export class Application {
             if (!seenIds.has(shape.id)) {
                 this.deleteLocalShape(this.localShapes.get(shape.id)!);
             }
-        })
-    }
+        });
+    };
 }
