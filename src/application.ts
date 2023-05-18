@@ -61,7 +61,7 @@ export class Application {
 
         // event handler for detecting remote changes to Fluid data and updating
         // the local data
-        fluidTree.forest.on('afterDelta', (delta) => {
+        fluidTree.events.on("afterBatch", () => {
             this.updateAllShapes();
         })
 

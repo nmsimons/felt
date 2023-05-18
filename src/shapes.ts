@@ -7,7 +7,7 @@ import { Pixi2Signal, Signals } from "./wrappers";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { SharedCounter } from "@fluidframework/counter";
 import { cursorForTypedTreeData } from "@fluid-experimental/tree2/dist/feature-libraries";
-import { brand, EditableField, getField } from "@fluid-experimental/tree2";
+import { brand, EditableField, getField, replaceField, EditableTree } from "@fluid-experimental/tree2";
 
 // set some constants for shapes
 export const shapeLimit = 100;
@@ -213,7 +213,9 @@ export class FeltShape extends PIXI.Graphics {
             this.x = position.x; this.y = position.y;
         } else {
             const cursor = cursorForTypedTreeData(schema, positionSchema, position);
-            (this.shape[getField](brand("position")) as EditableField).replaceNodes(0, cursor);
+            //(this.shape[getField](brand("position")) as EditableField).replaceNodes(0, cursor);
+
+            (this.shape as unknown as EditableTree)[replaceField](brand("position"), cursor)
         }
     }
 
