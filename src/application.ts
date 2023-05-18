@@ -345,14 +345,12 @@ export class Application {
     };
 
     public deleteAllShapes = (): void => {
-        this.localShapes.forEach((value: FeltShape, key: string) => {
-            this.deleteShape(value);
-        });
+        this.shapeTree.shapes.deleteNodes(0);
     };
 
     private deleteShape = (shape: FeltShape): void => {
         const i = shape.shape[parentField].index;
-        //this.shapeTree[de]   [deleteNodes](i, 1);
+        this.shapeTree.shapes.deleteNodes(i, 1);
     };
 
     // Called when a shape is deleted in the Fluid Data
