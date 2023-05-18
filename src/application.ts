@@ -2,13 +2,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Signaler, SignalListener } from "@fluid-experimental/data-objects";
-import { EditableField, ISharedTree, parentField } from "@fluid-experimental/tree2";
+import { AllowedUpdateType, ISharedTree, parentField} from "@fluid-experimental/tree2";
 import { IAzureAudience } from "@fluidframework/azure-client";
 import { SharedCounter } from "@fluidframework/counter";
 import { Guid } from "guid-typescript";
-import { appSchemaData, ShapeProxy } from "./schema";
+import { schema, Felt, Shape } from "./schema";
 import { FeltShape, addShapeToShapeTree, getMaxZIndex, shapeLimit, bringToFront, Shapes } from "./shapes";
-import { Color, getNextColor, getNextShape, getRandomInt, Shape } from "./util";
+import { Color, getNextColor, getNextShape, getRandomInt, ShapeType} from "./util";
 import { clearPresence, removeUserFromPresenceArray } from "./presence";
 import * as PIXI from 'pixi.js';
 import { loadFluidData } from "./fluid";
@@ -27,7 +27,7 @@ export class Application {
         public useSignals: boolean,
         public signaler: Signaler,
         public localShapes: Shapes,
-        public shapeTree: ShapeProxy[] & EditableField,
+        public shapeTree: Felt,
         public maxZ: SharedCounter,
         public container: FluidContainer,
         public fluidTree: ISharedTree
@@ -69,8 +69,8 @@ export class Application {
         // the presence shared map. Note, all clients run this code right now
         audience.on('memberRemoved', (clientId: string, member: IMember) => {
             console.log(member.userId, "JUST LEFT");
-            for (const shapeProxy of shapeTree) {
-                removeUserFromPresenceArray({userId: member.userId, shapeProxy: shapeProxy});
+            for (const shape of shapeTree.shapes) {
+                removeUserFromPresenceArray({userId: member.userId, shape});
             }
         });
 
@@ -109,9 +109,14 @@ export class Application {
         const selection = new Shapes(shapeLimit);
 
         // create Fluid tree for shapes
+
+        const schemaPolicy = {allowedSchemaModifications: AllowedUpdateType.None,
+            initialTree: {shapes: []},
+            schema: schema}
+
         const fluidTree = container.initialObjects.tree as ISharedTree;
-        fluidTree.storedSchema.update(appSchemaData);
-        const shapeTree = fluidTree.root as ShapeProxy[] & EditableField;
+        const treeView = fluidTree.schematize(schemaPolicy);
+        const shapeTree = treeView.root as unknown as Felt;
 
         // create fluid counter for shared max z order
         const maxZ = container.initialObjects.maxZOrder as SharedCounter;
@@ -226,11 +231,11 @@ export class Application {
     // Creates a new FeltShape object which is the local object that represents
     // all shapes on the canvas
     public addNewLocalShape = (
-        shapeProxy: ShapeProxy
+        shape: Shape
     ): FeltShape => {
         const feltShape = new FeltShape(
             this.pixiApp,
-            shapeProxy,
+            shape,
             (userId: string) => {
                 clearPresence(userId, this.shapeTree);
             },
@@ -243,17 +248,17 @@ export class Application {
             this.signaler
         );
 
-        this.localShapes.set(shapeProxy.id, feltShape); // add the new shape to local data
+        this.localShapes.set(shape.id, feltShape); // add the new shape to local data
 
         return feltShape;
     }
 
     // function passed into React UX for creating shapes
-    public createShape = (shape: Shape, color: Color): void => {
+    public createShape = (shapeType: ShapeType, color: Color): void => {
         if (this.localShapes.maxReached) return
 
         addShapeToShapeTree(
-            shape,
+            shapeType,
             color,
             Guid.create().toString(),
             FeltShape.size,
@@ -265,16 +270,16 @@ export class Application {
 
     // function passed into React UX for creating lots of different shapes at once
     public createLotsOfShapes = (amount: number): void => {
-        let shape = Shape.Circle;
+        let shapeType = ShapeType.Circle;
         let color = Color.Red;
 
         for (let index = 0; index < amount; index++) {
-            shape = getNextShape(shape);
+            shapeType = getNextShape(shapeType);
             color = getNextColor(color);
 
             if (this.localShapes.size < shapeLimit) {
                 addShapeToShapeTree(
-                    shape,
+                    shapeType,
                     color,
                     Guid.create().toString(),
                     getRandomInt(FeltShape.size, this.pixiApp.screen.width - FeltShape.size),
@@ -322,8 +327,8 @@ export class Application {
     }
 
     private deleteShape = (shape: FeltShape): void => {
-        const i = shape.shapeProxy[parentField].index;
-        this.shapeTree.deleteNodes(i, 1);
+        const i = shape.shape[parentField].index;
+        //this.shapeTree[de]   [deleteNodes](i, 1);
     }
 
     // Called when a shape is deleted in the Fluid Data
@@ -351,14 +356,14 @@ export class Application {
 
     public updateAllShapes = () => {
         const seenIds = new Set<string>();
-        for (const shapeProxy of this.shapeTree) {
-            seenIds.add(shapeProxy.id);
-            let localShape = this.localShapes.get(shapeProxy.id);
+        for (const shape of this.shapeTree.shapes) {
+            seenIds.add(shape.id);
+            let localShape = this.localShapes.get(shape.id);
             if (localShape != undefined) {
-                localShape.shapeProxy = shapeProxy; // TODO this should not be necessary
+                localShape.shape = shape; // TODO this should not be necessary
                 localShape.sync();
             } else {
-                localShape = this.addNewLocalShape(shapeProxy);
+                localShape = this.addNewLocalShape(shape);
             }
         }
 

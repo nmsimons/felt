@@ -1,4 +1,4 @@
-export enum Shape {
+export enum ShapeType {
     Circle = 'CIRCLE',
     Square = 'SQUARE',
     Triangle = 'TRIANGLE',
@@ -19,9 +19,9 @@ export function getNextColor(current: Color) {
     ];
 }
 
-export function getNextShape(current: Shape) {
-    return Object.values(Shape)[
-        (Object.values(Shape).indexOf(current) + 1) % Object.values(Shape).length
+export function getNextShape(current: ShapeType) {
+    return Object.values(ShapeType)[
+        (Object.values(ShapeType).indexOf(current) + 1) % Object.values(ShapeType).length
     ];
 }
 

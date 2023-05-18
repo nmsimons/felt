@@ -1,12 +1,13 @@
-import { PositionProxy, ShapeProxy } from "./schema";
+import { Felt, Shape, positionSchema, schema, shapeSchema } from "./schema";
 import * as PIXI from 'pixi.js';
-import { Color, Shape } from './util';
+import { Color, ShapeType } from './util';
 import { AzureMember, IAzureAudience } from '@fluidframework/azure-client';
-import { EditableField, EditableTree } from "@fluid-experimental/tree2";
 import { removeUserFromPresenceArray, addUserToPresenceArray, shouldShowPresence, userIsInPresenceArray, clearPresence } from "./presence";
 import { Pixi2Signal, Signals } from "./wrappers";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { SharedCounter } from "@fluidframework/counter";
+import { cursorForTypedTreeData } from "@fluid-experimental/tree2/dist/feature-libraries";
+import { brand, EditableField, getField } from "@fluid-experimental/tree2";
 
 // set some constants for shapes
 export const shapeLimit = 100;
@@ -25,28 +26,30 @@ export function getMaxZIndex(maxZ: SharedCounter): number {
 }
 
 export function addShapeToShapeTree(
-    shape: Shape,
+    shapeType: ShapeType,
     color: Color,
     id: string,
     x: number,
     y: number,
     z: number,
-    shapeTree: ShapeProxy[] & EditableField): void {
+    shapeTree: Felt): void {
 
     const position = {
         x,
         y,
-    } as PositionProxy;
+    };
 
-    const shapeProxy = {
+    const shape = {
         id,
         position,
         color,
         z,
-        shape,
-    } as ShapeProxy;
+        shapeType: shapeType,
+        users: []
+    };
 
-    shapeTree[shapeTree.length] = shapeProxy;
+    const cursor = cursorForTypedTreeData(schema, shapeSchema, shape);
+    shapeTree.shapes.insertNodes(shapeTree.shapes.length, cursor);
 }
 
 // defines a custom map for storing local shapes that fires an event when the map changes
@@ -104,7 +107,7 @@ export class FeltShape extends PIXI.Graphics {
 
     constructor(
         private app: PIXI.Application,
-        public shapeProxy: ShapeProxy, // TODO this should be readonly
+        public shape: Shape, // TODO this should be readonly
         private clearPresence: (userId: string) => void,
         private addToSelected: (shape: FeltShape) => void,
         readonly audience: IAzureAudience,
@@ -112,7 +115,7 @@ export class FeltShape extends PIXI.Graphics {
         readonly signaler: Signaler
     ) {
         super();
-        this.id = this.shapeProxy.id;
+        this.id = this.shape.id;
         this._shape = new PIXI.Graphics();
 
         this.initProperties();
@@ -132,8 +135,8 @@ export class FeltShape extends PIXI.Graphics {
 
     private initProperties = () => {
         this._shape.tint = Number(this.color);
-        this.x = this.shapeProxy.position.x;
-        this.y = this.shapeProxy.position.y;
+        this.x = this.shape.position.x;
+        this.y = this.shape.position.y;
         this.zIndex = this.z;
     }
 
@@ -187,19 +190,19 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     set color(color: Color) {
-        this.shapeProxy.color = color;
+        this.shape.color = color;
     }
 
     get color() {
-        return this.shapeProxy.color as Color;
+        return this.shape.color as Color;
     }
 
     set z(value: number) {
-        this.shapeProxy.z = value;
+        this.shape.z = value;
     }
 
     get z() {
-        return this.shapeProxy.z;
+        return this.shape.z;
     }
 
     private updateFluidLocation = (position: {x: number, y: number}) =>  {
@@ -209,19 +212,20 @@ export class FeltShape extends PIXI.Graphics {
             this.signaler.submitSignal(Signals.ON_DRAG, sig);
             this.x = position.x; this.y = position.y;
         } else {
-            this.shapeProxy.position = position as PositionProxy;
+            const cursor = cursorForTypedTreeData(schema, positionSchema, position);
+            (this.shape[getField](brand("position")) as EditableField).replaceNodes(0, cursor);
         }
     }
 
     public sync() {
-        this.x = this.shapeProxy.position.x;
-        this.y = this.shapeProxy.position.y;
+        this.x = this.shape.position.x;
+        this.y = this.shape.position.y;
         this.zIndex = this.z;
         this._shape.tint = Number(this.color);
 
         const me: AzureMember | undefined = this.audience.getMyself();
         if (me !== undefined) {
-            if (shouldShowPresence(this.shapeProxy, me.userId)) {
+            if (shouldShowPresence(this.shape, me.userId)) {
                 this.showPresence();
             } else {
                 this.removePresence();
@@ -234,7 +238,7 @@ export class FeltShape extends PIXI.Graphics {
 
         const me: AzureMember | undefined = this.audience.getMyself();
         if (me !== undefined) {
-            removeUserFromPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
+            removeUserFromPresenceArray({ userId: me.userId, shape: this.shape });
         } else {
             console.log('Failed to delete presence!!!');
         }
@@ -247,11 +251,11 @@ export class FeltShape extends PIXI.Graphics {
 
         const me: AzureMember | undefined = this.audience.getMyself();
         if (me === undefined) { return } // it must be very early or something is broken
-        if ( userIsInPresenceArray(this.shapeProxy, me.userId) ) { return } // this is already in the presence array so no need to add it again
+        if ( userIsInPresenceArray(this.shape, me.userId) ) { return } // this is already in the presence array so no need to add it again
 
         this.clearPresence(me.userId);
         if (me !== undefined) {
-            addUserToPresenceArray({ userId: me.userId, shapeProxy: this.shapeProxy });
+            addUserToPresenceArray({ userId: me.userId, shape: this.shape });
         } else {
             console.log('Failed to set presence!!!');
         }
@@ -327,7 +331,7 @@ export class FeltShape extends PIXI.Graphics {
             fontSize: 30,
             textBaseline: "bottom"
         });
-        const text = new PIXI.Text(this.shapeProxy.users.length.toString(), style)
+        const text = new PIXI.Text(this.shape.users.length.toString(), style)
         text.x = top + 15;
         text.y = left + 15;
         this._presenceFrame.removeChildren()
@@ -393,11 +397,11 @@ export class FeltShape extends PIXI.Graphics {
     }
 
     private setShape() {
-        switch (this.shapeProxy.shape as Shape) {
-            case Shape.Circle:
+        switch (this.shape.shapeType as ShapeType) {
+            case ShapeType.Circle:
                 this._shape.drawCircle(0, 0, FeltShape.size / 2);
                 break;
-            case Shape.Square:
+            case ShapeType.Square:
                 this._shape.drawRect(
                     -FeltShape.size / 2,
                     -FeltShape.size / 2,
@@ -405,7 +409,7 @@ export class FeltShape extends PIXI.Graphics {
                     FeltShape.size
                 );
                 break;
-            case Shape.Triangle:
+            case ShapeType.Triangle:
                 // eslint-disable-next-line no-case-declarations
                 const path = [
                     0,
@@ -417,7 +421,7 @@ export class FeltShape extends PIXI.Graphics {
                 ];
                 this._shape.drawPolygon(path);
                 break;
-            case Shape.Rectangle:
+            case ShapeType.Rectangle:
                 this._shape.drawRect(
                     (-FeltShape.size * 1.5) / 2,
                     -FeltShape.size / 2,

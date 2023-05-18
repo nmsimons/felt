@@ -1,14 +1,13 @@
-import { EditableField } from "@fluid-experimental/tree2";
-import { ShapeProxy } from "./schema";
+import { Felt, Shape } from "./schema";
 
 export function removeUserFromPresenceArray({
     userId,
-    shapeProxy,
+    shape,
 }: {
     userId: string;
-    shapeProxy: ShapeProxy;
+    shape: Shape;
 }): void {
-    const users = shapeProxy.users;
+    const users = shape.users;
     for(let i = 0; i < users.length; i++) {
         if (users[i] === userId) {
             users.deleteNodes(i, 1);
@@ -19,12 +18,12 @@ export function removeUserFromPresenceArray({
 
 export function addUserToPresenceArray({
     userId,
-    shapeProxy,
+    shape,
 }: {
     userId: string;
-    shapeProxy: ShapeProxy;
+    shape: Shape;
 }): void {
-    const users = shapeProxy.users;
+    const users = shape.users;
     for(const user of users) {
         if (user === userId) {
             return;
@@ -33,7 +32,7 @@ export function addUserToPresenceArray({
     users[users.length] = userId;
 }
 
-export function shouldShowPresence(shapeProxy: ShapeProxy, userId: string): boolean {
+export function shouldShowPresence(shapeProxy: Shape, userId: string): boolean {
     for (const user of shapeProxy.users) {
         if (user !== userId) {
             return true;
@@ -42,8 +41,8 @@ export function shouldShowPresence(shapeProxy: ShapeProxy, userId: string): bool
     return false;
 }
 
-export function userIsInPresenceArray(shapeProxy: ShapeProxy, userId: string): boolean {
-    for (const user of shapeProxy.users) {
+export function userIsInPresenceArray(shape: Shape, userId: string): boolean {
+    for (const user of shape.users) {
         if (user === userId) {
             return true;
         }
@@ -51,8 +50,8 @@ export function userIsInPresenceArray(shapeProxy: ShapeProxy, userId: string): b
     return false;
 }
 
-export function clearPresence(userId: string, shapeTree: ShapeProxy[] & EditableField) {
-    for (const shapeProxy of shapeTree) {
-        removeUserFromPresenceArray({userId, shapeProxy});
+export function clearPresence(userId: string, shapeTree: Felt) {
+    for (const shape of shapeTree.shapes) {
+        removeUserFromPresenceArray({userId, shape});
     }
 }

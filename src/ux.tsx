@@ -5,10 +5,9 @@ import { mdiCircle, mdiSquare, mdiTriangle, mdiRectangle, mdiShape } from '@mdi/
 import { mdiCloseThick, mdiEraser } from '@mdi/js';
 import { mdiArrangeBringForward } from '@mdi/js';
 import { mdiInformationOutline } from '@mdi/js';
-import { Color, Shape as S } from './util';
+import { Color, ShapeType as S } from './util';
 import { Shapes } from './shapes';
-import { ShapeProxy } from './schema';
-import { EditableField } from '@fluid-experimental/tree2';
+import { Felt } from './schema';
 import { ConnectionState, FluidContainer } from 'fluid-framework';
 
 // eslint-disable-next-line react/prop-types
@@ -24,7 +23,7 @@ export function ReactApp(props: {
     signals: () => boolean;
     selectionManager: any;
     localShapes: Shapes;
-    shapeTree: ShapeProxy[] & EditableField;
+    shapeTree: Felt;
     fluidContainer: FluidContainer;
 }): JSX.Element {
     const keyDownHandler = (e: KeyboardEvent) => {
@@ -262,7 +261,7 @@ export function StatusBar(props: {
     toggleSignals: any;
     signals: () => boolean;
     localShapes: Shapes;
-    shapeTree: ShapeProxy[] & EditableField;
+    shapeTree: Felt;
     fluidContainer: FluidContainer;
 }) {
     const [, setChecked] = React.useState(props.signals());
@@ -308,16 +307,16 @@ export function StatusBar(props: {
 
 export function ShapeCount(props: {
     localShapes: Shapes;
-    shapeTree: ShapeProxy[] & EditableField;
+    shapeTree: Felt;
 }) {
 
-    const [fluidCount, getFluidCount] = React.useState(props.shapeTree.length);
+    const [fluidCount, getFluidCount] = React.useState(props.shapeTree.shapes.length);
     const [localCount, getLocalCount] = React.useState(props.localShapes.size);
 
     React.useEffect(() => {
         props.localShapes.onChanged(() => {
             getLocalCount(props.localShapes.size);
-            getFluidCount(props.shapeTree.length);
+            getFluidCount(props.shapeTree.shapes.length);
         });
     }, [localCount]);
 

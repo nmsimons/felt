@@ -1,75 +1,39 @@
-import {
-	brand,
-	EditableTree,
-	rootFieldKey,
-	SchemaData,
-	ValueSchema,
-	fieldSchema,
-	EditableField,
-	FieldKinds,
-	namedTreeSchema
-} from "@fluid-experimental/tree2";
+import { FieldKinds, SchemaAware, SchemaBuilder, ValueSchema } from "@fluid-experimental/tree2";
 
-export const stringSchema = namedTreeSchema({
-	name: brand("String"),
-	value: ValueSchema.String,
-});
+const builder = new SchemaBuilder("felt app");
 
-export const numberSchema = namedTreeSchema({
-	name: brand("number"),
-	value: ValueSchema.Number,
-});
+export const float64 = builder.primitive("number", ValueSchema.Number);
+export const string = builder.primitive("string", ValueSchema.String);
+export const boolean = builder.primitive("boolean", ValueSchema.Boolean);
 
-export const booleanSchema = namedTreeSchema({
-	name: brand("boolean"),
-	value: ValueSchema.Boolean,
-});
-
-export const positionSchema = namedTreeSchema({
-	name: brand("position"),
-	localFields: {
-		x: fieldSchema(FieldKinds.value, [numberSchema.name]),
-        y: fieldSchema(FieldKinds.value, [numberSchema.name]),
+export const positionSchema = builder.object("felt:part", {
+	local: {
+		x: SchemaBuilder.field(FieldKinds.value, float64),
+        y: SchemaBuilder.field(FieldKinds.value, float64)
 	}
 })
 
-export const shapeSchema = namedTreeSchema({
-	name: brand("shape"),
-	localFields: {
-        id: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        position: fieldSchema(FieldKinds.value, [positionSchema.name]),
-        y: fieldSchema(FieldKinds.value, [numberSchema.name]),
-        color: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        z: fieldSchema(FieldKinds.value, [numberSchema.name]),
-        shape: fieldSchema(FieldKinds.value, [stringSchema.name]),
-        users: fieldSchema(FieldKinds.sequence, [stringSchema.name]),
+export const shapeSchema = builder.object("felt:shape", {
+	local: {
+        id: SchemaBuilder.field(FieldKinds.value, string),
+        position: SchemaBuilder.field(FieldKinds.value, positionSchema),
+        color: SchemaBuilder.field(FieldKinds.value, string),
+        z: SchemaBuilder.field(FieldKinds.value, float64),
+        shapeType: SchemaBuilder.field(FieldKinds.value, string),
+        users: SchemaBuilder.field(FieldKinds.sequence, string),
 	},
 });
 
-export type PositionProxy = EditableTree & {
-	x: number,
-    y: number,
-}
+export const feltSchema = builder.object("felt:felt", {
+	local: {
+		shapes: SchemaBuilder.field(FieldKinds.sequence, shapeSchema)
+	}
+})
 
-export type ShapeProxy = EditableTree & {
-	id: string,
-    position: PositionProxy,
-    y: number,
-    color: string,
-    z: number,
-    shape: string,
-    users: string[] & EditableField,
-};
+export const rootField = SchemaBuilder.field(FieldKinds.value, feltSchema);
 
-export const rootAppStateSchema = fieldSchema(FieldKinds.sequence, [shapeSchema.name]);
+export const schema = builder.intoDocumentSchema(rootField);
 
-export const appSchemaData: SchemaData = {
-	treeSchema: new Map([
-		[stringSchema.name, stringSchema],
-        [booleanSchema.name, booleanSchema],
-		[numberSchema.name, numberSchema],
-		[shapeSchema.name, shapeSchema],
-		[positionSchema.name, positionSchema]
-	]),
-	globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
-};
+export type Felt = SchemaAware.TypedNode<typeof feltSchema>;
+export type Shape = SchemaAware.TypedNode<typeof shapeSchema>;
+export type Position = SchemaAware.TypedNode<typeof positionSchema>;
